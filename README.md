@@ -1,11 +1,6 @@
-# Jablon
+# $ ja2mqtt
 
-Jablon is a collection of software tools that build on top of Jablotron 100+ via JA-121T serial interface. 
-The tools allow a third-party application to interact with Jablotron 100 by a standard RESTful interface. 
-
-In order to use the tools, you first need to initialise your environment by running `bin/venv-create.sh` script. This will create the python
-virtual environment and install all required packages. After that, you need to run `source bin/env.sh` which activates 
-the virtual environment and creates various environment variables and settings.    
+ja2mqtt is a software tool that translates events from Jablotron 100+ via JA-121T serial interface to MQTT. 
 
 ## JA-121T Emulator
 
