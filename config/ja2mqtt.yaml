@@ -1,0 +1,80 @@
+# -*- coding: utf-8 -*-
+# @author: Tomas Vitvar, https://vitvar.com, tomas@vitvar.com
+# ja2mqtt definition file for JA121-T BUS RS-485 protocol
+# You normally do not need to edit this file unless you want to change the way how JA121 protocol is implemented.
+# The file uses Jinja templates and data from the yaml configuration file that defines Jablotron topology
+
+# Definition of MQTT topics for serial output.
+# The topics defined in `serial2mqtt` will be created in MQTT broker according to events that occur in the serial output
+serial2mqtt:
+
+# MQTT heartbeat topic; Jablotron writes hearbeat 'OK' messages to serial output
+# that are converted to MQTT heartbeat events
+- name: ja2mqtt/heartbeat
+  disabled: True
+  rules:
+  - read: OK
+    write:
+      heartbeat: !py data
+
+# MQTT topics for sections that will be generated when events in serial output occur
+{% for k,v in topology.section.items() %}
+- name: ja2mqtt/section/{{ k }}
+  rules:
+  - read: !py pattern('STATE {{ v }} (READY|ARMED_PART|ARMED|SERVICE|BLOCKED|OF)')
+    write:
+      section_code: {{ v }}
+      section_name: {{ k }}
+      state: !py data.match.group(1)
+{% endfor %}
+
+# generic error
+- name: ja2mqtt/error
+  rules:
+  - read: !py pattern('ERROR. ([0-9]+) (.+)')
+    write:
+      section_code: {{ v }}
+      section_name: {{ k }}
+      error_number: !py data.match.group(1)
+      error_message: !py data.match.group(2)
+
+# Definition of MQTT topics for serial input.
+# The topics defined in `mqtt2serial` will be consumed from MQTT
+mqtt2serial:
+
+# get all section states
+- name: ja2mqtt/section/get
+  rules:
+    - read:
+        pin: !py pattern("^[0-9]{4}$")
+      write: !py format("{pin} STATE",pin=data.pin)
+
+{% for k,v in topology.section.items() %}
+# set state to ARMED for a single section
+- name: ja2mqtt/section/{{ k }}/set
+  rules:
+    - read:
+        pin: !py pattern("^[0-9]{4}$")
+      write: !py format("{pin} SET {{ v }}",pin=data.pin)
+
+# set state to ARMED_PART for a single section
+- name: ja2mqtt/section/{{ k }}/setp
+  rules:
+    - read:
+        pin: !py pattern("^[0-9]{4}$")
+      write: !py format("{pin} SETP {{ v }}",pin=data.pin)
+
+# unset a single section
+- name: ja2mqtt/section/{{ k }}/unset
+  rules:
+    - read:
+        pin: !py pattern("^[0-9]{4}$")
+      write: !py format("{pin} UNSET {{ v }}",pin=data.pin)
+
+# get state of a single section
+- name: ja2mqtt/section/{{ k }}/get
+  rules:
+    - read:
+        pin: !py pattern("^[0-9]{4}$")
+      write: !py format("{pin} STATE {{ v }}",pin=data.pin)
+{% endfor %}
