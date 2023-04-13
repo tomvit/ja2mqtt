@@ -21,7 +21,7 @@ serial2mqtt:
 {% for k,v in topology.section.items() %}
 - name: ja2mqtt/section/{{ k }}
   rules:
-  - read: !py pattern('STATE {{ v }} (READY|ARMED_PART|ARMED|SERVICE|BLOCKED|OF)')
+  - read: !py pattern('STATE {{ v }} (READY|ARMED_PART|ARMED|SERVICE|BLOCKED|OFF)')
     write:
       section_code: {{ v }}
       section_name: {{ k }}
