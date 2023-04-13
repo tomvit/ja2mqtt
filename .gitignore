@@ -1,2 +1,8 @@
 bin/venv
 __pycache__
+logs
+bin/sync
+etc
+__pycache__
+bin/env
+config/config.yaml
