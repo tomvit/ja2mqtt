@@ -17,6 +17,7 @@ mqtt-broker:
 # The serial port requires 9600 baud, 8 data bits, no parity, 1 stop-bit
 # see https://jablotron.com.hk/image/data/pdf/manuel/JA-121T.pdf
 serial:
+  use_simulator: True
   port: /dev/ttyUSB0
   baudrate: 9600
   bytesize: 8
@@ -31,21 +32,24 @@ topology:
     house: 1
     garage: 2
 
-# When serial.simulator is enabled in the main configuration, the below configuration defines
-# how data will be generated for ja2mqtt
+# When serial.use_simulator is True, the below configuration defines how events will be generated for ja2mqtt
 simulator:
-  disabled: True
+  pin: 1234
+  sections:
+    - code: 1
+      state: ARMED
+    - code: 2
+      state: READY
+    - code: 3
+      state: OFF
+    - code: 4
+      state: OFF
+
+  # delay in seconds when responding to a command
+  response_delay: 0.5
+
+  # list of rules that will generate sinulated events
   rules:
   # heartbeat every 10s
-  - time: 10s
+  - time: 10
     write: OK
-
-  # JA121T commands and responses
-  - read: 1234 SET 1
-    write: STATE 1 ARMED
-  - read: 1234 UNSET 2
-    write: STATE 2 READY
-  - read: 1234 STATE
-    write:
-      - STATE 1 ARMED
-      - STATE 2 READY

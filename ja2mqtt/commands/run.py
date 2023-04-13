@@ -48,7 +48,7 @@ def run(config, env):
 
     log.info(f"ja2mqtt, Jablotron JA-121 Serial MQTT bridge, version {version}")
 
-    serial = Serial(config.get_part("serial"))
+    serial = Serial(config.get_part("serial"), config.get_part("simulator"))
     mqtt = MQTT(config.get_part("mqtt-broker"))
     bridge = SerialMQTTBridge(config)
 
