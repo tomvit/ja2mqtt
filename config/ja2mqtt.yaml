@@ -33,8 +33,6 @@ serial2mqtt:
   rules:
   - read: !py pattern('ERROR. ([0-9]+) (.+)')
     write:
-      section_code: {{ v }}
-      section_name: {{ k }}
       error_number: !py data.match.group(1)
       error_message: !py data.match.group(2)
 
