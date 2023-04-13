@@ -224,6 +224,7 @@ class Config:
     def __call__(self, path, default=None, type=None, required=True, no_eval=False):
         return self.root(path, default=None, type=None, required=True, no_eval=False)
 
+
 class ConfigPart:
     def __init__(self, parent, base_path, config, config_dir):
         self.parent = parent

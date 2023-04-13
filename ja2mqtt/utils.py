@@ -115,7 +115,9 @@ def deep_eval(data, scope, raise_ex=False):
             data = data.eval(scope)
         except Exception as e:
             if raise_ex:
-                raise Exception(f"The Python expression '{data.expr_str}' failed. %s." % (str(e)))
+                raise Exception(
+                    f"The Python expression '{data.expr_str}' failed. %s." % (str(e))
+                )
             else:
                 data = None
     return data
