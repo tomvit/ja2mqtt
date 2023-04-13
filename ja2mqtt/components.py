@@ -16,6 +16,8 @@ import paho.mqtt.client as mqtt
 from ja2mqtt.utils import Map, merge_dicts, deep_eval, deep_merge, PythonExpression
 from ja2mqtt.config import Config
 
+from queue import Queue, Empty
+
 
 class Component:
     def __init__(self, config, name):
@@ -30,59 +32,162 @@ class Component:
         threading.Thread(target=self.worker, args=(exit_event,), daemon=True).start()
 
 
+class Section:
+    def __init__(self, data):
+        self.code = data.code
+        self.state = data.state
+
+    def __str__(self):
+        return f"STATE {self.code} {self.state}"
+
+    def set(self):
+        if self.state == "ARMED":
+            return "OK"
+        if self.state == "READY":
+            self.state = "ARMED"
+            return self.__str__()
+
+    def unset(self):
+        if self.state == "READY":
+            return "OK"
+        if self.state == "ARMED":
+            self.state = "READY"
+            return self.__str__()
+
+class Simulator(Component):
+    def __init__(self, config, encoding):
+        super().__init__(config, "simulator")
+        self.response_delay = config.value_int("response_delay", default=0.5)
+        self.rules = [Map(x) for x in config.value("rules")]
+        self.sections = {str(x["code"]): Section(Map(x)) for x in config.value("sections")}
+        self.pin = config.value("pin")
+        self.timeout = None
+        self.buffer = Queue()
+        self.encoding = encoding
+
+    def open(self):
+        pass
+
+    def close(self):
+        pass
+
+    def _add_to_buffer(self, data):
+        time.sleep(self.response_delay)
+        self.buffer.put(data)
+
+    def write(self, data):
+        def _match(pattern, data_str):
+            m = re.compile(pattern).match(data_str)
+            if m:
+                return Map(m.groupdict())
+            else:
+                return None
+
+        def _check_pin(command):
+            if command.pin != str(self.pin):
+                self._add_to_buffer("ERROR: 3 NO_ACCESS")
+                return False
+            return True
+
+        data_str = data.decode(self.encoding).strip("\n")
+
+        # SET and UNSET commands
+        command = _match(
+            "^(?P<pin>[0-9]+) (?P<command>SET|UNSET) (?P<code>[0-9]+)$", data_str
+        )
+        if command is not None and _check_pin(command):
+            section = self.sections.get(command.code)
+            if section is not None:
+                data = {
+                    "SET": lambda: section.set(),
+                    "UNSET": lambda: section.unset(),
+                }[command.command]()
+                self._add_to_buffer(data)
+            else:
+                self._add_to_buffer("ERROR: 4 INVALID_VALUE")
+
+        # STATE command
+        command = _match("^(?P<pin>[0-9]+) (?P<command>STATE)$", data_str)
+        if command is not None and _check_pin(command):
+            time.sleep(self.response_delay)
+            for section in self.sections.values():
+                self.buffer.put(str(section))
+
+    def readline(self):
+        try:
+            return bytes(self.buffer.get(timeout=self.timeout), self.encoding)
+        except Empty:
+            return b""
+
+    def worker(self, exit_event):
+        while not exit_event.is_set():
+            for rule in self.rules:
+                if rule.get("time"):
+                    if rule.__last_write is None:
+                        rule.__last_write = time.time()
+                    if time.time() - rule.__last_write > rule.time:
+                        self.buffer.put(rule.write)
+                        rule.__last_write = time.time()
+            exit_event.wait(1)
+
+
 class Serial(Component):
     """
     Serial provides an interface for the serial port where JA-121T is connected.
     """
 
-    def __init__(self, config):
-        super().__init__(config, "serial")
-        self.ser = py_serial.serial_for_url(
-            config.value_str("port", required=True), do_not_open=True
-        )
-        self.log.info(f"The serial port is {self.ser.port}")
-        self.ser.baudrate = config.value_int("baudrate", min=0, default=9600)
-        self.ser.bytesize = config.value_int("bytesize", min=7, max=8, default=8)
-        self.ser.parity = config.value_str("parity", default="N")
-        self.ser.stopbits = config.value_int("stopbits", default=1)
-        self.ser.rtscts = config.value_bool("rtscts", default=False)
-        self.ser.xonxoff = config.value_bool("xonxoff", default=False)
+    def __init__(self, config_serial, config_simulator):
+        super().__init__(config_serial, "serial")
+        self.encoding = config_serial.value_bool("encoding", default="ascii")
+        self.use_simulator = config_serial.value_bool("use_simulator", default=False)
+        if not self.use_simulator:
+            self.ser = py_serial.serial_for_url(
+                config_serial.value_str("port", required=True), do_not_open=True
+            )
+            self.ser.baudrate = config_serial.value_int("baudrate", min=0, default=9600)
+            self.ser.bytesize = config_serial.value_int(
+                "bytesize", min=7, max=8, default=8
+            )
+            self.ser.parity = config_serial.value_str("parity", default="N")
+            self.ser.stopbits = config_serial.value_int("stopbits", default=1)
+            self.ser.rtscts = config_serial.value_bool("rtscts", default=False)
+            self.ser.xonxoff = config_serial.value_bool("xonxoff", default=False)
+            self.log.info(
+                f"The serial connection configured, the port is {self.ser.port}"
+            )
+            self.log.debug(f"The serial object is {self.ser}")
+        else:
+            self.ser = Simulator(config_simulator, self.encoding)
+            self.log.info("The serial simulator configured.")
         self.ser.timeout = 1
-        self.encoding = config.value_bool("encoding", default="ascii")
-        self.simulator = config.value_bool("simulator", default=False)
-        self.log.debug(f"The serial object is {self.ser}")
 
     def on_data(self, data):
         pass
 
     def open(self):
-        if not self.simulator:
-            self.ser.open()
+        self.ser.open()
 
     def close(self):
-        if not self.simulator:
-            self.ser.close()
+        self.ser.close()
 
     def writeline(self, line):
-        if not self.simulator:
-            self.ser.write(bytes(line + "\n", self.encoding))
+        self.ser.write(bytes(line + "\n", self.encoding))
 
     def worker(self, exit_event):
         self.open()
         try:
             while not exit_event.is_set():
-                if not self.simulator:
-                    x = self.ser.readline()
-                    if x != b"":
-                        self.on_data(x.decode(self.encoding).strip("\r\n"))
-                else:
-                    if int(time.time()) % 11 == 10:
-                        self.on_data("OK")
-                    if int(time.time()) % 11 == 6:
-                        self.on_data("ERROR 4: NO_ACCESS")
+                x = self.ser.readline()
+                if x != b"":
+                    self.on_data(x.decode(self.encoding).strip("\r\n"))
                 exit_event.wait(0.2)
         finally:
             self.close()
+
+    def start(self, exit_event):
+        super().start(exit_event)
+        if self.use_simulator and isinstance(self.ser, Simulator):
+            self.ser.start(exit_event)
 
 
 class MQTT(Component):
