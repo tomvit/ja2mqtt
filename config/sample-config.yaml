@@ -1,0 +1,51 @@
+# -*- coding: utf-8 -*-
+# jablotron2mqtt configuration file for JA121-T BUS RS-485
+# @author: Tomas Vitvar, https://vitvar.com, tomas@vitvar.com
+
+# ja2mqtt definition file
+ja2mqtt: ja2mqtt.yaml
+
+# location of logs
+logs: ../logs
+
+# mqtt broker configuration
+mqtt-broker:
+  address: mqtt-broker
+  port: 1883
+
+# Serial port where the device is connected.
+# The serial port requires 9600 baud, 8 data bits, no parity, 1 stop-bit
+# see https://jablotron.com.hk/image/data/pdf/manuel/JA-121T.pdf
+serial:
+  port: /dev/ttyUSB0
+  baudrate: 9600
+  bytesize: 8
+  parity: N
+  stopbits: 1
+  rtscts: False
+  xonxoff: False
+
+# Jablotron topology definition
+topology:
+  section:
+    house: 1
+    garage: 2
+
+# When serial.simulator is enabled in the main configuration, the below configuration defines
+# how data will be generated for ja2mqtt
+simulator:
+  disabled: True
+  rules:
+  # heartbeat every 10s
+  - time: 10s
+    write: OK
+
+  # JA121T commands and responses
+  - read: 1234 SET 1
+    write: STATE 1 ARMED
+  - read: 1234 UNSET 2
+    write: STATE 2 READY
+  - read: 1234 STATE
+    write:
+      - STATE 1 ARMED
+      - STATE 2 READY
