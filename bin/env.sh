@@ -1,12 +1,11 @@
-# jablon env file
+#!/bin/bash
+bdir=$(realpath)
+mdir=$( cd $bdir && cd ../.. && pwd)
 
-# this script directory
-export JABLON_HOME=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. && pwd )
-
-# path to jablon python modules
-export PYTHONPATH=$JABLON_HOME/libs
-
-alias tcp2emulator='$JABLON_HOME/libs/tcp2serial.py -P 8081 /dev/emulator'
-
-# activate the environment
-source $JABLON_HOME/bin/venv/bin/activate
+if [ ! -f $bdir/env/bin/activate ]; then
+  echo "ERROR: You must source the env.sh script from the ja2mqtt/bin directory and the Python virtual environment must exist!"
+else 
+  . $bdir/env/bin/activate 
+  export PATH=$PATH:$mdir/ja2mqtt/bin
+  export PYTHONPATH=$mdir/ja2mqtt
+fi
