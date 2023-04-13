@@ -16,7 +16,8 @@ import paho.mqtt.client as mqtt
 from ja2mqtt.utils import Map, merge_dicts, deep_eval, deep_merge, PythonExpression
 from ja2mqtt.config import Config
 
-class Component():
+
+class Component:
     def __init__(self, config, name):
         self.log = logging.getLogger(name)
         self.config = config
@@ -26,9 +27,7 @@ class Component():
         pass
 
     def start(self, exit_event):
-        threading.Thread(
-            target=self.worker, args=(exit_event,), daemon=True
-        ).start()
+        threading.Thread(target=self.worker, args=(exit_event,), daemon=True).start()
 
 
 class Serial(Component):
@@ -49,7 +48,7 @@ class Serial(Component):
         self.ser.rtscts = config.value_bool("rtscts", default=False)
         self.ser.xonxoff = config.value_bool("xonxoff", default=False)
         self.ser.timeout = 1
-        self.encoding = config.value_bool("encoding", default='ascii')
+        self.encoding = config.value_bool("encoding", default="ascii")
         self.simulator = config.value_bool("simulator", default=False)
         self.log.debug(f"The serial object is {self.ser}")
 
@@ -74,13 +73,13 @@ class Serial(Component):
             while not exit_event.is_set():
                 if not self.simulator:
                     x = self.ser.readline()
-                    if x != b'':
+                    if x != b"":
                         self.on_data(x.decode(self.encoding).strip("\r\n"))
                 else:
                     if int(time.time()) % 11 == 10:
-                        self.on_data('OK')
+                        self.on_data("OK")
                     if int(time.time()) % 11 == 6:
-                        self.on_data('ERROR 4: NO_ACCESS')
+                        self.on_data("ERROR 4: NO_ACCESS")
                 exit_event.wait(0.2)
         finally:
             self.close()
@@ -175,7 +174,7 @@ class MQTT(Component):
                 self.client.disconnect()
 
 
-class Pattern():
+class Pattern:
     def __init__(self, pattern):
         self.match = None
         self.pattern = pattern
@@ -188,7 +187,8 @@ class Pattern():
         self.match = self.re.match(other)
         return self.match is not None
 
-class Topic():
+
+class Topic:
     def __init__(self, topic):
         self.name = topic["name"]
         self.disabled = topic.get("disabled", False)
@@ -197,20 +197,24 @@ class Topic():
             self.rules.append(Map(rule_def))
 
     def check_rule_data(self, read, data, scope, path=[]):
-        for k,v in read.items():
+        for k, v in read.items():
             path += [k]
             if k not in data.keys():
                 raise Exception(f"Missing property {k}.")
             else:
                 if not isinstance(v, PythonExpression) and type(v) != type(data[k]):
-                    raise Exception(f"Invalid type of property {'.'.join(path)}, found: {type(data[k]).__name__}, expected: {type(v).__name__}")
+                    raise Exception(
+                        f"Invalid type of property {'.'.join(path)}, found: {type(data[k]).__name__}, expected: {type(v).__name__}"
+                    )
                 if type(v) == dict:
                     self.check_rule_data(v, data[k], scope, path)
                 else:
                     if isinstance(v, PythonExpression):
                         v = v.eval(scope)
                     if v != data[k]:
-                        raise Exception(f"Invalid value of property {'.'.join(path)}, found: {data[k]}, exepcted: {v}")
+                        raise Exception(
+                            f"Invalid value of property {'.'.join(path)}, found: {data[k]}, exepcted: {v}"
+                        )
 
 
 class SerialMQTTBridge(Component):
@@ -229,16 +233,22 @@ class SerialMQTTBridge(Component):
         for topic_def in ja2mqtt("mqtt2serial"):
             self.topics_mqtt2serial.append(Topic(topic_def))
         self.log.info(f"The ja2mqtt definition file is {ja2mqtt_file}")
-        self.log.info(f"There are {len(self.topics_serial2mqtt)} serial2mqtt and {len(self.topics_mqtt2serial)} mqtt2serial topics.")
-        self.log.debug(f"The serial2mqtt topics are: {', '.join([x.name + ('' if not x.disabled else ' (disabled)') for x in self.topics_serial2mqtt])}")
-        self.log.debug(f"The mqtt2serial topics are: {', '.join([x.name + ('' if not x.disabled else ' (disabled)') for x in self.topics_mqtt2serial])}")
+        self.log.info(
+            f"There are {len(self.topics_serial2mqtt)} serial2mqtt and {len(self.topics_mqtt2serial)} mqtt2serial topics."
+        )
+        self.log.debug(
+            f"The serial2mqtt topics are: {', '.join([x.name + ('' if not x.disabled else ' (disabled)') for x in self.topics_serial2mqtt])}"
+        )
+        self.log.debug(
+            f"The mqtt2serial topics are: {', '.join([x.name + ('' if not x.disabled else ' (disabled)') for x in self.topics_mqtt2serial])}"
+        )
 
     def scope(self):
         if self._scope is None:
             self._scope = Map(
                 topology=self.config.root("topology"),
                 pattern=lambda x: Pattern(x),
-                format=lambda x,**kwa: x.format(**kwa)
+                format=lambda x, **kwa: x.format(**kwa),
             )
         return self._scope
 
@@ -281,7 +291,9 @@ class SerialMQTTBridge(Component):
     def on_serial_data(self, data):
         self.log.debug(f"Received data from serial: {data}")
         if not self.mqtt.connected:
-            self.log.warn("No events will be published. The client is not connected to the MQTT broker.")
+            self.log.warn(
+                "No events will be published. The client is not connected to the MQTT broker."
+            )
             return
 
         for topic in self.topics_serial2mqtt:
@@ -294,8 +306,12 @@ class SerialMQTTBridge(Component):
                     if _data == data:
                         self.update_scope("data", _data)
                         try:
-                            write_data = json.dumps(deep_eval(deep_merge(rule.write,{}), self._scope))
-                            self.log.info(f"Publishing {write_data} to topic {topic.name}")
+                            write_data = json.dumps(
+                                deep_eval(deep_merge(rule.write, {}), self._scope)
+                            )
+                            self.log.info(
+                                f"Publishing {write_data} to topic {topic.name}"
+                            )
                             self.mqtt.client.publish(topic.name, write_data)
                         finally:
                             self.update_scope("data", remove=True)
