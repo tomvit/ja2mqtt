@@ -24,6 +24,11 @@ from ja2mqtt.config import Config
 
 from queue import Queue, Empty
 
+ERROR_INVALID_VALUE = "ERROR: 4 INVALID_VALUE"
+ERROR_NO_ACCESS = "ERROR: 3 NO_ACCESS"
+
+class SimilatorException(Exception):
+    pass
 
 class Section:
     def __init__(self, data):
@@ -33,12 +38,16 @@ class Section:
     def __str__(self):
         return f"STATE {self.code} {self.state}"
 
+    def __repr__(self):
+        return self.__str__()
+
     def set(self):
         if self.state == "ARMED":
             return "OK"
         if self.state == "READY":
             self.state = "ARMED"
             return self.__str__()
+        raise SimilatorException(f"Cannot run command SET. Invalid state {self.state}.")
 
     def unset(self):
         if self.state == "READY":
@@ -46,6 +55,7 @@ class Section:
         if self.state == "ARMED":
             self.state = "READY"
             return self.__str__()
+        raise SimilatorException(f"Cannot run command UNSET. Invalid state {self.state}.")
 
 
 class Simulator():
@@ -61,6 +71,9 @@ class Simulator():
         self.timeout = None
         self.buffer = Queue()
         self.encoding = encoding
+
+    def __str__(self):
+        return f"pin={self.pin}, timeout={self.timeout}, response_delay={self.response_delay}, sections={[str(x) for x in self.sections.values()]}, rules={self.rules}"
 
     def open(self):
         pass
@@ -82,7 +95,7 @@ class Simulator():
 
         def _check_pin(command):
             if command.pin != str(self.pin):
-                self._add_to_buffer("ERROR: 3 NO_ACCESS")
+                self._add_to_buffer(ERROR_NO_ACCESS)
                 return False
             return True
 
@@ -97,12 +110,13 @@ class Simulator():
             section = self.sections.get(command.code)
             if section is not None:
                 data = {
-                    "SET": lambda: section.set(),
-                    "UNSET": lambda: section.unset(),
-                }[command.command]()
+                    "SET": lambda _: section.set(),
+                    "UNSET": lambda _: section.unset(),
+                    "N/A": lambda x: (_ for _ in ()).throw(SimilatorException(f"The command {x} is not implemented."))
+                }.get(command.command,"N/A")(command.command)
                 self._add_to_buffer(data)
             else:
-                self._add_to_buffer("ERROR: 4 INVALID_VALUE")
+                self._add_to_buffer(ERROR_INVALID_VALUE)
 
         # STATE command
         command = _match("^(?P<pin>[0-9]+) (?P<command>STATE)$", data_str)
