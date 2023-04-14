@@ -13,7 +13,7 @@ options:
   # correlation timeout in seconds
   # when a mqtt request is received, then within this timeout the response must be collected
   # the request-response will then share the same correlation id
-  correlation_timeout: 10
+  correlation_timeout: 1.5
 
 # Definition of MQTT topics for serial output.
 # The topics defined in `serial2mqtt` will be created in MQTT broker according to events that occur in the serial output
@@ -27,10 +27,6 @@ serial2mqtt:
   - read: OK
     write:
       heartbeat: !py data
-
-    # frequency of data from serial in seconds
-    # this is important to correctly detect heartbeat 'OK' messages from other 'OK' messages
-    frequency: 10
 
     # disable correlation for this rule
     no_correlation: True
@@ -55,12 +51,15 @@ serial2mqtt:
       error_message: !py data.match.group(2)
 
 # generic response to events with OK result
-# for example, this happens when a state of a section is not changed
+# this happens, for example, when a state of a section is not changed
 - name: ja2mqtt/response
   rules:
   - read: OK
     write:
       data: !py data
+
+    # send this event only if there is a request within the correlation_timeout
+    require_request: True
 
 # Definition of MQTT topics for serial input.
 # The topics defined in `mqtt2serial` will be consumed from MQTT
@@ -72,6 +71,7 @@ mqtt2serial:
     - read:
         pin: !py pattern("^[0-9]{4}$")
       write: !py format("{pin} STATE",pin=data.pin)
+      request_ttl: 99
 
 {% for k,v in topology.section.items() %}
 # set state to ARMED for a single section

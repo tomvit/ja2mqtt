@@ -290,21 +290,17 @@ class SerialMQTTBridge(Component):
             f"The mqtt2serial topics are: {', '.join([x.name + ('' if not x.disabled else ' (disabled)') for x in self.topics_mqtt2serial])}"
         )
 
-    @property
-    def use_correlation(self):
-        return self.correlation_id is not None and self.correlation_timeout > 0
-
     def update_correlation(self, data):
-        if not self.use_correlation:
-            return data
         if self.request_queue.qsize() > 0:
             self.request = self.request_queue.get()
         if self.request is not None:
-            if time.time() - self.request.created_time < self.correlation_timeout:
-                data[self.correlation_id] = self.request.cor_id
+            if time.time() - self.request.created_time < self.correlation_timeout and self.request.ttl > 0:
+                if self.request.cor_id is not None:
+                    data[self.correlation_id] = self.request.cor_id
+                self.request.ttl -= 1
             else:
                 self.log.debug(
-                    "Discarding the request for correlation. The correlation timeout elapsed."
+                    "Discarding the request for correlation. The correlation timeout or TTL expired."
                 )
                 self.request = None
         return data
@@ -356,16 +352,13 @@ class SerialMQTTBridge(Component):
                     self.update_scope("data", _data)
                     try:
                         s = deep_eval(rule.write, self._scope)
-                        if (
-                            self.use_correlation
-                            and _data.get(self.correlation_id) is not None
-                        ):
-                            self.request_queue.put(
-                                Map(
-                                    cor_id=_data.get(self.correlation_id),
-                                    created_time=time.time(),
-                                )
+                        self.request_queue.put(
+                            Map(
+                                cor_id=_data.get(self.correlation_id),
+                                created_time=time.time(),
+                                ttl=rule.get("request_ttl",1)
                             )
+                        )
                         self.serial.writeline(s)
                     finally:
                         self.update_scope("data", remove=True)
@@ -386,24 +379,14 @@ class SerialMQTTBridge(Component):
                 else:
                     _data = rule.read
                 if _data == data:
-                    if rule.frequency is not None and rule.__last_use is not None:
-                        self.log.debug(
-                            f"The topic {topic.name} has a rule with frequency constraint: "
-                            + f"frequency={rule.frequency}, time_diff={current_time-rule.__last_use}"
-                        )
-                    if (
-                        rule.frequency is None
-                        or rule.__last_use is None
-                        or current_time - rule.__last_use >= rule.frequency
-                    ):
-                        rule.__last_use = current_time
-                        _rule = rule
-                        if not topic.disabled:
-                            self.update_scope("data", _data)
-                            try:
-                                d0 = Map()
-                                if not rule.no_correlation:
-                                    d0 = self.update_correlation({})
+                    _rule = rule
+                    if not topic.disabled:
+                        self.update_scope("data", _data)
+                        try:
+                            d0 = self.update_correlation(Map())
+                            if not rule.require_request or self.request is not None:
+                                if rule.no_correlation:
+                                    d0 = {}
                                 d1 = deep_merge(rule.write, d0)
                                 d2 = deep_eval(d1, self._scope)
                                 write_data = json.dumps(d2)
@@ -412,18 +395,13 @@ class SerialMQTTBridge(Component):
                                 )
                                 self.mqtt.client.publish(topic.name, write_data)
                                 break
-                            finally:
-                                self.update_scope("data", remove=True)
+                        finally:
+                            self.update_scope("data", remove=True)
             if _rule is not None:
                 break
 
         if _rule is None:
-            # d1 = self.update_correlation(Map())
-            # print(d1, self.correlation_id)
-            # if d1.get(self.correlation_id) is not None:
-            #     self.log.info(f"**** Publishing OK event with cor_id={d1}")
-            # else:
-            self.log.warning("No rule found for the data.")
+            self.log.debug("No rule found for the data.")
 
     def set_mqtt(self, mqtt):
         self.mqtt = mqtt

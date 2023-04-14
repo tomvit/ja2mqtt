@@ -45,7 +45,7 @@ class Section:
 
     def set(self):
         if self.state == "ARMED":
-            return "OK"
+            return ERROR_INVALID_VALUE
         if self.state == "READY":
             self.state = "ARMED"
             return self.__str__()
@@ -53,7 +53,7 @@ class Section:
 
     def unset(self):
         if self.state == "READY":
-            return "OK"
+            return ERROR_INVALID_VALUE
         if self.state == "ARMED":
             self.state = "READY"
             return self.__str__()
