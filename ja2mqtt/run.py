@@ -59,4 +59,7 @@ def command_run(config, env):
     mqtt.start(ja2mqtt_config.exit_event)
     serial.start(ja2mqtt_config.exit_event)
 
-    ja2mqtt_config.exit_event.wait()
+    mqtt.join()
+    serial.join()
+
+    log.info("Done.")

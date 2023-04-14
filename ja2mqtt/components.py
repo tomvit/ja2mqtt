@@ -30,12 +30,18 @@ class Component:
         self.log = logging.getLogger(name)
         self.config = config
         self.name = name
+        self.thread = None
 
     def worker(self, exit_event):
         pass
 
+    def join(self):
+        if self.thread is not None and self.thread.is_alive():
+            self.thread.join()
+
     def start(self, exit_event):
-        threading.Thread(target=self.worker, args=(exit_event,), daemon=True).start()
+        self.thread = threading.Thread(target=self.worker, args=(exit_event,), daemon=True)
+        self.thread.start()
 
 
 class Serial(Component):
@@ -100,11 +106,17 @@ class Serial(Component):
                 exit_event.wait(0.2)
         finally:
             self.close()
+            self.log.info("Serial worker ended.")
 
     def start(self, exit_event):
         super().start(exit_event)
         if self.use_simulator and isinstance(self.ser, Simulator):
             self.ser.start(exit_event)
+
+    def join(self):
+        super().join()
+        if self.use_simulator and isinstance(self.ser, Simulator):
+            self.ser.join()
 
 
 class MQTT(Component):
@@ -209,6 +221,7 @@ class MQTT(Component):
         finally:
             if self.connected:
                 self.client.disconnect()
+            self.log.info("MQTT worker ended.")
 
 
 class Pattern:

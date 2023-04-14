@@ -143,16 +143,24 @@ class Simulator:
             return b""
 
     def worker(self, exit_event):
-        while not exit_event.is_set():
-            current_time = time.time()
-            for rule in self.rules:
-                if rule.get("time"):
-                    if rule.__last_write is None:
-                        rule.__last_write = current_time
-                    if current_time - rule.__last_write > rule.time:
-                        self.buffer.put(rule.write)
-                        rule.__last_write = current_time
-            exit_event.wait(0.5)
+        try:
+            while not exit_event.is_set():
+                current_time = time.time()
+                for rule in self.rules:
+                    if rule.get("time"):
+                        if rule.__last_write is None:
+                            rule.__last_write = current_time
+                        if current_time - rule.__last_write > rule.time:
+                            self.buffer.put(rule.write)
+                            rule.__last_write = current_time
+                exit_event.wait(0.5)
+        finally:
+            self.log.info("Simulator worker ended.")
 
     def start(self, exit_event):
-        threading.Thread(target=self.worker, args=(exit_event,), daemon=True).start()
+        self.thread = threading.Thread(target=self.worker, args=(exit_event,), daemon=True)
+        self.thread.start()
+
+    def join(self):
+        if self.thread is not None and self.thread.is_alive():
+            self.thread.join()
