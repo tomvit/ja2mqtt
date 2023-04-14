@@ -6,3 +6,5 @@ etc
 __pycache__
 bin/env
 config/config.yaml
+*.egg-info
+dist/
