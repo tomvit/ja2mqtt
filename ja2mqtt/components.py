@@ -42,29 +42,30 @@ class Serial(Component):
     Serial provides an interface for the serial port where JA-121T is connected.
     """
 
-    def __init__(self, config_serial, config_simulator):
-        super().__init__(config_serial, "serial")
-        self.encoding = config_serial.value_bool("encoding", default="ascii")
-        self.use_simulator = config_serial.value_bool("use_simulator", default=False)
+    def __init__(self, config):
+        super().__init__(config.get_part("serial"), "serial")
+        self.encoding = self.config.value_bool("encoding", default="ascii")
+        self.use_simulator = self.config.value_bool("use_simulator", default=False)
         if not self.use_simulator:
             self.ser = py_serial.serial_for_url(
-                config_serial.value_str("port", required=True), do_not_open=True
+                self.config.value_str("port", required=True), do_not_open=True
             )
-            self.ser.baudrate = config_serial.value_int("baudrate", min=0, default=9600)
-            self.ser.bytesize = config_serial.value_int(
+            self.ser.baudrate = self.config.value_int("baudrate", min=0, default=9600)
+            self.ser.bytesize = self.config.value_int(
                 "bytesize", min=7, max=8, default=8
             )
-            self.ser.parity = config_serial.value_str("parity", default="N")
-            self.ser.stopbits = config_serial.value_int("stopbits", default=1)
-            self.ser.rtscts = config_serial.value_bool("rtscts", default=False)
-            self.ser.xonxoff = config_serial.value_bool("xonxoff", default=False)
+            self.ser.parity = self.config.value_str("parity", default="N")
+            self.ser.stopbits = self.config.value_int("stopbits", default=1)
+            self.ser.rtscts = self.config.value_bool("rtscts", default=False)
+            self.ser.xonxoff = self.config.value_bool("xonxoff", default=False)
             self.log.info(
                 f"The serial connection configured, the port is {self.ser.port}"
             )
             self.log.debug(f"The serial object is {self.ser}")
         else:
-            self.ser = Simulator(config_simulator, self.encoding)
+            self.ser = Simulator(config.get_part("simulator"), self.encoding)
             self.log.info("The serial simulator configured.")
+            self.log.debug(f"The simulator object is {self.ser}")
         self.ser.timeout = 1
 
     def on_data(self, data):
@@ -77,7 +78,10 @@ class Serial(Component):
         self.ser.close()
 
     def writeline(self, line):
-        self.ser.write(bytes(line + "\n", self.encoding))
+        try:
+            self.ser.write(bytes(line + "\n", self.encoding))
+        except Exception as e:
+            self.log.error(str(e))
 
     def worker(self, exit_event):
         self.open()
@@ -102,12 +106,12 @@ class MQTT(Component):
     """
 
     def __init__(self, config):
-        super().__init__(config, "mqtt")
-        self.address = config.value_str("address")
-        self.port = config.value_int("port", default=1883)
-        self.keepalive = config.value_int("keepalive", default=60)
-        self.reconnect_after = config.value_int("reconnect_after", default=30)
-        self.loop_timeout = config.value_int("loop_timeout", default=1)
+        super().__init__(config.get_part("mqtt-broker"), "mqtt")
+        self.address = self.config.value_str("address")
+        self.port = self.config.value_int("port", default=1883)
+        self.keepalive = self.config.value_int("keepalive", default=60)
+        self.reconnect_after = self.config.value_int("reconnect_after", default=30)
+        self.loop_timeout = self.config.value_int("loop_timeout", default=1)
         self.client = None
         self.connected = False
         self.on_connect_ext = None
