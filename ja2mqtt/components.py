@@ -64,12 +64,17 @@ class Serial(Component):
             self.log.debug(f"The serial object is {self.ser}")
         else:
             self.ser = Simulator(config.get_part("simulator"), self.encoding)
-            self.log.info("The serial simulator configured.")
+            self.log.info(
+                "The simulation is enabled, events will be simulated. The serial interface is not used."
+            )
             self.log.debug(f"The simulator object is {self.ser}")
         self.ser.timeout = 1
+        self.on_data_ext = None
 
     def on_data(self, data):
-        pass
+        self.log.debug(f"Received data from serial: {data}")
+        if self.on_data_ext is not None:
+            self.on_data_ext(data)
 
     def open(self):
         self.ser.open()
@@ -78,6 +83,7 @@ class Serial(Component):
         self.ser.close()
 
     def writeline(self, line):
+        self.log.debug(f"Writing to serial: {line}")
         try:
             self.ser.write(bytes(line + "\n", self.encoding))
         except Exception as e:
@@ -105,8 +111,9 @@ class MQTT(Component):
     MQTTClient provides an interface for MQTT broker.
     """
 
-    def __init__(self, config):
+    def __init__(self, name, config):
         super().__init__(config.get_part("mqtt-broker"), "mqtt")
+        self.client_name = name
         self.address = self.config.value_str("address")
         self.port = self.config.value_int("port", default=1883)
         self.keepalive = self.config.value_int("keepalive", default=60)
@@ -116,12 +123,12 @@ class MQTT(Component):
         self.connected = False
         self.on_connect_ext = None
         self.on_message_ext = None
-        self.log.info(f"The MQTT client configured for {self.address}")
-        self.log.debug(f"The MQTT object is {self}")
+        self.log.info(f"The MQTT client configured for {self.address}.")
+        self.log.debug(f"The MQTT object is {self}.")
 
     def __str__(self):
         return (
-            f"name={self.name}, address={self.address}, port={self.port}, keepalive={self.keepalive}, "
+            f"{self.__class__}: name={self.name}, address={self.address}, port={self.port}, keepalive={self.keepalive}, "
             + f"reconnect_after={self.reconnect_after}, loop_timeout={self.loop_timeout}, connected={self.connected}"
         )
 
@@ -146,7 +153,7 @@ class MQTT(Component):
         self.connected = False
 
     def init_client(self):
-        self.client = mqtt.Client(self.name)
+        self.client = mqtt.Client(self.client_name)
         self.client.on_connect = self.on_connect
         self.client.on_disconnect = self.on_disconnect
 
@@ -154,7 +161,11 @@ class MQTT(Component):
         self.log.info(f"Subscribing to events from {topic}")
         self.client.subscribe(topic)
 
-    def wait_for_connection(self, exit_event, reconnect=False):
+    def publish(self, topic, data):
+        self.log.info(f"Publishing event with data {data} to {topic}.")
+        self.client.publish(topic, data)
+
+    def __wait_for_connection(self, exit_event, reconnect=False):
         if reconnect or self.client is None or not self.connected:
             if self.client is not None:
                 self.client.disconnect()
@@ -173,17 +184,27 @@ class MQTT(Component):
                     )
                     exit_event.wait(self.reconnect_after)
 
+    def wait_is_connected(self, exit_event, timeout=0):
+        start_time = time.time()
+        while (
+            not exit_event.is_set()
+            and not self.connected
+            and (timeout == 0 or time.time() - start_time <= timeout)
+        ):
+            exit_event.wait(0.2)
+        return self.connected
+
     def worker(self, exit_event):
-        self.wait_for_connection(exit_event)
+        self.__wait_for_connection(exit_event)
         try:
             while not exit_event.is_set():
                 try:
                     self.client.loop(timeout=self.loop_timeout, max_packets=1)
                     if not self.connected:
-                        self.wait_for_connection(exit_event)
+                        self.__wait_for_connection(exit_event)
                 except Exception as e:
                     self.log.error(f"Error occurred in the MQTT loop. {str(e)}")
-                    self.wait_for_connection(exit_event, reconnect=True)
+                    self.__wait_for_connection(exit_event, reconnect=True)
         finally:
             if self.connected:
                 self.client.disconnect()
@@ -211,25 +232,30 @@ class Topic:
         for rule_def in topic["rules"]:
             self.rules.append(Map(rule_def))
 
-    def check_rule_data(self, read, data, scope, path=[]):
-        for k, v in read.items():
-            path += [k]
-            if k not in data.keys():
-                raise Exception(f"Missing property {k}.")
-            else:
-                if not isinstance(v, PythonExpression) and type(v) != type(data[k]):
-                    raise Exception(
-                        f"Invalid type of property {'.'.join(path)}, found: {type(data[k]).__name__}, expected: {type(v).__name__}"
-                    )
-                if type(v) == dict:
-                    self.check_rule_data(v, data[k], scope, path)
+    def check_rule_data(self, read, data, scope, path=None):
+        if path is None:
+            path = []
+        try:
+            for k, v in read.items():
+                path += [k]
+                if k not in data.keys():
+                    raise Exception(f"Missing property {k}.")
                 else:
-                    if isinstance(v, PythonExpression):
-                        v = v.eval(scope)
-                    if v != data[k]:
+                    if not isinstance(v, PythonExpression) and type(v) != type(data[k]):
                         raise Exception(
-                            f"Invalid value of property {'.'.join(path)}, found: {data[k]}, exepcted: {v}"
+                            f"Invalid type of property {'.'.join(path)}, found: {type(data[k]).__name__}, expected: {type(v).__name__}"
                         )
+                    if type(v) == dict:
+                        self.check_rule_data(v, data[k], scope, path)
+                    else:
+                        if isinstance(v, PythonExpression):
+                            v = v.eval(scope)
+                        if v != data[k]:
+                            raise Exception(
+                                f"Invalid value of property {'.'.join(path)}, found: {data[k]}, exepcted: {v}"
+                            )
+        except Exception as e:
+            raise Exception(f"Topic data validation failed. {str(e)}")
 
 
 class SerialMQTTBridge(Component):
@@ -282,54 +308,63 @@ class SerialMQTTBridge(Component):
 
     def on_mqtt_message(self, client, userdata, message):
         topic_name = message._topic.decode("utf-8")
-        self.log.info(f"Received event from mqtt: {topic_name}")
+        self.log.info(f"Received event from mqtt: {topic_name}, payload={message.payload.decode('utf-8')}")
 
         try:
             data = Map(json.loads(str(message.payload.decode("utf-8"))))
         except Exception as e:
             raise Exception(f"Cannot parse the event data. {str(e)}")
 
-        self.log.debug(f"The event data is: {data}")
+        self.log.debug(f"The event data parsed as json object: {data}")
         for topic in self.topics_mqtt2serial:
-            if not topic.disabled and topic.name == topic_name:
+            if topic.name == topic_name:
+                if topic.disabled:
+                    continue
                 for rule in topic.rules:
                     topic.check_rule_data(rule.read, data, self.scope())
-                    self.log.debug("Event data conform to defined rules.")
+                    self.log.debug("The event data is valid according to the defined rules.")
                     self.update_scope("data", Map(data))
                     try:
                         s = deep_eval(rule.write, self._scope)
-                        self.log.debug(f"Writing to serial: {s}")
                         self.serial.writeline(s)
                     finally:
                         self.update_scope("data", remove=True)
 
     def on_serial_data(self, data):
-        self.log.debug(f"Received data from serial: {data}")
         if not self.mqtt.connected:
             self.log.warn(
                 "No events will be published. The client is not connected to the MQTT broker."
             )
             return
 
+        _rule = None
+        current_time = time.time()
         for topic in self.topics_serial2mqtt:
-            if not topic.disabled:
-                for rule in topic.rules:
-                    if isinstance(rule.read, PythonExpression):
-                        _data = rule.read.eval(self.scope())
-                    else:
-                        _data = rule.read
-                    if _data == data:
-                        self.update_scope("data", _data)
-                        try:
-                            write_data = json.dumps(
-                                deep_eval(deep_merge(rule.write, {}), self._scope)
-                            )
-                            self.log.info(
-                                f"Publishing {write_data} to topic {topic.name}"
-                            )
-                            self.mqtt.client.publish(topic.name, write_data)
-                        finally:
-                            self.update_scope("data", remove=True)
+            for rule in topic.rules:
+                if isinstance(rule.read, PythonExpression):
+                    _data = rule.read.eval(self.scope())
+                else:
+                    _data = rule.read
+                if _data == data:
+                    # if rule.frequency is not None and rule.__last_use is not None:
+                    #     self.log.debug(f"The rule timing is: current_time={current_time}, last_use={rule.__last_use}, diff={current_time-rule.__last_use}")
+                    if rule.frequency is None or rule.__last_use is None or current_time-rule.__last_use > rule.frequency:
+                        rule.__last_use = current_time
+                        _rule = rule
+                        if not topic.disabled:
+                            self.update_scope("data", _data)
+                            try:
+                                write_data = json.dumps(
+                                    deep_eval(deep_merge(rule.write, {}), self._scope)
+                                )
+                                self.log.info(
+                                    f"Publishing {write_data} to topic {topic.name}"
+                                )
+                                self.mqtt.client.publish(topic.name, write_data)
+                            finally:
+                                self.update_scope("data", remove=True)
+        if _rule is None:
+            self.log.warning("No rule found for the data.")
 
     def set_mqtt(self, mqtt):
         self.mqtt = mqtt
@@ -338,4 +373,4 @@ class SerialMQTTBridge(Component):
 
     def set_serial(self, serial):
         self.serial = serial
-        serial.on_data = self.on_serial_data
+        serial.on_data_ext = self.on_serial_data

@@ -27,8 +27,10 @@ from queue import Queue, Empty
 ERROR_INVALID_VALUE = "ERROR: 4 INVALID_VALUE"
 ERROR_NO_ACCESS = "ERROR: 3 NO_ACCESS"
 
+
 class SimilatorException(Exception):
     pass
+
 
 class Section:
     def __init__(self, data):
@@ -55,10 +57,12 @@ class Section:
         if self.state == "ARMED":
             self.state = "READY"
             return self.__str__()
-        raise SimilatorException(f"Cannot run command UNSET. Invalid state {self.state}.")
+        raise SimilatorException(
+            f"Cannot run command UNSET. Invalid state {self.state}."
+        )
 
 
-class Simulator():
+class Simulator:
     def __init__(self, config, encoding):
         self.log = logging.getLogger("simulator")
         self.config = config
@@ -73,7 +77,10 @@ class Simulator():
         self.encoding = encoding
 
     def __str__(self):
-        return f"pin={self.pin}, timeout={self.timeout}, response_delay={self.response_delay}, sections={[str(x) for x in self.sections.values()]}, rules={self.rules}"
+        return (
+            f"{self.__class__}: pin={self.pin}, timeout={self.timeout}, response_delay={self.response_delay}, "
+            + f"sections={[str(x) for x in self.sections.values()]}, rules={self.rules}"
+        )
 
     def open(self):
         pass
@@ -112,11 +119,14 @@ class Simulator():
                 data = {
                     "SET": lambda _: section.set(),
                     "UNSET": lambda _: section.unset(),
-                    "N/A": lambda x: (_ for _ in ()).throw(SimilatorException(f"The command {x} is not implemented."))
-                }.get(command.command,"N/A")(command.command)
+                    "N/A": lambda x: (_ for _ in ()).throw(
+                        SimilatorException(f"The command {x} is not implemented.")
+                    ),
+                }.get(command.command, "N/A")(command.command)
                 self._add_to_buffer(data)
             else:
                 self._add_to_buffer(ERROR_INVALID_VALUE)
+            return
 
         # STATE command
         command = _match("^(?P<pin>[0-9]+) (?P<command>STATE)$", data_str)
@@ -124,6 +134,7 @@ class Simulator():
             time.sleep(self.response_delay)
             for section in self.sections.values():
                 self.buffer.put(str(section))
+            return
 
     def readline(self):
         try:

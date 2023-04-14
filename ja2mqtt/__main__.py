@@ -2,6 +2,7 @@ from .utils import Map
 
 from .run import command_run
 from .config import command_config
+from .test import command_publish
 
 import ja2mqtt.config as ja2mqtt_config
 import click
@@ -31,5 +32,6 @@ def ja2mqtt(no_ansi, debug):
 
 ja2mqtt.add_command(command_run)
 ja2mqtt.add_command(command_config)
+ja2mqtt.add_command(command_publish)
 
 ja2mqtt(prog_name="ja2mqtt")

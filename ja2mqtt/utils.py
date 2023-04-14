@@ -242,3 +242,21 @@ class PathDef:
 def remove_ansi_escape(text):
     ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
     return ansi_escape.sub("", text)
+
+
+def dict_from_string(s, d={}):
+    result = d
+    parts = s.split("=")
+    if len(parts) == 2:
+        key = parts[0]
+        value = parts[1]
+        keys = key.split(".")
+        current_dict = result
+        for i, k in enumerate(keys):
+            if k not in current_dict:
+                if i == len(keys) - 1:
+                    current_dict[k] = value
+                else:
+                    current_dict[k] = {}
+            current_dict = current_dict[k]
+    return result

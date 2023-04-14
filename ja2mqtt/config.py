@@ -328,14 +328,16 @@ class CustomFormatter(logging.Formatter):
         return formatter.format(record)
 
 
-def init_logging(logs_dir, log_level):
+def init_logging(
+    logs_dir, command_name, log_level="INFO", handlers=["file", "console"]
+):
     """
     Initialize the logging, set the log level and logging directory.
     """
     os.makedirs(logs_dir, exist_ok=True)
 
     # log handlers
-    log_handlers = ["file", "console"]
+    log_handlers = handlers
 
     # main logs configuration
     logging.config.dictConfig(
@@ -357,7 +359,7 @@ def init_logging(logs_dir, log_level):
                 "file": {
                     "formatter": "standard",
                     "class": "logging.handlers.TimedRotatingFileHandler",
-                    "filename": f"{logs_dir}/ja2mqtt.log",
+                    "filename": f"{logs_dir}/ja2mqtt_{command_name}.log",
                     "when": "midnight",
                     "interval": 1,
                     "backupCount": 30,
@@ -371,6 +373,14 @@ def init_logging(logs_dir, log_level):
                 }
             },
         }
+    )
+
+
+def ja2mqtt_def(config):
+    return Config(
+        config.get_dir_path(config.root("ja2mqtt")),
+        scope=Map(topology=config.root("topology")),
+        use_template=True,
     )
 
 

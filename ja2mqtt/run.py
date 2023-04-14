@@ -42,14 +42,15 @@ def command_run(config, env):
 
     init_logging(
         config.get_dir_path(config.root.value("logs")),
-        "DEBUG" if ja2mqtt_config.DEBUG else "INFO",
+        "run",
+        log_level="DEBUG" if ja2mqtt_config.DEBUG else "INFO",
     )
-    log = logging.getLogger("loop")
+    log = logging.getLogger("run-loop")
 
     log.info(f"ja2mqtt, Jablotron JA-121 Serial MQTT bridge, version {version}")
 
     serial = Serial(config)
-    mqtt = MQTT(config)
+    mqtt = MQTT("ja2mqtt-client", config)
     bridge = SerialMQTTBridge(config)
 
     bridge.set_mqtt(mqtt)

@@ -11,11 +11,18 @@ serial2mqtt:
 # MQTT heartbeat topic; Jablotron writes hearbeat 'OK' messages to serial output
 # that are converted to MQTT heartbeat events
 - name: ja2mqtt/heartbeat
-  disabled: True
+  disabled: False
   rules:
   - read: OK
     write:
       heartbeat: !py data
+
+    # frequency of data from serial in seconds
+    # this is important to correctly detect heartbeat 'OK' messages from other 'OK' messages
+    frequency: 10
+
+    # aggregation interval in seconds; there will be 1 event published per this interval
+    aggregate: 60
 
 # MQTT topics for sections that will be generated when events in serial output occur
 {% for k,v in topology.section.items() %}
