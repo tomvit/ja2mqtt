@@ -142,9 +142,10 @@ def import_class(name):
     return mod
 
 
-def randomString(stringLength=10):
+def randomString(stringLength=10, letters=None):
     """Generate a random string of fixed length"""
-    letters = string.ascii_lowercase
+    if letters is None:
+        letters = string.ascii_lowercase
     return "".join(random.choice(letters) for i in range(stringLength))
 
 

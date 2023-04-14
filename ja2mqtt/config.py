@@ -311,7 +311,7 @@ class CustomFormatter(logging.Formatter):
     red = "\x1b[31;20m"
     bold_red = "\x1b[31;1m"
     reset = "\x1b[0m"
-    format_header = "%(asctime)s [%(name)-10.10s] "
+    format_header = "%(asctime)s [%(name)-8.8s] "
     format_msg = "[%(levelname)-1.1s] %(message)s"
 
     FORMATS = {

@@ -78,6 +78,10 @@ def command_publish(config, env, topic, data):
     for d in data:
         _data = dict_from_string(d, _data)
 
+    cor_id = ja2mqtt("options.correlation_id", None)
+    if cor_id is not None:
+        _data[cor_id] = randomString(12, letters="abcdef0123456789")
+
     mqtt = MQTT(f"ja2mqtt-test-{randomString(5)}", config)
     mqtt.start(ja2mqtt_config.exit_event)
     try:

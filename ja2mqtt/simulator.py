@@ -144,14 +144,15 @@ class Simulator:
 
     def worker(self, exit_event):
         while not exit_event.is_set():
+            current_time = time.time()
             for rule in self.rules:
                 if rule.get("time"):
                     if rule.__last_write is None:
-                        rule.__last_write = time.time()
-                    if time.time() - rule.__last_write > rule.time:
+                        rule.__last_write = current_time
+                    if current_time - rule.__last_write > rule.time:
                         self.buffer.put(rule.write)
-                        rule.__last_write = time.time()
-            exit_event.wait(1)
+                        rule.__last_write = current_time
+            exit_event.wait(0.5)
 
     def start(self, exit_event):
         threading.Thread(target=self.worker, args=(exit_event,), daemon=True).start()

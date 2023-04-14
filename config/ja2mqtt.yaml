@@ -4,6 +4,17 @@
 # You normally do not need to edit this file unless you want to change the way how JA121 protocol is implemented.
 # The file uses Jinja templates and data from the yaml configuration file that defines Jablotron topology
 
+options:
+  # name of the propery for the correlation id in request payloads
+  # the id will be copied from requests and copied to responses
+  # when the correlation_id field is not present in request payload, no correlation will be done
+  correlation_id: 'corrid'
+
+  # correlation timeout in seconds
+  # when a mqtt request is received, then within this timeout the response must be collected
+  # the request-response will then share the same correlation id
+  correlation_timeout: 10
+
 # Definition of MQTT topics for serial output.
 # The topics defined in `serial2mqtt` will be created in MQTT broker according to events that occur in the serial output
 serial2mqtt:
@@ -21,8 +32,8 @@ serial2mqtt:
     # this is important to correctly detect heartbeat 'OK' messages from other 'OK' messages
     frequency: 10
 
-    # aggregation interval in seconds; there will be 1 event published per this interval
-    aggregate: 60
+    # disable correlation for this rule
+    no_correlation: True
 
 # MQTT topics for sections that will be generated when events in serial output occur
 {% for k,v in topology.section.items() %}
@@ -42,6 +53,14 @@ serial2mqtt:
     write:
       error_number: !py data.match.group(1)
       error_message: !py data.match.group(2)
+
+# generic response to events with OK result
+# for example, this happens when a state of a section is not changed
+- name: ja2mqtt/response
+  rules:
+  - read: OK
+    write:
+      data: !py data
 
 # Definition of MQTT topics for serial input.
 # The topics defined in `mqtt2serial` will be consumed from MQTT
