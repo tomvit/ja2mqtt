@@ -37,7 +37,7 @@ import click
     required=False,
     help="Environment variable file",
 )
-def run(config, env):
+def command_run(config, env):
     config = Config(config, env)
 
     init_logging(
