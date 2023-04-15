@@ -14,7 +14,6 @@ import glob
 
 from setuptools import find_packages
 from setuptools import setup
-from setuptools_scm import get_version
 
 # read file content
 def read(*parts):
@@ -26,15 +25,6 @@ def read(*parts):
 here = os.path.abspath(os.path.dirname(__file__))
 version_file = os.path.join(here, 'ja2mqtt', '__init__.py')
 exec(open(version_file).read())
-
-import subprocess
-
-# Run 'git rev-parse HEAD' command to get the current commit id
-commit_id = subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode().strip()
-
-#print(f'Current commit id: {commit_id}')
-
-version = __version__ #+ f".{commit_id[:8]}"
 
 # setup main
 # required modules
@@ -48,7 +38,7 @@ install_requires = [
 
 setup(
     name='ja2mqtt',
-    version=version,
+    version=__version__,
     description='Jablotron MQTT bridge',
     long_description=read('README.md'),
     author='Tomas Vitvar',
@@ -64,10 +54,5 @@ setup(
         'Intended Audience :: Developers',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
-    ],
-    entry_points={
-        'distutils.metadata': [
-            f'git_commit_id = {commit_id}' 
-        ],
-    },
+    ]
 )
