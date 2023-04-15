@@ -15,26 +15,9 @@ from ja2mqtt.components import MQTT
 from ja2mqtt.config import Config, init_logging, ja2mqtt_def
 from ja2mqtt.utils import Map, dict_from_string, randomString
 
+from . import BaseCommandLogOnly
 
-@click.command("pub", help="Publish a ja2mqtt topic in MQTT.")
-@click.option(
-    "-c",
-    "--config",
-    "config",
-    metavar="<file>",
-    is_flag=False,
-    required=True,
-    help="Configuration file",
-)
-@click.option(
-    "-e",
-    "--env",
-    "env",
-    metavar="<file>",
-    is_flag=False,
-    required=False,
-    help="Environment variable file",
-)
+@click.command("pub", help="Publish a ja2mqtt topic in MQTT.", cls=BaseCommandLogOnly)
 @click.option(
     "-t",
     "--topic",
@@ -53,17 +36,7 @@ from ja2mqtt.utils import Map, dict_from_string, randomString
     required=False,
     help="Data as a key=value pair",
 )
-def command_publish(config, env, topic, data):
-    config = Config(config, env)
-
-    init_logging(
-        config.get_dir_path(config("logs")),
-        "publish",
-        log_level="DEBUG" if ja2mqtt_config.DEBUG else "INFO",
-        handlers=["file"],
-    )
-    log = logging.getLogger("publish")
-
+def command_publish(config, topic, data, log):
     ja2mqtt = ja2mqtt_def(config)
     _topic = next(filter(lambda x: x["name"] == topic, ja2mqtt("mqtt2serial")), None)
     if _topic is None:

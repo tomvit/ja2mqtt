@@ -4,27 +4,13 @@
 from __future__ import absolute_import, unicode_literals
 
 import click
+import json
 
+from . import BaseCommandLogOnly
+from ja2mqtt.config import Config
+from ja2mqtt.utils import Map
 
-@click.command("config", help="Show the configuration.")
-@click.option(
-    "-c",
-    "--config",
-    "config",
-    metavar="<file>",
-    is_flag=False,
-    required=True,
-    help="Configuration file",
-)
-@click.option(
-    "-e",
-    "--env",
-    "env",
-    metavar="<file>",
-    is_flag=False,
-    required=False,
-    help="Environment variable file",
-)
+@click.command("config", help="Show the configuration.", cls=BaseCommandLogOnly)
 @click.option(
     "--ja2mqtt",
     "df",
@@ -32,12 +18,11 @@ import click
     required=False,
     help="Show the ja2mqtt definition file",
 )
-def command_config(config, env, df):
-    _config = Config(config, env)
+def command_config(config, df, log):
     if not df:
-        print(json.dumps(_config.root._config, indent=4, default=str))
+        print(json.dumps(config.root._config, indent=4, default=str))
     else:
-        ja2mqtt_file = _config.get_dir_path(_config.root("ja2mqtt"))
-        scope = Map(topology=_config.root("topology"))
+        ja2mqtt_file = config.get_dir_path(config.root("ja2mqtt"))
+        scope = Map(topology=config.root("topology"))
         ja2mqtt = Config(ja2mqtt_file, scope=scope, use_template=True)
         print(json.dumps(ja2mqtt.root._config, indent=4, default=str))

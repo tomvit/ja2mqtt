@@ -14,40 +14,12 @@ from ja2mqtt.components import MQTT, Serial, SerialMQTTBridge
 from ja2mqtt.config import Config, init_logging
 from ja2mqtt.utils import Map
 
+from . import BaseCommand
 
-@click.command("run", help="Run command.")
-@click.option(
-    "-c",
-    "--config",
-    "config",
-    metavar="<file>",
-    is_flag=False,
-    required=True,
-    help="Configuration file",
-)
-@click.option(
-    "-e",
-    "--env",
-    "env",
-    metavar="<file>",
-    is_flag=False,
-    required=False,
-    help="Environment variable file",
-)
-def command_run(config, env):
-    config = Config(config, env)
 
-    init_logging(
-        config.get_dir_path(config.root.value("logs")),
-        "run",
-        log_level="DEBUG" if ja2mqtt_config.DEBUG else "INFO",
-    )
-    log = logging.getLogger("run-loop")
-
-    log.info(
-        f"ja2mqtt, Jablotron JA-121 Serial MQTT bridge, version {get_version_string()}"
-    )
-
+@click.command("run", help="Run command.", cls=BaseCommand)
+def command_run(config, log):
+    
     serial = Serial(config)
     mqtt = MQTT("ja2mqtt-client", config)
     bridge = SerialMQTTBridge(config)

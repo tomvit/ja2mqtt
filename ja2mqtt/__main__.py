@@ -2,6 +2,7 @@ import logging
 import signal
 import time
 import traceback
+import sys
 
 import click
 
@@ -24,10 +25,9 @@ for sig in ("TERM", "HUP", "INT"):
     signal.signal(getattr(signal, "SIG" + sig), signal_quit)
 
 try:
-    log = logging.getLogger("main")
     ja2mqtt(prog_name="ja2mqtt")
 except Exception as e:
-    log.error(f"ERROR: {str(e)}")
+    sys.stderr.write(f"ERROR: {str(e)}\n")
     if ja2mqtt_config.DEBUG:
         print("---")
         traceback.print_exc()
