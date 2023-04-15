@@ -1,4 +1,4 @@
-# Makefile for res2-service
+# Makefile for ja2mqtt
 # uses version from git with commit hash
 
 help:
