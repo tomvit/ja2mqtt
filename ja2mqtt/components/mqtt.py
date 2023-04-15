@@ -47,9 +47,14 @@ class MQTT(Component):
         )
 
     def on_message(self, client, userdata, message):
+        topic_name = message._topic.decode("utf-8")
+        payload = str(message.payload.decode('utf-8'))
+        self.log.info(
+            f"--> recv: {topic_name}, payload={payload}"
+        )
         if self.on_message_ext is not None:
             try:
-                self.on_message_ext(client, userdata, message)
+                self.on_message_ext(topic_name, payload)
             except Exception as e:
                 self.log.error(str(e))
 
@@ -72,11 +77,13 @@ class MQTT(Component):
         self.client.on_disconnect = self.on_disconnect
 
     def subscribe(self, topic):
-        self.log.info(f"Subscribing to events from {topic}")
+        self.log.info(f"Subscribing to {topic}")
         self.client.subscribe(topic)
 
     def publish(self, topic, data):
-        self.log.info(f"Publishing event with data {data} to {topic}.")
+        self.log.info(
+            f"<-- send: {topic}, data={data}"
+        )
         self.client.publish(topic, data)
 
     def __wait_for_connection(self, exit_event, reconnect=False):

@@ -138,18 +138,12 @@ class SerialMQTTBridge(Component):
         for topic in self.topics_mqtt2serial:
             self.mqtt.subscribe(topic.name)
 
-    def on_mqtt_message(self, client, userdata, message):
+    def on_mqtt_message(self, topic_name, payload):
         if not self.serial.is_ready():
             self.log.warn("No messages will be processed. The serial interface is not available.")
             return
-
-        topic_name = message._topic.decode("utf-8")
-        self.log.info(
-            f"--> recv: {topic_name}, payload={message.payload.decode('utf-8')}"
-        )
-
         try:
-            data = Map(json.loads(str(message.payload.decode("utf-8"))))
+            data = Map(json.loads(payload))
         except Exception as e:
             raise Exception(f"Cannot parse the event data. {str(e)}")
 
@@ -205,10 +199,7 @@ class SerialMQTTBridge(Component):
                                 d1 = deep_merge(rule.write, d0)
                                 d2 = deep_eval(d1, self._scope)
                                 write_data = json.dumps(d2)
-                                self.log.info(
-                                    f"<-- send: {topic.name}, data={write_data}"
-                                )
-                                self.mqtt.client.publish(topic.name, write_data)
+                                self.mqtt.publish(topic.name, write_data)
                                 break
                         finally:
                             self.update_scope("data", remove=True)
