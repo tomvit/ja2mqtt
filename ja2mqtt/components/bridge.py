@@ -140,7 +140,9 @@ class SerialMQTTBridge(Component):
 
     def on_mqtt_message(self, topic_name, payload):
         if not self.serial.is_ready():
-            self.log.warn("No messages will be processed. The serial interface is not available.")
+            self.log.warn(
+                "No messages will be processed. The serial interface is not available."
+            )
             return
         try:
             data = Map(json.loads(payload))

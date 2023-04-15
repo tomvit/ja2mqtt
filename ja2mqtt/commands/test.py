@@ -17,6 +17,7 @@ from ja2mqtt.utils import Map, dict_from_string, randomString
 
 from . import BaseCommandLogOnly
 
+
 @click.command("pub", help="Publish a ja2mqtt topic in MQTT.", cls=BaseCommandLogOnly)
 @click.option(
     "-t",

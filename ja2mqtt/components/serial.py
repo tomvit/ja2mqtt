@@ -3,9 +3,9 @@
 
 from __future__ import absolute_import, unicode_literals
 
-import os
 import json
 import logging
+import os
 import re
 import threading
 import time
@@ -34,9 +34,7 @@ class Serial(Component):
             self.ser = None
             self.port = self.config.value_str("port", required=True)
             self.wait_on_ready = self.config.value_int("wait_on_ready", default=10)
-            self.log.info(
-                f"The serial connection configured, the port is {self.port}"
-            )
+            self.log.info(f"The serial connection configured, the port is {self.port}")
         else:
             self.port = "<__simulator__>"
             self.ser = Simulator(config.get_part("simulator"), self.encoding)
@@ -49,9 +47,7 @@ class Serial(Component):
     def create_serial(self):
         self.ser = py_serial.serial_for_url(self.port, do_not_open=True)
         self.ser.baudrate = self.config.value_int("baudrate", min=0, default=9600)
-        self.ser.bytesize = self.config.value_int(
-            "bytesize", min=7, max=8, default=8
-        )
+        self.ser.bytesize = self.config.value_int("bytesize", min=7, max=8, default=8)
         self.ser.parity = self.config.value_str("parity", default="N")
         self.ser.stopbits = self.config.value_int("stopbits", default=1)
         self.ser.rtscts = self.config.value_bool("rtscts", default=False)
@@ -73,13 +69,17 @@ class Serial(Component):
             while not exit_event.is_set():
                 try:
                     if not os.path.exists(self.port):
-                        raise Exception(f"The port {self.port} does not exist in the system. Is it connected?")
+                        raise Exception(
+                            f"The port {self.port} does not exist in the system. Is it connected?"
+                        )
                     self.create_serial()
                     self.ser.open()
                     break
                 except Exception as e:
                     self.log.error(str(e))
-                    self.log.info(f"Waiting {self.wait_on_ready} seconds for the port to be ready...")
+                    self.log.info(
+                        f"Waiting {self.wait_on_ready} seconds for the port to be ready..."
+                    )
                     exit_event.wait(self.wait_on_ready)
                     self.ser = None
 
@@ -106,7 +106,9 @@ class Serial(Component):
                 try:
                     x = self.ser.readline()
                 except Exception as e:
-                    self.log.error(f"Error occured while reading data from the serial port. {str(e)}")
+                    self.log.error(
+                        f"Error occured while reading data from the serial port. {str(e)}"
+                    )
                     self.close()
                     self.open(exit_event)
                     continue

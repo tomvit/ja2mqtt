@@ -3,12 +3,15 @@
 
 from __future__ import absolute_import, unicode_literals
 
-import click
 import json
 
-from . import BaseCommandLogOnly
+import click
+
 from ja2mqtt.config import Config
 from ja2mqtt.utils import Map
+
+from . import BaseCommandLogOnly
+
 
 @click.command("config", help="Show the configuration.", cls=BaseCommandLogOnly)
 @click.option(

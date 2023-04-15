@@ -121,10 +121,18 @@ class Simulator:
             return
 
         # STATE command
-        command = _match("^(?P<pin>[0-9]+) (?P<command>STATE)$", data_str)
+        command = _match(
+            "^(?P<pin>[0-9]+) (?P<command>STATE)( (?P<code>[0-9]+))?$", data_str
+        )
         if command is not None and _check_pin(command):
+            print(command)
+            sections = [
+                x
+                for x in self.sections.values()
+                if command.code is None or str(x.code) == str(command.code)
+            ]
             time.sleep(self.response_delay)
-            for section in self.sections.values():
+            for section in sections:
                 self.buffer.put(str(section))
             return
 

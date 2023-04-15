@@ -48,10 +48,8 @@ class MQTT(Component):
 
     def on_message(self, client, userdata, message):
         topic_name = message._topic.decode("utf-8")
-        payload = str(message.payload.decode('utf-8'))
-        self.log.info(
-            f"--> recv: {topic_name}, payload={payload}"
-        )
+        payload = str(message.payload.decode("utf-8"))
+        self.log.info(f"--> recv: {topic_name}, payload={payload}")
         if self.on_message_ext is not None:
             try:
                 self.on_message_ext(topic_name, payload)
@@ -81,9 +79,7 @@ class MQTT(Component):
         self.client.subscribe(topic)
 
     def publish(self, topic, data):
-        self.log.info(
-            f"<-- send: {topic}, data={data}"
-        )
+        self.log.info(f"<-- send: {topic}, data={data}")
         self.client.publish(topic, data)
 
     def __wait_for_connection(self, exit_event, reconnect=False):
@@ -122,9 +118,13 @@ class MQTT(Component):
                 try:
                     self.client.loop(timeout=self.loop_timeout, max_packets=1)
                     if not self.connected:
-                        self.__wait_for_connection(exit_event)
+                        raise Exception("Not connected to MQTT broker.")
                 except Exception as e:
-                    self.log.error(f"Error occurred in the MQTT loop. {str(e)}")
+                    self.log.error(
+                        f"Error occurred in the MQTT loop. {str(e)}"
+                        + f"Will attemmpt to reconnect after {self.reconnect_after} seconds."
+                    )
+                    exit_event.wait(self.reconnect_after)
                     self.__wait_for_connection(exit_event, reconnect=True)
         finally:
             if self.connected:

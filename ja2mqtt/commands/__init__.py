@@ -3,21 +3,37 @@
 
 from __future__ import absolute_import, unicode_literals
 
-import click
+import logging
 
+import click
 from click import Option
 
 import ja2mqtt.config as ja2mqtt_config
 from ja2mqtt import get_version_string
 from ja2mqtt.config import Config, init_logging
 
-import logging
 
 class BaseCommand(click.core.Command):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.params.insert(0, Option(('-c', '--config'),metavar="<file>",required=True,help="Configuration file"))
-        self.params.insert(0, Option(('-e', '--env'),metavar="<file>",required=False,help="Environment variable file"))
+        self.params.insert(
+            0,
+            Option(
+                ("-c", "--config"),
+                metavar="<file>",
+                required=True,
+                help="Configuration file",
+            ),
+        )
+        self.params.insert(
+            0,
+            Option(
+                ("-e", "--env"),
+                metavar="<file>",
+                required=False,
+                help="Environment variable file",
+            ),
+        )
 
     def init_logging(self, config):
         init_logging(
@@ -32,7 +48,7 @@ class BaseCommand(click.core.Command):
         config = Config(config_file, env_file)
 
         self.init_logging(config)
-        log = logging.getLogger(ctx.command.name + '-loop')
+        log = logging.getLogger(ctx.command.name + "-loop")
         log.info(
             f"ja2mqtt, Jablotron JA-121 Serial MQTT bridge, version {get_version_string()}"
         )
@@ -40,6 +56,7 @@ class BaseCommand(click.core.Command):
         ctx.params["config"] = config
         ctx.params["log"] = log
         super().invoke(ctx)
+
 
 class BaseCommandLogOnly(BaseCommand):
     def init_logging(self, config):

@@ -1,8 +1,8 @@
 import logging
 import signal
+import sys
 import time
 import traceback
-import sys
 
 import click
 
