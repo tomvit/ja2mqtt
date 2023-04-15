@@ -64,7 +64,7 @@ class Simulator:
             str(x["code"]): Section(Map(x)) for x in config.value("sections")
         }
         self.pin = config.value("pin")
-        self.timeout = None
+        self.timeout = 1
         self.buffer = Queue()
         self.encoding = encoding
 
@@ -74,7 +74,7 @@ class Simulator:
             + f"sections={[str(x) for x in self.sections.values()]}, rules={self.rules}"
         )
 
-    def open(self):
+    def open(self, exit_event):
         pass
 
     def close(self):

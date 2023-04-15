@@ -3,6 +3,7 @@
 
 from __future__ import absolute_import, unicode_literals
 
+import os
 import json
 import logging
 import re
@@ -30,20 +31,12 @@ class Serial(Component):
         self.encoding = self.config.value_bool("encoding", default="ascii")
         self.use_simulator = self.config.value_bool("use_simulator", default=False)
         if not self.use_simulator:
+            self.ser = None
             self.port = self.config.value_str("port", required=True)
-            self.ser = py_serial.serial_for_url(self.port, do_not_open=True)
-            self.ser.baudrate = self.config.value_int("baudrate", min=0, default=9600)
-            self.ser.bytesize = self.config.value_int(
-                "bytesize", min=7, max=8, default=8
-            )
-            self.ser.parity = self.config.value_str("parity", default="N")
-            self.ser.stopbits = self.config.value_int("stopbits", default=1)
-            self.ser.rtscts = self.config.value_bool("rtscts", default=False)
-            self.ser.xonxoff = self.config.value_bool("xonxoff", default=False)
+            self.wait_on_ready = self.config.value_int("wait_on_ready", default=10)
             self.log.info(
-                f"The serial connection configured, the port is {self.ser.port}"
+                f"The serial connection configured, the port is {self.port}"
             )
-            self.log.debug(f"The serial object is {self.ser}")
         else:
             self.port = "<__simulator__>"
             self.ser = Simulator(config.get_part("simulator"), self.encoding)
@@ -51,21 +44,53 @@ class Serial(Component):
                 "The simulation is enabled, events will be simulated. The serial interface is not used."
             )
             self.log.debug(f"The simulator object is {self.ser}")
-        self.ser.timeout = 1
         self.on_data_ext = None
+
+    def create_serial(self):
+        self.ser = py_serial.serial_for_url(self.port, do_not_open=True)
+        self.ser.baudrate = self.config.value_int("baudrate", min=0, default=9600)
+        self.ser.bytesize = self.config.value_int(
+            "bytesize", min=7, max=8, default=8
+        )
+        self.ser.parity = self.config.value_str("parity", default="N")
+        self.ser.stopbits = self.config.value_int("stopbits", default=1)
+        self.ser.rtscts = self.config.value_bool("rtscts", default=False)
+        self.ser.xonxoff = self.config.value_bool("xonxoff", default=False)
+        self.ser.timeout = 1
+        self.log.debug(f"The serial object created: {self.ser}")
+
+    def is_ready(self):
+        return self.ser is not None
 
     def on_data(self, data):
         self.log.debug(f"Received data from serial: {data}")
         if self.on_data_ext is not None:
             self.on_data_ext(data)
 
-    def open(self):
-        self.log.info(f"Opening serial port {self.port}")
-        self.ser.open()
+    def open(self, exit_event):
+        if self.ser is None:
+            self.log.info(f"Opening serial port {self.port}")
+            while not exit_event.is_set():
+                try:
+                    if not os.path.exists(self.port):
+                        raise Exception(f"The port {self.port} does not exist in the system. Is it connected?")
+                    self.create_serial()
+                    self.ser.open()
+                    break
+                except Exception as e:
+                    self.log.error(str(e))
+                    self.log.info(f"Waiting {self.wait_on_ready} seconds for the port to be ready...")
+                    exit_event.wait(self.wait_on_ready)
+                    self.ser = None
 
     def close(self):
-        self.log.info(f"Closing serial port {self.port}")
-        self.ser.close()
+        if self.ser is not None:
+            self.log.info(f"Closing serial port {self.port}")
+            try:
+                self.ser.close()
+            except Exception as e:
+                self.log.error(f"Cannot close the serial port {self.port}. {str(e)}")
+            self.ser = None
 
     def writeline(self, line):
         self.log.debug(f"Writing to serial: {line}")
@@ -75,10 +100,16 @@ class Serial(Component):
             self.log.error(str(e))
 
     def worker(self, exit_event):
-        self.open()
+        self.open(exit_event)
         try:
             while not exit_event.is_set():
-                x = self.ser.readline()
+                try:
+                    x = self.ser.readline()
+                except Exception as e:
+                    self.log.error(f"Error occured while reading data from the serial port. {str(e)}")
+                    self.close()
+                    self.open(exit_event)
+                    continue
                 data_str = x.decode(self.encoding).strip("\r\n").strip()
                 if data_str != "":
                     self.on_data(data_str)

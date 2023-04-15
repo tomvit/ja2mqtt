@@ -11,7 +11,6 @@ import time
 from queue import Queue
 
 import paho.mqtt.client as mqtt
-import serial as py_serial
 
 from ja2mqtt.config import Config
 from ja2mqtt.utils import Map, PythonExpression, deep_eval, deep_merge, merge_dicts
@@ -140,6 +139,10 @@ class SerialMQTTBridge(Component):
             self.mqtt.subscribe(topic.name)
 
     def on_mqtt_message(self, client, userdata, message):
+        if not self.serial.is_ready():
+            self.log.warn("No messages will be processed. The serial interface is not available.")
+            return
+
         topic_name = message._topic.decode("utf-8")
         self.log.info(
             f"--> recv: {topic_name}, payload={message.payload.decode('utf-8')}"
@@ -213,7 +216,7 @@ class SerialMQTTBridge(Component):
                 break
 
         if _rule is None:
-            self.log.debug("No rule found for the data.")
+            self.log.debug(f"No rule found for the data: {data}")
 
     def set_mqtt(self, mqtt):
         self.mqtt = mqtt
