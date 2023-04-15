@@ -11,6 +11,8 @@ import time
 import logging
 import traceback
 
+from ja2mqtt import get_version_string
+
 
 @click.group()
 @click.option(
@@ -27,6 +29,7 @@ import traceback
     default=False,
     help="Print debug information",
 )
+@click.version_option(version=get_version_string())
 def ja2mqtt(no_ansi, debug):
     if no_ansi:
         ja2mqtt_config.ANSI_COLORS = False

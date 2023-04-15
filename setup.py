@@ -14,6 +14,7 @@ import glob
 
 from setuptools import find_packages
 from setuptools import setup
+from setuptools_scm import get_version
 
 # read file content
 def read(*parts):
@@ -21,14 +22,19 @@ def read(*parts):
     with codecs.open(path, encoding='utf-8') as fobj:
         return fobj.read()
 
-# find the version of the package
-def find_version(*file_paths):
-    version_file = read(*file_paths)
-    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
-                              version_file, re.M)
-    if version_match:
-        return version_match.group(1)
-    raise RuntimeError("Unable to find version string.")
+# Read the version number from __init__.py
+here = os.path.abspath(os.path.dirname(__file__))
+version_file = os.path.join(here, 'ja2mqtt', '__init__.py')
+exec(open(version_file).read())
+
+import subprocess
+
+# Run 'git rev-parse HEAD' command to get the current commit id
+commit_id = subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode().strip()
+
+#print(f'Current commit id: {commit_id}')
+
+version = __version__ #+ f".{commit_id[:8]}"
 
 # setup main
 # required modules
@@ -42,7 +48,7 @@ install_requires = [
 
 setup(
     name='ja2mqtt',
-    version=find_version("ja2mqtt", "__init__.py"),
+    version=version,
     description='Jablotron MQTT bridge',
     long_description=read('README.md'),
     author='Tomas Vitvar',
@@ -58,5 +64,10 @@ setup(
         'Intended Audience :: Developers',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
-    ]
+    ],
+    entry_points={
+        'distutils.metadata': [
+            f'git_commit_id = {commit_id}' 
+        ],
+    },
 )
