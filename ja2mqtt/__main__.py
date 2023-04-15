@@ -1,13 +1,15 @@
-from .utils import Map
-
-import ja2mqtt.config as ja2mqtt_config
-import click
+import logging
 import signal
 import time
-import logging
 import traceback
 
+import click
+
+import ja2mqtt.config as ja2mqtt_config
+
 from .commands import ja2mqtt
+from .utils import Map
+
 
 def signal_quit(signal, frame):
     """
@@ -15,6 +17,7 @@ def signal_quit(signal, frame):
     sets the `exit_event` so that all worker threads using the event can gracefully end.
     """
     ja2mqtt_config.exit_event.set()
+
 
 # register `signal_quit` function for all signals.
 for sig in ("TERM", "HUP", "INT"):

@@ -1,30 +1,24 @@
 # -*- coding: utf-8 -*-
 # @author: Tomas Vitvar, https://vitvar.com, tomas@vitvar.com
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
-import time
 import json
 import logging
-import threading
 import re
-
-import serial as py_serial
-import paho.mqtt.client as mqtt
-
-from ja2mqtt.utils import (
-    Map,
-    merge_dicts,
-    deep_eval,
-    deep_merge,
-    PythonExpression,
-)
-from ja2mqtt.config import Config
-from .simulator import Simulator
+import threading
+import time
 from queue import Queue
 
+import paho.mqtt.client as mqtt
+import serial as py_serial
+
+from ja2mqtt.config import Config
+from ja2mqtt.utils import Map, PythonExpression, deep_eval, deep_merge, merge_dicts
+
 from . import Component
+from .simulator import Simulator
+
 
 class Serial(Component):
     """
@@ -37,9 +31,7 @@ class Serial(Component):
         self.use_simulator = self.config.value_bool("use_simulator", default=False)
         if not self.use_simulator:
             self.port = self.config.value_str("port", required=True)
-            self.ser = py_serial.serial_for_url(
-                self.port, do_not_open=True
-            )
+            self.ser = py_serial.serial_for_url(self.port, do_not_open=True)
             self.ser.baudrate = self.config.value_int("baudrate", min=0, default=9600)
             self.ser.bytesize = self.config.value_int(
                 "bytesize", min=7, max=8, default=8

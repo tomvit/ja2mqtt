@@ -1,30 +1,24 @@
 # -*- coding: utf-8 -*-
 # @author: Tomas Vitvar, https://vitvar.com, tomas@vitvar.com
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
-import time
 import json
 import logging
-import threading
 import re
-
-import serial as py_serial
-import paho.mqtt.client as mqtt
-
-from ja2mqtt.utils import (
-    Map,
-    merge_dicts,
-    deep_eval,
-    deep_merge,
-    PythonExpression,
-)
-from ja2mqtt.config import Config
-from .simulator import Simulator
+import threading
+import time
 from queue import Queue
 
+import paho.mqtt.client as mqtt
+import serial as py_serial
+
+from ja2mqtt.config import Config
+from ja2mqtt.utils import Map, PythonExpression, deep_eval, deep_merge, merge_dicts
+
 from . import Component
+from .simulator import Simulator
+
 
 class MQTT(Component):
     """

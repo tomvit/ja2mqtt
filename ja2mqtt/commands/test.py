@@ -1,22 +1,19 @@
 # -*- coding: utf-8 -*-
 # @author: Tomas Vitvar, https://vitvar.com, tomas@vitvar.com
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
+import json
 import logging
 import time
-import json
 
-from ja2mqtt.config import Config, init_logging, ja2mqtt_def
+import click
 
 import ja2mqtt.config as ja2mqtt_config
 from ja2mqtt import __version__ as version
-from ja2mqtt.utils import Map, randomString, dict_from_string
-
 from ja2mqtt.components import MQTT
-
-import click
+from ja2mqtt.config import Config, init_logging, ja2mqtt_def
+from ja2mqtt.utils import Map, dict_from_string, randomString
 
 
 @click.command("pub", help="Publish a ja2mqtt topic in MQTT.")

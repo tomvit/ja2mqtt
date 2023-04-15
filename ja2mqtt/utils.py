@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
 # @author: Tomas Vitvar, https://vitvar.com, tomas@vitvar.com
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 import random
-import string
 import re
-import time
+import string
 import threading
-
+import time
 from functools import reduce
 
 

@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 # @author: Tomas Vitvar, https://vitvar.com, tomas@vitvar.com
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 import logging
 import threading
+
 
 class Component:
     def __init__(self, config, name):
@@ -22,9 +22,12 @@ class Component:
             self.thread.join()
 
     def start(self, exit_event):
-        self.thread = threading.Thread(target=self.worker, args=(exit_event,), daemon=True)
+        self.thread = threading.Thread(
+            target=self.worker, args=(exit_event,), daemon=True
+        )
         self.thread.start()
 
-from .serial import Serial
-from .mqtt import MQTT
+
 from .bridge import SerialMQTTBridge
+from .mqtt import MQTT
+from .serial import Serial

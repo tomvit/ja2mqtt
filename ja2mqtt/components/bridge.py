@@ -1,30 +1,24 @@
 # -*- coding: utf-8 -*-
 # @author: Tomas Vitvar, https://vitvar.com, tomas@vitvar.com
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
-import time
 import json
 import logging
-import threading
 import re
-
-import serial as py_serial
-import paho.mqtt.client as mqtt
-
-from ja2mqtt.utils import (
-    Map,
-    merge_dicts,
-    deep_eval,
-    deep_merge,
-    PythonExpression,
-)
-from ja2mqtt.config import Config
-from .simulator import Simulator
+import threading
+import time
 from queue import Queue
 
+import paho.mqtt.client as mqtt
+import serial as py_serial
+
+from ja2mqtt.config import Config
+from ja2mqtt.utils import Map, PythonExpression, deep_eval, deep_merge, merge_dicts
+
 from . import Component
+from .simulator import Simulator
+
 
 class Pattern:
     def __init__(self, pattern):
@@ -73,6 +67,7 @@ class Topic:
         except Exception as e:
             raise Exception(f"Topic data validation failed. {str(e)}")
 
+
 class SerialMQTTBridge(Component):
     def __init__(self, config):
         super().__init__(config, "bridge")
@@ -108,7 +103,10 @@ class SerialMQTTBridge(Component):
         if self.request_queue.qsize() > 0:
             self.request = self.request_queue.get()
         if self.request is not None:
-            if time.time() - self.request.created_time < self.correlation_timeout and self.request.ttl > 0:
+            if (
+                time.time() - self.request.created_time < self.correlation_timeout
+                and self.request.ttl > 0
+            ):
                 if self.request.cor_id is not None:
                     data[self.correlation_id] = self.request.cor_id
                 self.request.ttl -= 1
@@ -170,7 +168,7 @@ class SerialMQTTBridge(Component):
                             Map(
                                 cor_id=_data.get(self.correlation_id),
                                 created_time=time.time(),
-                                ttl=rule.get("request_ttl",1)
+                                ttl=rule.get("request_ttl", 1),
                             )
                         )
                         self.serial.writeline(s)

@@ -1,30 +1,35 @@
 # -*- coding: utf-8 -*-
 # @author: Tomas Vitvar, https://vitvar.com, tomas@vitvar.com
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
-import os
 import io
-import sys
-import yaml
+import json
 import logging
 import logging.config
+import os
 import re
+import sys
 import warnings
-import json
-import jinja2
-import click
-
 from threading import Event
+
+import click
+import jinja2
+import yaml
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 import imp
-
-from .utils import PythonExpression
-from .utils import deep_find, import_class, Map, deep_merge, merge_dicts
 from functools import reduce
+
+from .utils import (
+    Map,
+    PythonExpression,
+    deep_find,
+    deep_merge,
+    import_class,
+    merge_dicts,
+)
 
 # they must be in a form ${VARIABLE_NAME}
 ENVNAME_PATTERN = "[A-Z0-9_]+"

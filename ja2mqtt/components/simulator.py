@@ -1,28 +1,20 @@
 # -*- coding: utf-8 -*-
 # @author: Tomas Vitvar, https://vitvar.com, tomas@vitvar.com
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
-import time
 import json
 import logging
-import threading
 import re
+import threading
+import time
+from queue import Empty, Queue
 
-import serial as py_serial
 import paho.mqtt.client as mqtt
+import serial as py_serial
 
-from ja2mqtt.utils import (
-    Map,
-    merge_dicts,
-    deep_eval,
-    deep_merge,
-    PythonExpression,
-)
 from ja2mqtt.config import Config
-
-from queue import Queue, Empty
+from ja2mqtt.utils import Map, PythonExpression, deep_eval, deep_merge, merge_dicts
 
 ERROR_INVALID_VALUE = "ERROR: 4 INVALID_VALUE"
 ERROR_NO_ACCESS = "ERROR: 3 NO_ACCESS"
@@ -158,7 +150,9 @@ class Simulator:
             self.log.info("Simulator worker ended.")
 
     def start(self, exit_event):
-        self.thread = threading.Thread(target=self.worker, args=(exit_event,), daemon=True)
+        self.thread = threading.Thread(
+            target=self.worker, args=(exit_event,), daemon=True
+        )
         self.thread.start()
 
     def join(self):

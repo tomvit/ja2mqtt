@@ -1,21 +1,18 @@
 # -*- coding: utf-8 -*-
 # @author: Tomas Vitvar, https://vitvar.com, tomas@vitvar.com
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 import logging
 import time
 
-from ja2mqtt.config import Config, init_logging
+import click
 
 import ja2mqtt.config as ja2mqtt_config
 from ja2mqtt import get_version_string
+from ja2mqtt.components import MQTT, Serial, SerialMQTTBridge
+from ja2mqtt.config import Config, init_logging
 from ja2mqtt.utils import Map
-
-from ja2mqtt.components import Serial, MQTT, SerialMQTTBridge
-
-import click
 
 
 @click.command("run", help="Run command.")
@@ -47,7 +44,9 @@ def command_run(config, env):
     )
     log = logging.getLogger("run-loop")
 
-    log.info(f"ja2mqtt, Jablotron JA-121 Serial MQTT bridge, version {get_version_string()}")
+    log.info(
+        f"ja2mqtt, Jablotron JA-121 Serial MQTT bridge, version {get_version_string()}"
+    )
 
     serial = Serial(config)
     mqtt = MQTT("ja2mqtt-client", config)
