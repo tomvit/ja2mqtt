@@ -56,7 +56,7 @@ In order to test ja2mqtt with default configuration that uses JA-121T simulator,
 3. Publish the mqtt event to retrieve a state of sections as follows:
 
    ```
-   $ docker exec -it ja2mqtt pub -t ja2mqtt/section/house/set -d pin=1234
+   $ docker exec -it ja2mqtt pub -t ja2mqtt/section/get -d pin=1234
    ```
 
 4. Check log entries in the ja2mqtt log:
