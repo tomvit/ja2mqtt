@@ -1,7 +1,5 @@
 # $ ja2mqtt
 
-**This is a DRAFT version, and not all commands below may work.**
-
 ja2mqtt is a bridge that connects a Jablotron control unit, extended with the [JA-121T RS-485 bus interface](https://www.jablotron.com/en/produkt/rs-485-bus-interface-426/), to an MQTT broker.
 
 ja2mqtt enables the use of MQTT events to control Jablotron events, allowing for seamless integration with MQTT-based IoT systems and platforms. With this bridge, Jablotron alarms can be integrated into a larger IoT ecosystem, alongside other devices that use industry-standard protocols like ZigBee or MQTT. For example, by using ja2mqtt in conjunction with ZigBee2MQTT, Jablotron alarms and ZigBee devices can be connected in a single network and integrated with other systems such as Alexa, Tahoma, or Google Assistant, providing a unified and interoperable smart home or industrial automation solution.
@@ -75,6 +73,3 @@ In order to test ja2mqtt with default configuration that uses JA-121T simulator,
    2023-04-17 21:59:46,816 [serial  ] [D] Received data from serial: STATE 4 False
    2023-04-17 21:59:46,817 [bridge  ] [D] No rule found for the data: STATE 4 False
    ```
-
-
-
