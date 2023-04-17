@@ -1,55 +1,26 @@
 # -*- coding: utf-8 -*-
 # @author: Tomas Vitvar, https://vitvar.com, tomas@vitvar.com
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 import logging
 import time
 
-from ja2mqtt.config import Config, init_logging
-
-import ja2mqtt.config as ja2mqtt_config
-from ja2mqtt import __version__ as version
-from ja2mqtt.utils import Map
-
-from ja2mqtt.components import Serial, MQTT, SerialMQTTBridge
-
 import click
 
+import ja2mqtt.config as ja2mqtt_config
+from ja2mqtt import get_version_string
+from ja2mqtt.components import MQTT, Serial, SerialMQTTBridge
+from ja2mqtt.config import Config, init_logging
+from ja2mqtt.utils import Map, randomString
 
-@click.command("run", help="Run command.")
-@click.option(
-    "-c",
-    "--config",
-    "config",
-    metavar="<file>",
-    is_flag=False,
-    required=True,
-    help="Configuration file",
-)
-@click.option(
-    "-e",
-    "--env",
-    "env",
-    metavar="<file>",
-    is_flag=False,
-    required=False,
-    help="Environment variable file",
-)
-def run(config, env):
-    config = Config(config, env)
+from . import BaseCommand
 
-    init_logging(
-        config.get_dir_path(config.root.value("logs")),
-        "DEBUG" if ja2mqtt_config.DEBUG else "INFO",
-    )
-    log = logging.getLogger("loop")
 
-    log.info(f"ja2mqtt, Jablotron JA-121 Serial MQTT bridge, version {version}")
-
-    serial = Serial(config.get_part("serial"), config.get_part("simulator"))
-    mqtt = MQTT(config.get_part("mqtt-broker"))
+@click.command("run", help="Run command.", cls=BaseCommand)
+def command_run(config, log):
+    serial = Serial(config)
+    mqtt = MQTT(f"ja2mqtt-client+{randomString(10)}", config)
     bridge = SerialMQTTBridge(config)
 
     bridge.set_mqtt(mqtt)
@@ -58,4 +29,7 @@ def run(config, env):
     mqtt.start(ja2mqtt_config.exit_event)
     serial.start(ja2mqtt_config.exit_event)
 
-    ja2mqtt_config.exit_event.wait()
+    mqtt.join()
+    serial.join()
+
+    log.info("Done.")
