@@ -83,8 +83,9 @@ class SerialMQTTBridge(Component):
             self.topics_serial2mqtt.append(Topic(topic_def))
         for topic_def in ja2mqtt("mqtt2serial"):
             self.topics_mqtt2serial.append(Topic(topic_def))
-        self.correlation_id = ja2mqtt("options.correlation_id", None)
-        self.correlation_timeout = ja2mqtt("options.correlation_timeout", 0)
+        self.correlation_id = ja2mqtt("system.correlation_id", None)
+        self.correlation_timeout = ja2mqtt("system.correlation_timeout", 0)
+        self.topic_sys_error = ja2mqtt("system.topic_sys_error", None)
         self.request = None
 
         self.log.info(f"The ja2mqtt definition file is {ja2mqtt_file}")
