@@ -19,7 +19,7 @@ image:
 	cp dist/ja2mqtt-2.0.0.tar.gz docker/files
 	cp config/sample-config.yaml docker/files
 	cp config/ja2mqtt.yaml docker/files
-	cd docker && docker build . -t ja2mqtt:2.0
+	cd docker && docker build . -t ja2mqtt:2.0.0
 
 clean:
 	rm -fr build
