@@ -2,7 +2,7 @@ version: '3.0'
 services:
   ja2mqtt:
     container_name: ja2mqtt
-    image: ja2mqtt:2.0.0
+    image: tomvit/ja2mqtt:2.0.0
     depends_on:
       - mqtt-broker
   mqtt-broker:
