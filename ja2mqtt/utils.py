@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
 # @author: Tomas Vitvar, https://vitvar.com, tomas@vitvar.com
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 import random
-import string
 import re
-import time
+import string
 import threading
-
+import time
 from functools import reduce
 
 
@@ -142,9 +140,10 @@ def import_class(name):
     return mod
 
 
-def randomString(stringLength=10):
+def randomString(stringLength=10, letters=None):
     """Generate a random string of fixed length"""
-    letters = string.ascii_lowercase
+    if letters is None:
+        letters = string.ascii_lowercase
     return "".join(random.choice(letters) for i in range(stringLength))
 
 
@@ -242,3 +241,21 @@ class PathDef:
 def remove_ansi_escape(text):
     ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
     return ansi_escape.sub("", text)
+
+
+def dict_from_string(s, d={}):
+    result = d
+    parts = s.split("=")
+    if len(parts) == 2:
+        key = parts[0]
+        value = parts[1]
+        keys = key.split(".")
+        current_dict = result
+        for i, k in enumerate(keys):
+            if k not in current_dict:
+                if i == len(keys) - 1:
+                    current_dict[k] = value
+                else:
+                    current_dict[k] = {}
+            current_dict = current_dict[k]
+    return result

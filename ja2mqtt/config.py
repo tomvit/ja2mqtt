@@ -1,29 +1,35 @@
 # -*- coding: utf-8 -*-
 # @author: Tomas Vitvar, https://vitvar.com, tomas@vitvar.com
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
-import os
 import io
-import sys
-import yaml
+import json
 import logging
 import logging.config
+import os
 import re
+import sys
 import warnings
-import json
-import jinja2
-
 from threading import Event
+
+import click
+import jinja2
+import yaml
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 import imp
-
-from .utils import PythonExpression
-from .utils import deep_find, import_class, Map, deep_merge, merge_dicts
 from functools import reduce
+
+from .utils import (
+    Map,
+    PythonExpression,
+    deep_find,
+    deep_merge,
+    import_class,
+    merge_dicts,
+)
 
 # they must be in a form ${VARIABLE_NAME}
 ENVNAME_PATTERN = "[A-Z0-9_]+"
@@ -263,7 +269,8 @@ class ConfigPart:
                         try:
                             val = val.eval(
                                 merge_dicts(
-                                    self.parent.custom_functions, self.parent.scope
+                                    self.parent.custom_functions,
+                                    self.parent.scope,
                                 )
                             )
                         except Exception as e:
@@ -309,7 +316,7 @@ class CustomFormatter(logging.Formatter):
     red = "\x1b[31;20m"
     bold_red = "\x1b[31;1m"
     reset = "\x1b[0m"
-    format_header = "%(asctime)s [%(name)-10.10s] "
+    format_header = "%(asctime)s [%(name)-8.8s] "
     format_msg = "[%(levelname)-1.1s] %(message)s"
 
     FORMATS = {
@@ -326,14 +333,16 @@ class CustomFormatter(logging.Formatter):
         return formatter.format(record)
 
 
-def init_logging(logs_dir, log_level):
+def init_logging(
+    logs_dir, command_name, log_level="INFO", handlers=["file", "console"]
+):
     """
     Initialize the logging, set the log level and logging directory.
     """
     os.makedirs(logs_dir, exist_ok=True)
 
     # log handlers
-    log_handlers = ["file", "console"]
+    log_handlers = handlers
 
     # main logs configuration
     logging.config.dictConfig(
@@ -355,7 +364,7 @@ def init_logging(logs_dir, log_level):
                 "file": {
                     "formatter": "standard",
                     "class": "logging.handlers.TimedRotatingFileHandler",
-                    "filename": f"{logs_dir}/ja2mqtt.log",
+                    "filename": f"{logs_dir}/ja2mqtt_{command_name}.log",
                     "when": "midnight",
                     "interval": 1,
                     "backupCount": 30,
@@ -369,4 +378,12 @@ def init_logging(logs_dir, log_level):
                 }
             },
         }
+    )
+
+
+def ja2mqtt_def(config):
+    return Config(
+        config.get_dir_path(config.root("ja2mqtt")),
+        scope=Map(topology=config.root("topology")),
+        use_template=True,
     )
