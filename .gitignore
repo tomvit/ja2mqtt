@@ -8,3 +8,4 @@ bin/env
 config/config.yaml
 *.egg-info
 dist/
+docker/files
