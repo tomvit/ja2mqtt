@@ -8,13 +8,13 @@ help:
 	@echo ""
 
 build:
-	python setup.py egg_info sdist
+	python3 setup.py egg_info sdist
 
 check:
 	pylint ja2mqtt
 
 image:
-	python setup.py egg_info sdist
+	python3 setup.py egg_info sdist
 	mkdir -p docker/files
 	cp dist/ja2mqtt-2.0.0.tar.gz docker/files
 	cp config/sample-config.yaml docker/files
