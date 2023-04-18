@@ -12,7 +12,7 @@ If you do not have access to a JA-121T interface for testing, ja2mqtt offers a s
 
 To test ja2mqtt with the JA-121T simulator, you can utilize the ja2mqtt Docker image that comes with pre-configured settings. The simulator provides a straightforward Jablotron topology with two sections: "House" with code "1" and an initial state of "ARMED", and "Garage" with code "2" and an initial state of "READY". This topology can be used to simulate changing the state or retrieving the status of the sections. The simulator also mimics Jablotron heartbeat messages by generating "OK" messages every 10 seconds.
 
-In  order to test ja2mqtt with the simulator, follow the below steps.
+To test ja2mqtt with the simulator, follow the steps below.
 
 1. Run the `docker-compose.yaml` provided in the [docker](https://github.com/tomvit/ja2mqtt/tree/master/docker) directory.
 
@@ -20,24 +20,22 @@ In  order to test ja2mqtt with the simulator, follow the below steps.
    $ docker-compose up -d
    ```
 
-2. Inspect logs of ja2mqtt by running the following command:
+2. Inspect the logs of ja2mqtt by running the following command:
 
    ```
-   $ docker logs ja2mqtt -f
+   $ docker logs ja2mqtt
    ```
 
-3. Publish the mqtt event to retrieve a state of sections as follows:
+3. Publish the MQTT event to retrieve the state of sections as follows:
 
    ```
    $ docker exec -it ja2mqtt pub -t ja2mqtt/section/get -d pin=1234
+   <-- send: ja2mqtt/section/get: {"pin": "1234", "corrid": "ca8438b82f16"}
+   --> recv: ja2mqtt/section/house: {"corrid": "ca8438b82f16", "section_code": 1, "section_name": "house", "state": "ARMED"}
+   --> recv: ja2mqtt/section/garage: {"corrid": "ca8438b82f16", "section_code": 2, "section_name": "garage", "state": "READY"}   
    ```
 
-4. Check log entries in the ja2mqtt log to see that the following entries are present:
-
-   ```
-   2023-04-17 21:59:46,203 [mqtt    ] [I] <-- send: ja2mqtt/section/house, data={"section_code": 1, "section_name": "house", "state": "ARMED"}
-   2023-04-17 21:59:46,408 [mqtt    ] [I] <-- send: ja2mqtt/section/garage, data={"section_code": 2, "section_name": "garage", "state": "READY"}
-   ```
+4. Check the log entries in the ja2mqtt log again to see if the events were generated.
 
 ## Getting Started
 
