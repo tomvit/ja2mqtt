@@ -40,7 +40,7 @@ setup(
     name='ja2mqtt',
     version=__version__,
     description='Jablotron MQTT bridge',
-    long_description=read('README.md'),
+    long_description=read('README-pypi.text'),
     author='Tomas Vitvar',
     author_email='tomas@vitvar.com',
     packages=find_packages(exclude=['tests.*', 'tests']),
