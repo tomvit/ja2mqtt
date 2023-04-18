@@ -29,6 +29,7 @@ from .utils import (
     deep_merge,
     import_class,
     merge_dicts,
+    randomString,
 )
 
 # they must be in a form ${VARIABLE_NAME}
@@ -387,3 +388,9 @@ def ja2mqtt_def(config):
         scope=Map(topology=config.root("topology")),
         use_template=True,
     )
+
+
+def correlation_id(ja2mqtt):
+    corrid_field = ja2mqtt("system.correlation_id", None)
+    corr_id = randomString(12, letters="abcdef0123456789")
+    return corrid_field, corr_id if corrid_field is not None else None
