@@ -1,0 +1,5 @@
+include README.md
+include README-pypi.text
+exclude Makefile 
+exclude .gitignore
+recursive-exclude .github *
