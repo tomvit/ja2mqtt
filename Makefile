@@ -16,7 +16,7 @@ check:
 image:
 	rm dist/*
 	python3 setup.py egg_info sdist
-	mkdir -p docker/files
+	rm -fr docker/files && mkdir -p docker/files
 	cp dist/ja2mqtt-*.tar.gz docker/files
 	cp config/sample-config.yaml docker/files
 	cp config/ja2mqtt.yaml docker/files
