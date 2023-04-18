@@ -18,7 +18,7 @@ To use ja2mqtt, you will need:
 
 ## Testing in Docker
 
-In order to test ja2mqtt with default configuration that uses JA-121T simulator, do the following:
+In  order to test ja2mqtt with default configuration that uses JA-121T simulator, do the following:
 
 1. Run the `docker-compose.yaml` provided in the [docker](https://github.com/tomvit/ja2mqtt/tree/master/docker) directory.
 
