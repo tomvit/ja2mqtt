@@ -42,7 +42,7 @@ class Serial(Component):
                 "The simulation is enabled, events will be simulated. The serial interface is not used."
             )
             self.log.debug(f"The simulator object is {self.ser}")
-        self.on_data_ext = None
+        self.buffer = Queue()
 
     def create_serial(self):
         self.ser = py_serial.serial_for_url(self.port, do_not_open=True)
@@ -57,11 +57,6 @@ class Serial(Component):
 
     def is_ready(self):
         return self.ser is not None
-
-    def on_data(self, data):
-        self.log.debug(f"Received data from serial: {data}")
-        if self.on_data_ext is not None:
-            self.on_data_ext(data)
 
     def open(self, exit_event):
         if self.ser is None:
@@ -114,8 +109,10 @@ class Serial(Component):
                     continue
                 data_str = x.decode(self.encoding).strip("\r\n").strip()
                 if data_str != "":
-                    self.on_data(data_str)
-                exit_event.wait(0.2)
+                    self.log.debug(f"Received data from serial: {data_str}")
+                    self.buffer.put(data_str)
+                else:
+                    exit_event.wait(0.2)
         finally:
             self.close()
             self.log.info("Serial worker ended.")

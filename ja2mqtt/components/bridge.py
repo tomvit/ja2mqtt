@@ -8,7 +8,7 @@ import logging
 import re
 import threading
 import time
-from queue import Queue
+from queue import Queue, Empty
 
 import paho.mqtt.client as mqtt
 
@@ -219,4 +219,17 @@ class SerialMQTTBridge(Component):
 
     def set_serial(self, serial):
         self.serial = serial
-        serial.on_data_ext = self.on_serial_data
+
+    def worker(self, exit_event):
+        self.log.info("Running bridge worker, reading events from the serial buffer.")
+        try:
+            if self.serial is None:
+                raise Exception("Serial object has not been set!")
+            while not exit_event.is_set():
+                try:
+                    data = self.serial.buffer.get(timeout=1)
+                    self.on_serial_data(data)
+                except Empty as e:
+                    pass
+        finally:
+            self.log.info("Bridge worker ended.")
