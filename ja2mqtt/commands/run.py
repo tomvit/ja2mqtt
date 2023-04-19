@@ -19,7 +19,6 @@ from . import BaseCommand
 
 @click.command("run", help="Run command.", cls=BaseCommand)
 def command_run(config, log):
-    
     serial = Serial(config)
     mqtt = MQTT(f"ja2mqtt-client+{randomString(10)}", config)
     bridge = SerialMQTTBridge(config)
