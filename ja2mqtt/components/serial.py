@@ -41,7 +41,7 @@ class Serial(Component):
             self.wait_on_ready = self.config.value_int("wait_on_ready", default=10)
             self.log.info(f"The serial connection configured, the port is {self.port}")
         else:
-            self.port = "<__simulator__>"
+            self.port = "<simulator>"
             self.ser = Simulator(config.get_part("simulator"), self.encoding)
             self.log.info(
                 "The simulation is enabled, events will be simulated. The serial interface is not used."
