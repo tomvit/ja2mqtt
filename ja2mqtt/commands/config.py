@@ -33,15 +33,15 @@ def config_ja2mqtt(config, log):
     ja2mqtt = Config(ja2mqtt_file, scope=scope, use_template=True)
     print(json.dumps(ja2mqtt.root._config, indent=4, default=str))
 
-@click.command(
-    "env", help="Show environment varialbes."
-)
+
+@click.command("env", help="Show environment varialbes.")
 def config_env():
     print("List of environment variables used by ja2mqtt:")
     print("")
     for e in env_variables:
         print(f"{e}={os.getenv(e)}")
     print("")
+
 
 command_config.add_command(config_main)
 command_config.add_command(config_ja2mqtt)
