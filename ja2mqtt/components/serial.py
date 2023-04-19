@@ -27,6 +27,11 @@ class Serial(Component):
     """
 
     def __init__(self, config):
+        """
+        Initialize the serial object. It reads configuration parameters from the config
+        and creates `ser` object that can be either `PySerial` or `Simulator` based on the
+        `use_simulator` property in the configuration.
+        """
         super().__init__(config.get_part("serial"), "serial")
         self.encoding = self.config.value_bool("encoding", default="ascii")
         self.use_simulator = self.config.value_bool("use_simulator", default=False)
@@ -45,6 +50,9 @@ class Serial(Component):
         self.buffer = Queue()
 
     def create_serial(self):
+        """
+        Create serial object and initialize the parameters from the configuration.
+        """
         self.ser = py_serial.serial_for_url(self.port, do_not_open=True)
         self.ser.baudrate = self.config.value_int("baudrate", min=0, default=9600)
         self.ser.bytesize = self.config.value_int("bytesize", min=7, max=8, default=8)
@@ -56,9 +64,16 @@ class Serial(Component):
         self.log.debug(f"The serial object created: {self.ser}")
 
     def is_ready(self):
+        """
+        Retrun True if the serial object exist.
+        """
         return self.ser is not None
 
     def open(self, exit_event):
+        """
+        Open serial interface. If the interface cannot be opened due to an error, try opening it
+        with frequency of `wait_on_ready` parameter.
+        """
         if self.ser is None:
             self.log.info(f"Opening serial port {self.port}")
             while not exit_event.is_set():
@@ -79,6 +94,9 @@ class Serial(Component):
                     self.ser = None
 
     def close(self):
+        """
+        Close the serial port when it is open.
+        """
         if self.ser is not None:
             self.log.info(f"Closing serial port {self.port}")
             try:
@@ -88,6 +106,10 @@ class Serial(Component):
             self.ser = None
 
     def writeline(self, line):
+        """
+        Write a single line of string to the seiral port. It convers the string to bytes using
+        the defined `encoding` and adds a LF at the end.
+        """
         self.log.debug(f"Writing to serial: {line}")
         try:
             self.ser.write(bytes(line + "\n", self.encoding))
@@ -95,6 +117,13 @@ class Serial(Component):
             self.log.error(str(e))
 
     def worker(self, exit_event):
+        """
+        The main worker of the serial object that reads data from the serial port and
+        puts them to the `buffer` queue. Althoguh the `worker` method (that only reads
+        the data from the serial port) can run in parallel with the `writeline` method,
+        due to the global interpreter lock (https://docs.python.org/3/glossary.html#term-global-interpreter-lock)
+        they both should be thread-safe.
+        """
         self.open(exit_event)
         try:
             while not exit_event.is_set():
@@ -112,17 +141,25 @@ class Serial(Component):
                     self.log.debug(f"Received data from serial: {data_str}")
                     self.buffer.put(data_str)
                 else:
+                    # this is necessary to allow other threads to run too
                     exit_event.wait(0.2)
         finally:
             self.close()
             self.log.info("Serial worker ended.")
 
     def start(self, exit_event):
+        """
+        Start the worker thread of the serial object. If the simulator is used, this also starts
+        the worker thread of the simulator object.
+        """
         super().start(exit_event)
         if self.use_simulator and isinstance(self.ser, Simulator):
             self.ser.start(exit_event)
 
     def join(self):
+        """
+        Join the worker thread and simulator thread if it exists.
+        """
         super().join()
         if self.use_simulator and isinstance(self.ser, Simulator):
             self.ser.join()
