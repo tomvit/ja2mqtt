@@ -13,19 +13,20 @@ from ja2mqtt.utils import Map
 from . import BaseCommandLogOnly
 
 
-@click.command("config", help="Show the configuration.", cls=BaseCommandLogOnly)
-@click.option(
-    "--ja2mqtt",
-    "df",
-    is_flag=True,
-    required=False,
-    help="Show the ja2mqtt definition file",
-)
-def command_config(config, df, log):
-    if not df:
-        print(json.dumps(config.root._config, indent=4, default=str))
-    else:
-        ja2mqtt_file = config.get_dir_path(config.root("ja2mqtt"))
-        scope = Map(topology=config.root("topology"))
-        ja2mqtt = Config(ja2mqtt_file, scope=scope, use_template=True)
-        print(json.dumps(ja2mqtt.root._config, indent=4, default=str))
+@click.group("config", help="Configuration commands")
+def command_config():
+    pass
+
+@click.command("main", help="Show the main configuration.", cls=BaseCommandLogOnly)
+def config_main(config, log):
+    print(json.dumps(config.root._config, indent=4, default=str))
+
+@click.command("ja2mqtt", help="Show the ja2mqtt definition configuration.", cls=BaseCommandLogOnly)
+def config_ja2mqtt(config, log):
+    ja2mqtt_file = config.get_dir_path(config.root("ja2mqtt"))
+    scope = Map(topology=config.root("topology"))
+    ja2mqtt = Config(ja2mqtt_file, scope=scope, use_template=True)
+    print(json.dumps(ja2mqtt.root._config, indent=4, default=str))
+
+command_config.add_command(config_main)
+command_config.add_command(config_ja2mqtt)
