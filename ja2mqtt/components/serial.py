@@ -53,7 +53,7 @@ def decode_prfstate(prfstate):
             f"Cannot decode prfstate string {prfstate}. {str(e)}"
         )
 
-def encode_prfstate(prf, prf_state_bits):
+def encode_prfstate(prf, prf_state_bits=24):
     """
     Encode prfstate from the prf state object. This is an inverse funtion to decode_prfstate,
     i.e. it must hold that `encode_prfstate(decode_prfstate(X)) == X`
