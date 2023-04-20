@@ -2,8 +2,6 @@
 
 ja2mqtt is a bridge that connects a Jablotron control unit, extended with the [JA-121T RS-485 bus interface](https://www.jablotron.com/en/produkt/rs-485-bus-interface-426/), to an MQTT broker.
 
-ja2mqtt enables the use of MQTT events to control Jablotron events, allowing for seamless integration with MQTT-based IoT systems and platforms. With this bridge, Jablotron alarms can be integrated into a larger IoT ecosystem, alongside other devices that use industry-standard protocols like ZigBee or MQTT. For example, by using ja2mqtt in conjunction with ZigBee2MQTT, Jablotron alarms and ZigBee devices can be connected in a single network and integrated with other systems such as Alexa, Tahoma, or Google Assistant, providing a unified and interoperable smart home or industrial automation solution.
-
 ja2mqtt reads input from the JA-121T serial interface, converts it into MQTT events, and publishes them to the MQTT broker using defined MQTT topics. It utilizes a ja2mqtt definition file that outlines the implementation of the JA-121T protocol. Additionally, ja2mqtt defines MQTT events that can be converted into input for the JA-121T serial interface, such as changing the state of a section to ARMED or READY. Each MQTT request may contain a correlation ID that is copied to the corresponding generated MQTT event.
 
 If you do not have access to a JA-121T interface for testing, ja2mqtt offers a simulator that can simulate the interaction with the JA-121T interface. This allows you to test and verify the functionality of ja2mqtt even without the physical JA-121T interface available.
@@ -15,7 +13,7 @@ If you do not have access to a JA-121T interface for testing, ja2mqtt offers a s
 * Read events from Jablotron, such as section arming and disarming, peripheral state changes, and convert them to MQTT events.
 * Use MQTT events to query section states and correlate request and response MQTT events.
 * Implement automated recovery from serial interface failures or MQTT broker connection failures.
-* JA-121T simulator that simulates section state changes, peripheral state changes and heartbeat messages. 
+* JA-121T simulator that simulates section state changes, peripheral state changes and heartbeat messages.
 
 ## Testing using Docker
 
