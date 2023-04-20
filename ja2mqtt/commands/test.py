@@ -38,7 +38,15 @@ from . import BaseCommandLogOnly
     required=False,
     help="Data as a key=value pair",
 )
-def command_publish(config, topic, data, log):
+@click.option(
+    "--timeout",
+    "timeout",
+    metavar="<timeout>",
+    required=False,
+    type=float,
+    help="Timeout to wait for responses. The default is correlation timeout from the ja2mqtt configuration.",
+)
+def command_publish(config, topic, data, log, timeout):
     ja2mqtt = ja2mqtt_def(config)
     _topic = next(filter(lambda x: x["name"] == topic, ja2mqtt("mqtt2serial")), None)
     if _topic is None:
@@ -71,6 +79,6 @@ def command_publish(config, topic, data, log):
         mqtt.wait_is_connected(ja2mqtt_config.exit_event)
         print(f"<-- send: {_topic['name']}: {json.dumps(_data)}")
         mqtt.publish(_topic["name"], json.dumps(_data))
-        time.sleep(5)
+        time.sleep(ja2mqtt.root("system.correlation_timeout", 1.5) if timeout is None else timeout)
     finally:
         ja2mqtt_config.exit_event.set()
