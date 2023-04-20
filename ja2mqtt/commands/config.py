@@ -38,10 +38,10 @@ def config_ja2mqtt(config, log):
 )
 def config_env():
     print("List of environment variables used by ja2mqtt:")
-    print("---")
+    print("")
     for e in env_variables:
         print(f"{e}={os.getenv(e)}")
-    print("---")
+    print("")
 
 command_config.add_command(config_main)
 command_config.add_command(config_ja2mqtt)
