@@ -48,7 +48,6 @@ class MQTT(Component):
         )
 
     def on_error(self, exception):
-        print(str(exception))
         self.log.error(str(exception))
         if self.on_error_ext is not None:
             self.on_error_ext(exception)

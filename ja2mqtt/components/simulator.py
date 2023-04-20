@@ -127,7 +127,6 @@ class Simulator:
             "^(?P<pin>[0-9]+) (?P<command>STATE)( (?P<code>[0-9]+))?$", data_str
         )
         if command is not None and _check_pin(command):
-            print(command)
             sections = [
                 x
                 for x in self.sections.values()
