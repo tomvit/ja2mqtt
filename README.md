@@ -46,6 +46,24 @@ To test ja2mqtt with the simulator, follow the steps below.
 
 4. Check the log entries in the ja2mqtt log again to see if the events were generated.
 
+2. Inspect logs of ja2mqtt by running the following command:
+
+   ```
+   $ docker logs ja2mqtt -f
+   ```
+
+3. Publish the mqtt event to retrieve a state of sections as follows:
+
+   ```
+   $ docker exec -it ja2mqtt pub -t ja2mqtt/section/get -d pin=1234
+   ```
+
+4. Check log entries in the ja2mqtt log to see that the following entries are present:
+
+   ```
+   2023-04-17 21:59:46,203 [mqtt    ] [I] <-- send: ja2mqtt/section/house, data={"section_code": 1, "section_name": "house", "state": "ARMED"}
+   2023-04-17 21:59:46,408 [mqtt    ] [I] <-- send: ja2mqtt/section/garage, data={"section_code": 2, "section_name": "garage", "state": "READY"}
+   ```
 ## Getting Started
 
 To use ja2mqtt, you will need:

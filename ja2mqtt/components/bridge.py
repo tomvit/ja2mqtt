@@ -20,7 +20,6 @@ from .simulator import Simulator
 
 from .serial import decode_prfstate, SerialJA121TException
 
-
 class Pattern:
     def __init__(self, pattern):
         self.match = None

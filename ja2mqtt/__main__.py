@@ -32,8 +32,4 @@ except Exception as e:
             f"ERROR: {str(e)}\n", bcolors.ERROR, not ja2mqtt_config.ANSI_COLORS
         )
     )
-    if ja2mqtt_config.DEBUG:
-        print("---")
-        traceback.print_exc()
-        print("---")
     sys.exit(1)
