@@ -281,3 +281,9 @@ def dict_from_string(s, d={}):
                     current_dict[k] = {}
             current_dict = current_dict[k]
     return result
+
+def str2bool(s):
+    if type(s) == str:
+        return s.lower() in ["True", "true"]
+    else:
+        raise Exception(f"Invalid type: {type(s)}")

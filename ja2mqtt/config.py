@@ -30,6 +30,7 @@ from .utils import (
     import_class,
     merge_dicts,
     randomString,
+    str2bool
 )
 
 # they must be in a form ${VARIABLE_NAME}
@@ -39,8 +40,12 @@ ENVPARAM_PATTERN = "\$\{%s\}" % ENVNAME_PATTERN
 # consolidated variables supplied via env file and environment variables
 ENV = {}
 
-DEBUG = False
-ANSI_COLORS = True
+DEBUG = str2bool(os.getenv("JA2MQTT_DEBUG", "False"))
+ANSI_COLORS = not str2bool(os.getenv("JA2MQTT_NO_ANSI", "False"))
+CONFIG_FILE= os.getenv("JA2MQTT_CONFIG", None)
+CONFIG_ENV= os.getenv("JA2MQTT_ENV", None)
+
+env_variables = ["JA2MQTT_DEBUG", "JA2MQTT_NO_ANSI", "JA2MQTT_CONFIG", "JA2MQTT_ENV"]
 
 # global exit event
 exit_event = Event()
