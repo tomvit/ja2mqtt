@@ -79,6 +79,10 @@ def command_publish(config, topic, data, log, timeout):
         mqtt.wait_is_connected(ja2mqtt_config.exit_event)
         print(f"<-- send: {_topic['name']}: {json.dumps(_data)}")
         mqtt.publish(_topic["name"], json.dumps(_data))
-        time.sleep(ja2mqtt.root("system.correlation_timeout", 1.5) if timeout is None else timeout)
+        time.sleep(
+            ja2mqtt.root("system.correlation_timeout", 1.5)
+            if timeout is None
+            else timeout
+        )
     finally:
         ja2mqtt_config.exit_event.set()
