@@ -8,6 +8,15 @@ ja2mqtt reads input from the JA-121T serial interface, converts it into MQTT eve
 
 If you do not have access to a JA-121T interface for testing, ja2mqtt offers a simulator that can simulate the interaction with the JA-121T interface. This allows you to test and verify the functionality of ja2mqtt even without the physical JA-121T interface available.
 
+## Features
+
+* Define Jablotron topology in the YAML configuration file, including sections with their codes, names, and peripherals' positions and names.
+* Implement declarative rules in the ja2mqtt.yaml configuration file to support the serial JA-121T protocol.
+* Read events from Jablotron, such as section arming and disarming, peripheral state changes, and convert them to MQTT events.
+* Use MQTT events to query section states and correlate request and response MQTT events.
+* Implement automated recovery from serial interface failures or MQTT broker connection failures.
+* JA-121T simulator that simulates section state changes, peripheral state changes and heartbeat messages. 
+
 ## Testing using Docker
 
 To test ja2mqtt with the JA-121T simulator, you can utilize the ja2mqtt Docker image that comes with pre-configured settings. The simulator provides a straightforward Jablotron topology with two sections: "House" with code "1" and an initial state of "ARMED", and "Garage" with code "2" and an initial state of "READY". This topology can be used to simulate changing the state or retrieving the status of the sections. The simulator also mimics Jablotron heartbeat messages by generating "OK" messages every 10 seconds.
