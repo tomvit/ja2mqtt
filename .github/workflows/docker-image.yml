@@ -4,9 +4,6 @@ on:
   push:
     branches: [ "master" ]
 
-env:
-  ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
-
 jobs:
   docker:
     runs-on: ubuntu-latest
@@ -24,12 +21,12 @@ jobs:
           if [ -f bin/requirements.txt ]; then pip install -r bin/requirements.txt; fi
           rm -fr dist/*
           python3 setup.py egg_info sdist
-          export version=$(egrep -o "__version__ = \".+\"" ja2mqtt/__init__.py | awk '{print $3}')
           mkdir -p docker/files
           cp dist/*.tar.gz docker/files
           cp config/sample-config.yaml docker/files
           cp config/ja2mqtt.yaml docker/files
-          echo "::set-env name=version::$version"
+          version=$(egrep -o "__version__ = \".+\"" ja2mqtt/__init__.py | awk '{print $3}')"
+          echo "image_tag=$version" >> $GITHUB_ENV
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
@@ -45,4 +42,4 @@ jobs:
           context: "docker"
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: tomvit/ja2mqtt:latest, tomvit/ja2mqtt:${version}
+          tags: tomvit/ja2mqtt:latest, tomvit/ja2mqtt:${{ env.tag_version }}
