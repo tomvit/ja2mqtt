@@ -21,12 +21,12 @@ jobs:
           if [ -f bin/requirements.txt ]; then pip install -r bin/requirements.txt; fi
           rm -fr dist/*
           python3 setup.py egg_info sdist
+          export version=$(egrep -o "__version__ = \".+\"" ja2mqtt/__init__.py | awk '{print $3}')"
+          echo "image_tag=${version}" >> $GITHUB_ENV
           mkdir -p docker/files
           cp dist/*.tar.gz docker/files
           cp config/sample-config.yaml docker/files
           cp config/ja2mqtt.yaml docker/files
-          version=$(egrep -o "__version__ = \".+\"" ja2mqtt/__init__.py | awk '{print $3}')"
-          echo "image_tag=$version" >> $GITHUB_ENV
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
