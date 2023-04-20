@@ -21,6 +21,55 @@ from . import Component
 from .simulator import Simulator
 
 
+class SerialJA121TException(Exception):
+    pass
+
+
+def decode_prfstate(prfstate):
+    """
+    Decode prfstate from a hexadecimal string to a dictionary, where the keys
+    represent the peripheral IDs and the values represent the state (ON/OFF)
+    of the respective peripherals. For details see JA-121T documentation.
+    """
+    try:
+        parts = [
+            bin(int(prfstate[i : i + 2], 16))[2:].zfill(8)
+            for i in range(0, len(prfstate), 2)
+        ]
+
+        peripherals = {}
+        for x in range(0, int(len(prfstate) / 2)):
+            j = 0
+            for y in range(x * 8 + 7, x * 8 - 1, -1):
+                peripherals[y] = parts[x][j]
+                j += 1
+
+        return {
+            str(k): ("ON" if peripherals[k] == "1" else "OFF")
+            for k in sorted(peripherals.keys())
+        }
+    except Exception as e:
+        raise SerialJA121TException(
+            f"Cannot decode prfstate string {prfstate}. {str(e)}"
+        )
+
+def encode_prfstate(prf, prf_state_bits):
+    """
+    Encode prfstate from the prf state object. This is an inverse funtion to decode_prfstate,
+    i.e. it must hold that `encode_prfstate(decode_prfstate(X)) == X`
+    """
+    b = ''.zfill(prf_state_bits)
+    for p in prf.keys():
+        if prf[p] == 'ON':
+            index = int(p)
+            b = b[:index] + '1' + b[index + 1:]
+    r = ''
+    for x in range(len(b) // 8):
+        h = hex(int(b[x*8:x*8+8][::-1], 2))
+        h2 = h[2:].upper().zfill(2)
+        r += h2
+    return r
+
 class Serial(Component):
     """
     Serial provides an interface for the serial port where JA-121T is connected.
@@ -79,7 +128,7 @@ class Serial(Component):
             while not exit_event.is_set():
                 try:
                     if not os.path.exists(self.port):
-                        raise Exception(
+                        raise SerialJA121TException(
                             f"The port {self.port} does not exist in the system. Is it connected?"
                         )
                     self.create_serial()
@@ -119,7 +168,7 @@ class Serial(Component):
     def worker(self, exit_event):
         """
         The main worker of the serial object that reads data from the serial port and
-        puts them to the `buffer` queue. Althoguh the `worker` method (that only reads
+        puts them to the queue `buffer`. Althoguh the `worker` method (that only reads
         the data from the serial port) can run in parallel with the `writeline` method,
         due to the global interpreter lock (https://docs.python.org/3/glossary.html#term-global-interpreter-lock)
         they both should be thread-safe.

@@ -42,6 +42,19 @@ serial2mqtt:
       state: !py data.match.group(1)
 {% endfor %}
 
+{% for v in topology.peripheral if v.type == 'motion-sensor' %}
+- name: ja2mqtt/motion/{{ v.name }}
+  rules:
+  - read: !py prf_state({'{{ v['pos'] }}':'ON'})
+    write:
+      name: {{ v.name }}
+      type: {{ v.type }}
+      pos: {{ v.pos }}
+
+    # allow to process next rule when this rule matches
+    process_next_rule: True
+{% endfor %}
+
 # generic error
 - name: ja2mqtt/error
   rules:
