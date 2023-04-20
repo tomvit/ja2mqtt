@@ -8,17 +8,43 @@ ja2mqtt reads input from the JA-121T serial interface, converts it into MQTT eve
 
 If you do not have access to a JA-121T interface for testing, ja2mqtt offers a simulator that can simulate the interaction with the JA-121T interface. This allows you to test and verify the functionality of ja2mqtt even without the physical JA-121T interface available.
 
+## Features
+
+* Define Jablotron topology in the YAML configuration file, including sections with their codes, names, and peripherals' positions and names.
+* Implement declarative rules in the ja2mqtt.yaml configuration file to support the serial JA-121T protocol.
+* Read events from Jablotron, such as section arming and disarming, peripheral state changes, and convert them to MQTT events.
+* Use MQTT events to query section states and correlate request and response MQTT events.
+* Implement automated recovery from serial interface failures or MQTT broker connection failures.
+* JA-121T simulator that simulates section state changes, peripheral state changes and heartbeat messages. 
+
 ## Testing using Docker
 
 To test ja2mqtt with the JA-121T simulator, you can utilize the ja2mqtt Docker image that comes with pre-configured settings. The simulator provides a straightforward Jablotron topology with two sections: "House" with code "1" and an initial state of "ARMED", and "Garage" with code "2" and an initial state of "READY". This topology can be used to simulate changing the state or retrieving the status of the sections. The simulator also mimics Jablotron heartbeat messages by generating "OK" messages every 10 seconds.
 
-In  order to test ja2mqtt with the simulator, follow the below steps.
+To test ja2mqtt with the simulator, follow the steps below.
 
 1. Run the `docker-compose.yaml` provided in the [docker](https://github.com/tomvit/ja2mqtt/tree/master/docker) directory.
 
    ```
    $ docker-compose up -d
    ```
+
+2. Inspect the logs of ja2mqtt by running the following command:
+
+   ```
+   $ docker logs ja2mqtt
+   ```
+
+3. Publish the MQTT event to retrieve the state of sections as follows:
+
+   ```
+   $ docker exec -it ja2mqtt pub -t ja2mqtt/section/get -d pin=1234
+   <-- send: ja2mqtt/section/get: {"pin": "1234", "corrid": "ca8438b82f16"}
+   --> recv: ja2mqtt/section/house: {"corrid": "ca8438b82f16", "section_code": 1, "section_name": "house", "state": "ARMED"}
+   --> recv: ja2mqtt/section/garage: {"corrid": "ca8438b82f16", "section_code": 2, "section_name": "garage", "state": "READY"}   
+   ```
+
+4. Check the log entries in the ja2mqtt log again to see if the events were generated.
 
 2. Inspect logs of ja2mqtt by running the following command:
 
@@ -38,7 +64,6 @@ In  order to test ja2mqtt with the simulator, follow the below steps.
    2023-04-17 21:59:46,203 [mqtt    ] [I] <-- send: ja2mqtt/section/house, data={"section_code": 1, "section_name": "house", "state": "ARMED"}
    2023-04-17 21:59:46,408 [mqtt    ] [I] <-- send: ja2mqtt/section/garage, data={"section_code": 2, "section_name": "garage", "state": "READY"}
    ```
-
 ## Getting Started
 
 To use ja2mqtt, you will need:

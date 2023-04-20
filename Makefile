@@ -1,10 +1,12 @@
 # Makefile for ja2mqtt
-# uses version from git with commit hash
 
 help:
 	@echo "make <target>"
-	@echo "build	build ja2mqtt."
+	@echo "build	build ja2mqtt package in dist directory."
+	@echo "image    build local dev Docker image"
 	@echo "clean	clean all temporary directories."
+	@echo "format	format the code using black."
+	@echo "require	create requirements.txt from setup.py"
 	@echo ""
 
 build:
@@ -29,3 +31,6 @@ clean:
 
 format:
 	black ja2mqtt
+
+require:
+	bin/requirements-setup-py.sh

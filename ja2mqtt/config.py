@@ -29,6 +29,8 @@ from .utils import (
     deep_merge,
     import_class,
     merge_dicts,
+    randomString,
+    str2bool,
 )
 
 # they must be in a form ${VARIABLE_NAME}
@@ -38,8 +40,12 @@ ENVPARAM_PATTERN = "\$\{%s\}" % ENVNAME_PATTERN
 # consolidated variables supplied via env file and environment variables
 ENV = {}
 
-DEBUG = False
-ANSI_COLORS = True
+DEBUG = str2bool(os.getenv("JA2MQTT_DEBUG", "False"))
+ANSI_COLORS = not str2bool(os.getenv("JA2MQTT_NO_ANSI", "False"))
+CONFIG_FILE = os.getenv("JA2MQTT_CONFIG", None)
+CONFIG_ENV = os.getenv("JA2MQTT_ENV", None)
+
+env_variables = ["JA2MQTT_DEBUG", "JA2MQTT_NO_ANSI", "JA2MQTT_CONFIG", "JA2MQTT_ENV"]
 
 # global exit event
 exit_event = Event()
@@ -387,3 +393,9 @@ def ja2mqtt_def(config):
         scope=Map(topology=config.root("topology")),
         use_template=True,
     )
+
+
+def correlation_id(ja2mqtt):
+    corrid_field = ja2mqtt("system.correlation_id", None)
+    corr_id = randomString(12, letters="abcdef0123456789")
+    return corrid_field, corr_id if corrid_field is not None else None

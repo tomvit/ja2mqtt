@@ -26,10 +26,10 @@ def command_run(config, log):
     bridge.set_mqtt(mqtt)
     bridge.set_serial(serial)
 
-    mqtt.start(ja2mqtt_config.exit_event)
-    serial.start(ja2mqtt_config.exit_event)
+    for x in (mqtt, serial, bridge):
+        x.start(ja2mqtt_config.exit_event)
 
-    mqtt.join()
-    serial.join()
+    for x in (mqtt, serial, bridge):
+        x.join()
 
     log.info("Done.")

@@ -37,6 +37,7 @@ class MQTT(Component):
         self.connected = False
         self.on_connect_ext = None
         self.on_message_ext = None
+        self.on_error_ext = None
         self.log.info(f"The MQTT client configured for {self.address}.")
         self.log.debug(f"The MQTT object is {self}.")
 
@@ -46,6 +47,12 @@ class MQTT(Component):
             + f"reconnect_after={self.reconnect_after}, loop_timeout={self.loop_timeout}, connected={self.connected}"
         )
 
+    def on_error(self, exception):
+        print(str(exception))
+        self.log.error(str(exception))
+        if self.on_error_ext is not None:
+            self.on_error_ext(exception)
+
     def on_message(self, client, userdata, message):
         topic_name = message._topic.decode("utf-8")
         payload = str(message.payload.decode("utf-8"))
@@ -54,20 +61,26 @@ class MQTT(Component):
             try:
                 self.on_message_ext(topic_name, payload)
             except Exception as e:
-                self.log.error(str(e))
+                self.on_error(e)
 
     def on_connect(self, client, userdata, flags, rc):
         self.connected = True
         self.client.on_message = self.on_message
         self.log.info(f"Connected to the MQTT broker at {self.address}:{self.port}")
         if self.on_connect_ext is not None:
-            self.on_connect_ext(client, userdata, flags, rc)
+            try:
+                self.on_connect_ext(client, userdata, flags, rc)
+            except Exception as e:
+                self.on_error(e)
 
     def on_disconnect(self, client, userdata, rc):
-        self.log.info(f"Disconnected from the MQTT broker.")
-        if rc != 0:
-            self.log.error("The client was disconnected unexpectedly.")
-        self.connected = False
+        try:
+            self.log.info(f"Disconnected from the MQTT broker.")
+            self.connected = False
+            if rc != 0:
+                raise Exception("The client was disconnected unexpectedly.")
+        except Exception as e:
+            self.on_error(e)
 
     def init_client(self):
         self.client = mqtt.Client(self.client_name)
@@ -95,9 +108,11 @@ class MQTT(Component):
                     )
                     break
                 except Exception as e:
-                    self.log.error(
-                        f"Cannot connect to the MQTT broker at {self.address}:{self.port}. {str(e)}. "
-                        + f"Will attemmpt to reconnect after {self.reconnect_after} seconds."
+                    self.on_error(
+                        Exception(
+                            f"Cannot connect to the MQTT broker at {self.address}:{self.port}. {str(e)}. "
+                            + f"Will attemmpt to reconnect after {self.reconnect_after} seconds."
+                        )
                     )
                     exit_event.wait(self.reconnect_after)
 
@@ -120,9 +135,11 @@ class MQTT(Component):
                     if not self.connected:
                         raise Exception("Not connected to MQTT broker.")
                 except Exception as e:
-                    self.log.error(
-                        f"Error occurred in the MQTT loop. {str(e)}"
-                        + f"Will attemmpt to reconnect after {self.reconnect_after} seconds."
+                    self.on_error(
+                        Exception(
+                            f"Error occurred in the MQTT loop. {str(e)}"
+                            + f"Will attemmpt to reconnect after {self.reconnect_after} seconds."
+                        )
                     )
                     exit_event.wait(self.reconnect_after)
                     self.__wait_for_connection(exit_event, reconnect=True)

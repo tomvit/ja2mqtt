@@ -8,7 +8,7 @@ import logging
 import re
 import threading
 import time
-from queue import Queue
+from queue import Queue, Empty
 
 import paho.mqtt.client as mqtt
 
@@ -18,6 +18,7 @@ from ja2mqtt.utils import Map, PythonExpression, deep_eval, deep_merge, merge_di
 from . import Component
 from .simulator import Simulator
 
+from .serial import decode_prfstate, SerialJA121TException
 
 class Pattern:
     def __init__(self, pattern):
@@ -31,6 +32,28 @@ class Pattern:
     def __eq__(self, other):
         self.match = self.re.match(other)
         return self.match is not None
+
+
+class PrfState:
+    def __init__(self, prf):
+        if not isinstance(prf, dict) or len([k for k in prf.keys() if re.match('[0-9]+', k)])==0:
+            raise Exception(f"Invalid prf object format: {prf}")
+        self.prf = prf
+        self.prf_decoded = None
+        self.prf_str = None
+
+    def __str__(self):
+        return f"{self.prf_decoded}" if self.prf_decoded is not None else self.prf
+
+    def __eq__(self, other):
+        if other.startswith("PRFSTATE"):
+            d = decode_prfstate(other.split(" ")[1])
+            d_filtered = {
+                k: v for k, v in d.items() if k in self.prf.keys() and re.match(self.prf[k],v)
+            }
+            if len(d_filtered.keys()) > 0:
+                self.prf_decoded = d_filtered
+        return self.prf_decoded is not None
 
 
 class Topic:
@@ -123,6 +146,7 @@ class SerialMQTTBridge(Component):
                 topology=self.config.root("topology"),
                 pattern=lambda x: Pattern(x),
                 format=lambda x, **kwa: x.format(**kwa),
+                prf_state=lambda x: PrfState(x),
             )
         return self._scope
 
@@ -134,6 +158,18 @@ class SerialMQTTBridge(Component):
         else:
             if key in self._scope:
                 del self._scope[key]
+
+    def decode_prfstate(self, data_str, only_on=False):
+        try:
+            prfstate = {}
+            if data_str.startswith("PRFSTATE"):
+                prfstate = decode_prfstate(data_str.split(" ")[1])
+                if only_on:
+                    prfstate = {k: v for k, v in prfstate.items() if v == "ON"}
+                self.log.debug(f"prfstate_decoded={prfstate}")
+            return prfstate
+        except SerialJA121TException as e:
+            self.log.error({str(e)})
 
     def on_mqtt_connect(self, client, userdata, flags, rc):
         for topic in self.topics_mqtt2serial:
@@ -182,6 +218,7 @@ class SerialMQTTBridge(Component):
             )
             return
 
+        prfstate = self.decode_prfstate(data, only_on=True)
         _rule = None
         current_time = time.time()
         for topic in self.topics_serial2mqtt:
@@ -203,10 +240,11 @@ class SerialMQTTBridge(Component):
                                 d2 = deep_eval(d1, self._scope)
                                 write_data = json.dumps(d2)
                                 self.mqtt.publish(topic.name, write_data)
-                                break
+                                if not _rule.process_next_rule:
+                                    break
                         finally:
                             self.update_scope("data", remove=True)
-            if _rule is not None:
+            if _rule is not None and not _rule.process_next_rule:
                 break
 
         if _rule is None:
@@ -219,4 +257,17 @@ class SerialMQTTBridge(Component):
 
     def set_serial(self, serial):
         self.serial = serial
-        serial.on_data_ext = self.on_serial_data
+
+    def worker(self, exit_event):
+        self.log.info("Running bridge worker, reading events from the serial buffer.")
+        try:
+            if self.serial is None:
+                raise Exception("Serial object has not been set!")
+            while not exit_event.is_set():
+                try:
+                    data = self.serial.buffer.get(timeout=1)
+                    self.on_serial_data(data)
+                except Empty as e:
+                    pass
+        finally:
+            self.log.info("Bridge worker ended.")

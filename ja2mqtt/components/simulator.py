@@ -8,6 +8,7 @@ import logging
 import re
 import threading
 import time
+import random
 from queue import Empty, Queue
 
 import paho.mqtt.client as mqtt
@@ -59,6 +60,7 @@ class Simulator:
         self.log = logging.getLogger("simulator")
         self.config = config
         self.response_delay = config.value_int("response_delay", default=0.5)
+        self.prf_state_bits = config.value_int("prf_state_bits", default=24)
         self.rules = [Map(x) for x in config.value("rules")]
         self.sections = {
             str(x["code"]): Section(Map(x)) for x in config.value("sections")
@@ -71,7 +73,7 @@ class Simulator:
     def __str__(self):
         return (
             f"{self.__class__}: pin={self.pin}, timeout={self.timeout}, response_delay={self.response_delay}, "
-            + f"sections={[str(x) for x in self.sections.values()]}, rules={self.rules}"
+            + f"prf_state_bits={self.prf_state_bits}, sections={[str(x) for x in self.sections.values()]}, rules={self.rules}"
         )
 
     def open(self, exit_event):
@@ -142,16 +144,38 @@ class Simulator:
         except Empty:
             return b""
 
+    def scope(self):
+
+        from .serial import encode_prfstate
+
+        def _prf_random_states(*pos, on_prob=0.5):
+            prf = { str(p):("ON" if random.random() < on_prob else "OFF") for p in pos }
+            return "PRFSTATE " + encode_prfstate(prf, self.prf_state_bits)
+
+        return Map(
+            random = lambda a,b: a+round(random.random()*b),
+            prf_randon_states = _prf_random_states,
+        )
+
     def worker(self, exit_event):
+
+        _scope = self.scope()
+
+        def _value(v):
+            if isinstance(v, PythonExpression):
+                return v.eval(_scope)
+            else:
+                return v
+
         try:
             while not exit_event.is_set():
                 current_time = time.time()
                 for rule in self.rules:
-                    if rule.get("time"):
+                    if rule.get("time_next"):
                         if rule.__last_write is None:
                             rule.__last_write = current_time
-                        if current_time - rule.__last_write > rule.time:
-                            self.buffer.put(rule.write)
+                        if current_time - rule.__last_write > _value(rule.time_next):
+                            self.buffer.put(_value(rule.write))
                             rule.__last_write = current_time
                 exit_event.wait(0.5)
         finally:

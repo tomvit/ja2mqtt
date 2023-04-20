@@ -23,6 +23,7 @@ class BaseCommand(click.core.Command):
                 metavar="<file>",
                 required=True,
                 help="Configuration file",
+                default=ja2mqtt_config.CONFIG_FILE,
             ),
         )
         self.params.insert(
@@ -32,6 +33,7 @@ class BaseCommand(click.core.Command):
                 metavar="<file>",
                 required=False,
                 help="Environment variable file",
+                default=ja2mqtt_config.CONFIG_ENV,
             ),
         )
 

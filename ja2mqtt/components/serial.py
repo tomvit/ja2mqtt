@@ -21,12 +21,66 @@ from . import Component
 from .simulator import Simulator
 
 
+class SerialJA121TException(Exception):
+    pass
+
+
+def decode_prfstate(prfstate):
+    """
+    Decode prfstate from a hexadecimal string to a dictionary, where the keys
+    represent the peripheral IDs and the values represent the state (ON/OFF)
+    of the respective peripherals. For details see JA-121T documentation.
+    """
+    try:
+        parts = [
+            bin(int(prfstate[i : i + 2], 16))[2:].zfill(8)
+            for i in range(0, len(prfstate), 2)
+        ]
+
+        peripherals = {}
+        for x in range(0, int(len(prfstate) / 2)):
+            j = 0
+            for y in range(x * 8 + 7, x * 8 - 1, -1):
+                peripherals[y] = parts[x][j]
+                j += 1
+
+        return {
+            str(k): ("ON" if peripherals[k] == "1" else "OFF")
+            for k in sorted(peripherals.keys())
+        }
+    except Exception as e:
+        raise SerialJA121TException(
+            f"Cannot decode prfstate string {prfstate}. {str(e)}"
+        )
+
+def encode_prfstate(prf, prf_state_bits):
+    """
+    Encode prfstate from the prf state object. This is an inverse funtion to decode_prfstate,
+    i.e. it must hold that `encode_prfstate(decode_prfstate(X)) == X`
+    """
+    b = ''.zfill(prf_state_bits)
+    for p in prf.keys():
+        if prf[p] == 'ON':
+            index = int(p)
+            b = b[:index] + '1' + b[index + 1:]
+    r = ''
+    for x in range(len(b) // 8):
+        h = hex(int(b[x*8:x*8+8][::-1], 2))
+        h2 = h[2:].upper().zfill(2)
+        r += h2
+    return r
+
 class Serial(Component):
     """
     Serial provides an interface for the serial port where JA-121T is connected.
     """
 
     def __init__(self, config):
+        """
+        Initialize the serial object. It reads configuration parameters from the config
+        and creates `ser` object that can be either `PySerial` or `Simulator` based on the
+        `use_simulator` property in the configuration.
+        """
         super().__init__(config.get_part("serial"), "serial")
         self.encoding = self.config.value_bool("encoding", default="ascii")
         self.use_simulator = self.config.value_bool("use_simulator", default=False)
@@ -36,15 +90,18 @@ class Serial(Component):
             self.wait_on_ready = self.config.value_int("wait_on_ready", default=10)
             self.log.info(f"The serial connection configured, the port is {self.port}")
         else:
-            self.port = "<__simulator__>"
+            self.port = "<simulator>"
             self.ser = Simulator(config.get_part("simulator"), self.encoding)
             self.log.info(
                 "The simulation is enabled, events will be simulated. The serial interface is not used."
             )
             self.log.debug(f"The simulator object is {self.ser}")
-        self.on_data_ext = None
+        self.buffer = Queue()
 
     def create_serial(self):
+        """
+        Create serial object and initialize the parameters from the configuration.
+        """
         self.ser = py_serial.serial_for_url(self.port, do_not_open=True)
         self.ser.baudrate = self.config.value_int("baudrate", min=0, default=9600)
         self.ser.bytesize = self.config.value_int("bytesize", min=7, max=8, default=8)
@@ -56,20 +113,22 @@ class Serial(Component):
         self.log.debug(f"The serial object created: {self.ser}")
 
     def is_ready(self):
+        """
+        Retrun True if the serial object exist.
+        """
         return self.ser is not None
 
-    def on_data(self, data):
-        self.log.debug(f"Received data from serial: {data}")
-        if self.on_data_ext is not None:
-            self.on_data_ext(data)
-
     def open(self, exit_event):
+        """
+        Open serial interface. If the interface cannot be opened due to an error, try opening it
+        with frequency of `wait_on_ready` parameter.
+        """
         if self.ser is None:
             self.log.info(f"Opening serial port {self.port}")
             while not exit_event.is_set():
                 try:
                     if not os.path.exists(self.port):
-                        raise Exception(
+                        raise SerialJA121TException(
                             f"The port {self.port} does not exist in the system. Is it connected?"
                         )
                     self.create_serial()
@@ -84,6 +143,9 @@ class Serial(Component):
                     self.ser = None
 
     def close(self):
+        """
+        Close the serial port when it is open.
+        """
         if self.ser is not None:
             self.log.info(f"Closing serial port {self.port}")
             try:
@@ -93,6 +155,10 @@ class Serial(Component):
             self.ser = None
 
     def writeline(self, line):
+        """
+        Write a single line of string to the seiral port. It convers the string to bytes using
+        the defined `encoding` and adds a LF at the end.
+        """
         self.log.debug(f"Writing to serial: {line}")
         try:
             self.ser.write(bytes(line + "\n", self.encoding))
@@ -100,6 +166,13 @@ class Serial(Component):
             self.log.error(str(e))
 
     def worker(self, exit_event):
+        """
+        The main worker of the serial object that reads data from the serial port and
+        puts them to the queue `buffer`. Althoguh the `worker` method (that only reads
+        the data from the serial port) can run in parallel with the `writeline` method,
+        due to the global interpreter lock (https://docs.python.org/3/glossary.html#term-global-interpreter-lock)
+        they both should be thread-safe.
+        """
         self.open(exit_event)
         try:
             while not exit_event.is_set():
@@ -114,18 +187,28 @@ class Serial(Component):
                     continue
                 data_str = x.decode(self.encoding).strip("\r\n").strip()
                 if data_str != "":
-                    self.on_data(data_str)
-                exit_event.wait(0.2)
+                    self.log.debug(f"Received data from serial: {data_str}")
+                    self.buffer.put(data_str)
+                else:
+                    # this is necessary to allow other threads to run too
+                    exit_event.wait(0.2)
         finally:
             self.close()
             self.log.info("Serial worker ended.")
 
     def start(self, exit_event):
+        """
+        Start the worker thread of the serial object. If the simulator is used, this also starts
+        the worker thread of the simulator object.
+        """
         super().start(exit_event)
         if self.use_simulator and isinstance(self.ser, Simulator):
             self.ser.start(exit_event)
 
     def join(self):
+        """
+        Join the worker thread and simulator thread if it exists.
+        """
         super().join()
         if self.use_simulator and isinstance(self.ser, Simulator):
             self.ser.join()
