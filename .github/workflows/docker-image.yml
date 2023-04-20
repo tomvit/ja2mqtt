@@ -23,6 +23,8 @@ jobs:
           python3 setup.py egg_info sdist
           export version=$(egrep -o "__version__ = \".+\"" ja2mqtt/__init__.py | awk '{print $3}' | sed 's/^.//;s/.$//')
           echo "image_tag=${version}" >> $GITHUB_ENV
+          echo $version
+          echo $GITHUB_ENV
           mkdir -p docker/files
           cp dist/*.tar.gz docker/files
           cp config/sample-config.yaml docker/files
