@@ -9,7 +9,7 @@ import click
 import ja2mqtt.config as ja2mqtt_config
 
 from .commands import ja2mqtt
-from .utils import Map
+from .utils import Map, bcolors, format_str_color
 
 
 def signal_quit(signal, frame):
@@ -27,8 +27,13 @@ for sig in ("TERM", "HUP", "INT"):
 try:
     ja2mqtt(prog_name="ja2mqtt")
 except Exception as e:
-    sys.stderr.write(f"ERROR: {str(e)}\n")
+    sys.stderr.write(
+        format_str_color(
+            f"ERROR: {str(e)}\n", bcolors.ERROR, not ja2mqtt_config.ANSI_COLORS
+        )
+    )
     if ja2mqtt_config.DEBUG:
         print("---")
         traceback.print_exc()
         print("---")
+    sys.exit(1)
