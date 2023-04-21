@@ -169,7 +169,7 @@ class Simulator:
 
         return Map(
             random=lambda a, b: a + round(random.random() * b),
-            prf_randon_states=_prf_random_states,
+            prf_random_states=_prf_random_states,
         )
 
     def worker(self, exit_event):

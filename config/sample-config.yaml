@@ -83,4 +83,4 @@ simulator:
   - time_next: !py random(10,20)
     # this will write prfstate event for peripherials on positions 1, 2, 3, 4, 5, 6
     # on_prob is a probability of the ON state, (1-on_prob) is then the probability of the OFF state
-    write: !py prf_randon_states(on_prob=0.8)
+    write: !py prf_random_states(on_prob=0.8)
