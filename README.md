@@ -69,4 +69,4 @@ ja2mqtt is a CLI that provides the following commands. You can use the `--help` 
 * `config main` - shows the main configuration in JSON.
 * `config ja2mqtt` - shows the ja2mqtt definition file after Jinja2 templating is processed.
 * `config env` - shows the environment variables used by ja2mqtt.
-* `config topics` - shows publishing and subscribing topics."
+* `config topics` - shows publishing and subscribing topics.
