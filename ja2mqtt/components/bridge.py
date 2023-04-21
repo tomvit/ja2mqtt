@@ -121,7 +121,7 @@ class SerialMQTTBridge(Component):
         self.correlation_id = ja2mqtt("system.correlation_id", None)
         self.correlation_timeout = ja2mqtt("system.correlation_timeout", 0)
         self.topic_sys_error = ja2mqtt("system.topic_sys_error", None)
-        self.prfstate_bits = ja2mqtt("system.prfstate_bits", 24)
+        self.prfstate_bits = ja2mqtt("system.prfstate_bits", 128)
         self.request = None
         self.prfstate = [decode_prfstate(''.zfill(self.prfstate_bits))]
 
@@ -153,6 +153,13 @@ class SerialMQTTBridge(Component):
         return data
 
     def scope(self):
+
+        def _write_prf_state(reset=False):
+            if reset:
+                self.log.debug("Reseting prfstate object to None.")
+                self.prfstate = []
+            return "PRFSTATE"
+
         if self._scope is None:
             self._scope = Map(
                 topology=self.config.root("topology"),
@@ -161,6 +168,7 @@ class SerialMQTTBridge(Component):
                 prf_state_change=lambda pos: PrfStateChange(
                     str(pos), self.prfstate[-2] if len(self.prfstate) > 1 else None
                 ),
+                write_prf_state=_write_prf_state,
             )
         return self._scope
 

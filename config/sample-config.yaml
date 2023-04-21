@@ -36,14 +36,23 @@ topology:
       type: central-unit
       pos: 0
     - name: house/entrance
-      type: motion-sensor
+      type: motion
       pos: 1
     - name: house/upperfloor/hall
-      type: motion-sensor
+      type: motion
       pos: 2
     - name: house/upperfloor/livingroom
-      type: motion-sensor
+      type: motion
       pos: 3
+    - name: house/upperfloor/smoke
+      type: smoke
+      pos: 4
+    - name: house/siren
+      type: siren
+      pos: 5
+    - name: garage/gate
+      type: magnet
+      pos: 6
 
 # When serial.use_simulator is True, the below configuration defines how events will be generated for ja2mqtt
 simulator:
@@ -58,11 +67,11 @@ simulator:
     - code: 4
       state: OFF
 
+  # positions of peripherals to be simulated
+  peripherals: 1,2,3,4,5,6
+
   # delay in seconds when responding to a command
   response_delay: 0.5
-
-  # number of bits in prfstate event
-  prf_state_bits: 24
 
   # list of rules that will generate sinulated events
   rules:
@@ -72,6 +81,6 @@ simulator:
 
   # prf state will occur once every 10-20 seconds
   - time_next: !py random(10,20)
-    # this will write prfstate event for peripherials on positions 1, 2, 3
+    # this will write prfstate event for peripherials on positions 1, 2, 3, 4, 5, 6
     # on_prob is a probability of the ON state, (1-on_prob) is then the probability of the OFF state
-    write: !py prf_randon_states(1,2,3, on_prob=0.8)
+    write: !py prf_randon_states(on_prob=0.8)

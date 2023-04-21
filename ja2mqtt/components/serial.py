@@ -182,10 +182,14 @@ class Serial(Component):
                     self.close()
                     self.open(exit_event)
                     continue
-                data_str = x.decode(ENCODING).strip("\r\n").strip()
-                if data_str != "":
-                    self.log.debug(f"Received data from serial: {data_str}")
-                    self.buffer.put(data_str)
+                try:
+                    data_str = x.decode(ENCODING).strip("\r\n").strip()
+                    if data_str != "":
+                        self.log.debug(f"Received data from serial: {data_str}")
+                        self.buffer.put(data_str)
+                except UnicodeDecodeError as e:
+                    self.log.error(str(e))
+                    continue
                 else:
                     # this is necessary to allow other threads to run too
                     exit_event.wait(0.2)

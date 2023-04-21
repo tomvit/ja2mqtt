@@ -18,7 +18,7 @@ ERROR_NO_ACCESS = "ERROR: 3 NO_ACCESS"
 
 from ja2mqtt.config import ENCODING
 
-class SimilatorException(Exception):
+class SimulatorException(Exception):
     pass
 
 
@@ -39,7 +39,7 @@ class Section:
         if self.state == "READY":
             self.state = "ARMED"
             return self.__str__()
-        raise SimilatorException(f"Cannot run command SET. Invalid state {self.state}.")
+        raise SimulatorException(f"Cannot run command SET. Invalid state {self.state}.")
 
     def unset(self):
         if self.state == "READY":
@@ -47,7 +47,7 @@ class Section:
         if self.state == "ARMED":
             self.state = "READY"
             return self.__str__()
-        raise SimilatorException(
+        raise SimulatorException(
             f"Cannot run command UNSET. Invalid state {self.state}."
         )
 
@@ -62,6 +62,7 @@ class Simulator:
         self.sections = {
             str(x["code"]): Section(Map(x)) for x in config.value("sections")
         }
+        self.peripherals = [int(x.strip()) for x in config.value("peripherals", default='').split(',')]
         self.pin = config.value("pin")
         self.timeout = 1
         self.buffer = Queue()
@@ -77,6 +78,9 @@ class Simulator:
 
     def close(self):
         pass
+
+    def generate_prfstate(self, on_prob=0.5):
+        return {str(p): ("ON" if random.random() < on_prob else "OFF") for p in self.peripherals}
 
     def _add_to_buffer(self, data):
         time.sleep(self.response_delay)
@@ -110,7 +114,7 @@ class Simulator:
                     "SET": lambda _: section.set(),
                     "UNSET": lambda _: section.unset(),
                     "N/A": lambda x: (_ for _ in ()).throw(
-                        SimilatorException(f"The command {x} is not implemented.")
+                        SimulatorException(f"The command {x} is not implemented.")
                     ),
                 }.get(command.command, "N/A")(command.command)
                 self._add_to_buffer(data)
@@ -133,6 +137,13 @@ class Simulator:
                 self.buffer.put(str(section))
             return
 
+        # PRFSTATE command
+        command = _match("^(?P<command>PRFSTATE)$", data_str)
+        if command is not None:
+            from .serial import encode_prfstate
+            self._add_to_buffer("PRFSTATE " + encode_prfstate(self.generate_prfstate(on_prob=0.5)))
+            return
+
     def readline(self):
         try:
             return bytes(self.buffer.get(timeout=self.timeout), ENCODING)
@@ -143,7 +154,7 @@ class Simulator:
         from .serial import encode_prfstate
 
         def _prf_random_states(*pos, on_prob=0.5):
-            prf = {str(p): ("ON" if random.random() < on_prob else "OFF") for p in pos}
+            prf = self.generate_prfstate(on_prob)
             return "PRFSTATE " + encode_prfstate(prf, self.prfstate_bits)
 
         return Map(

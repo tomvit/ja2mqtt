@@ -71,7 +71,7 @@ def command_publish(config, topic, data, log, timeout):
         for topic in ja2mqtt.root("serial2mqtt"):
             client.subscribe(topic["name"])
 
-    mqtt = MQTT(f"ja2mqtt-test-{randomString(5)}", config)
+    mqtt = MQTT(f"ja2mqtt-test-{randomString(5)}", config.get_part("mqtt-broker"))
     mqtt.on_message_ext = _wait_for_response
     mqtt.on_connect_ext = _on_connect
     mqtt.start(ja2mqtt_config.exit_event)
