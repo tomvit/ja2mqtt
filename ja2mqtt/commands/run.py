@@ -19,8 +19,8 @@ from . import BaseCommand
 @click.command("run", help="Run command.", cls=BaseCommand)
 def command_run(config, log):
     bridge = SerialMQTTBridge(config)
-    simulator = Simulator(config.get_part('simulator'), bridge.prfstate_bits)
-    serial = Serial(config.get_part('serial'), simulator)
+    simulator = Simulator(config.get_part("simulator"), bridge.prfstate_bits)
+    serial = Serial(config.get_part("serial"), simulator)
     mqtt = MQTT(f"ja2mqtt-client+{randomString(10)}", config.get_part("mqtt-broker"))
 
     bridge.set_mqtt(mqtt)

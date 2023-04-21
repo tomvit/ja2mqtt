@@ -18,6 +18,7 @@ ERROR_NO_ACCESS = "ERROR: 3 NO_ACCESS"
 
 from ja2mqtt.config import ENCODING
 
+
 class SimulatorException(Exception):
     pass
 
@@ -62,7 +63,10 @@ class Simulator:
         self.sections = {
             str(x["code"]): Section(Map(x)) for x in config.value("sections")
         }
-        self.peripherals = [int(x.strip()) for x in config.value("peripherals", default='').split(',')]
+        self.peripherals = [
+            int(x.strip())
+            for x in config.value("peripherals", default="1", required=False).split(",")
+        ]
         self.pin = config.value("pin")
         self.timeout = 1
         self.buffer = Queue()
@@ -80,7 +84,10 @@ class Simulator:
         pass
 
     def generate_prfstate(self, on_prob=0.5):
-        return {str(p): ("ON" if random.random() < on_prob else "OFF") for p in self.peripherals}
+        return {
+            str(p): ("ON" if random.random() < on_prob else "OFF")
+            for p in self.peripherals
+        }
 
     def _add_to_buffer(self, data):
         time.sleep(self.response_delay)
@@ -141,7 +148,10 @@ class Simulator:
         command = _match("^(?P<command>PRFSTATE)$", data_str)
         if command is not None:
             from .serial import encode_prfstate
-            self._add_to_buffer("PRFSTATE " + encode_prfstate(self.generate_prfstate(on_prob=0.5)))
+
+            self._add_to_buffer(
+                "PRFSTATE " + encode_prfstate(self.generate_prfstate(on_prob=0.5))
+            )
             return
 
     def readline(self):

@@ -20,6 +20,7 @@ from ja2mqtt.utils import Map, PythonExpression, deep_eval, deep_merge, merge_di
 from . import Component
 from .simulator import Simulator
 
+
 class SerialJA121TException(Exception):
     pass
 

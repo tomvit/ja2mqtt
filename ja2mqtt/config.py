@@ -236,7 +236,9 @@ class Config:
         )
 
     def __call__(self, path, default=None, type=None, required=True, no_eval=False):
-        return self.root(path, default=default, type=type, required=required, no_eval=no_eval)
+        return self.root(
+            path, default=default, type=type, required=required, no_eval=no_eval
+        )
 
 
 class ConfigPart:

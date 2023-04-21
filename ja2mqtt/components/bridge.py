@@ -123,7 +123,7 @@ class SerialMQTTBridge(Component):
         self.topic_sys_error = ja2mqtt("system.topic_sys_error", None)
         self.prfstate_bits = ja2mqtt("system.prfstate_bits", 128)
         self.request = None
-        self.prfstate = [decode_prfstate(''.zfill(self.prfstate_bits))]
+        self.prfstate = [decode_prfstate("".zfill(self.prfstate_bits))]
 
         self.log.info(f"The ja2mqtt definition file is {ja2mqtt_file}")
         self.log.info(
@@ -153,7 +153,6 @@ class SerialMQTTBridge(Component):
         return data
 
     def scope(self):
-
         def _write_prf_state(reset=False):
             if reset:
                 self.log.debug("Reseting prfstate object to None.")
