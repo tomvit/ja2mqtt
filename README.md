@@ -59,3 +59,14 @@ To use ja2mqtt, you will need:
    ```
 
 * Download the sample configuration file and ja2mqtt definition file from the [config directory](https://github.com/tomvit/ja2mqtt/tree/master/config) of the ja2mqtt GitHub repository. In the sample configuration file, you only need to define your Jablotron topology, such as section names and their numbers.
+
+## Usage
+
+ja2mqtt is a CLI that provides the following commands. You can use the `--help` option to get more information on command usage.
+
+* `run` - the main command that reads/writes data from/to the serial interface and sends/receives MQTT events.
+* `pub` - publishes MQTT events and waits for the response. It uses the correlation ID to relate the event request with the event response.
+* `config main` - shows the main configuration in JSON.
+* `config ja2mqtt` - shows the ja2mqtt definition file after Jinja2 templating is processed.
+* `config env` - shows the environment variables used by ja2mqtt.
+* `config topics` - shows publishing and subscribing topics."
