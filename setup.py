@@ -41,17 +41,22 @@ setup(
     version=__version__,
     description='Jablotron MQTT bridge',
     long_description=read('README-pypi.text'),
+    py_modules=['ja2mqtt'],
     author='Tomas Vitvar',
     author_email='tomas@vitvar.com',
     packages=find_packages(exclude=['tests.*', 'tests']),
     include_package_data=True,
     install_requires=install_requires,
     python_requires='>=3.6.0',
-    scripts=['bin/ja2mqtt'],
+    #scripts=['bin/ja2mqtt'],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Console',
         'Intended Audience :: Developers',
         'Programming Language :: Python :: 3.7',
-    ]
+    ],
+    entry_points='''
+        [console_scripts]
+        ja2mqtt=ja2mqtt.commands.ja2mqtt:ja2mqtt
+    ''',
 )

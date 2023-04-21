@@ -5,15 +5,15 @@ from __future__ import absolute_import, unicode_literals
 
 import json
 import logging
-import time
 import sys
+import time
 
 import click
 
 import ja2mqtt.config as ja2mqtt_config
 from ja2mqtt import __version__ as version
 from ja2mqtt.components import MQTT
-from ja2mqtt.config import Config, init_logging, ja2mqtt_def, correlation_id
+from ja2mqtt.config import Config, correlation_id, init_logging, ja2mqtt_def
 from ja2mqtt.utils import Map, dict_from_string, randomString
 
 from . import BaseCommandLogOnly

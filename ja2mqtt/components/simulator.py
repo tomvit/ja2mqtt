@@ -5,10 +5,10 @@ from __future__ import absolute_import, unicode_literals
 
 import json
 import logging
+import random
 import re
 import threading
 import time
-import random
 from queue import Empty, Queue
 
 import paho.mqtt.client as mqtt

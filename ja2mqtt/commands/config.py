@@ -4,9 +4,9 @@
 from __future__ import absolute_import, unicode_literals
 
 import json
+import os
 
 import click
-import os
 
 from ja2mqtt.config import Config, env_variables
 from ja2mqtt.utils import Map

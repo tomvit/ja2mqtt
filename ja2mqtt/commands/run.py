@@ -9,7 +9,6 @@ import time
 import click
 
 import ja2mqtt.config as ja2mqtt_config
-from ja2mqtt import get_version_string
 from ja2mqtt.components import MQTT, Serial, SerialMQTTBridge
 from ja2mqtt.config import Config, init_logging
 from ja2mqtt.utils import Map, randomString

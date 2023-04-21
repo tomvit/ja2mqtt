@@ -8,7 +8,7 @@ import logging
 import re
 import threading
 import time
-from queue import Queue, Empty
+from queue import Empty, Queue
 
 import paho.mqtt.client as mqtt
 
@@ -16,9 +16,8 @@ from ja2mqtt.config import Config
 from ja2mqtt.utils import Map, PythonExpression, deep_eval, deep_merge, merge_dicts
 
 from . import Component
+from .serial import SerialJA121TException, decode_prfstate
 from .simulator import Simulator
-
-from .serial import decode_prfstate, SerialJA121TException
 
 
 class Pattern:
@@ -107,7 +106,7 @@ class Topic:
 
 class SerialMQTTBridge(Component):
     def __init__(self, config):
-        def _list(topic):
+        def _list(topics):
             return ", ".join(
                 [x.name + ("" if not x.disabled else " (disabled)") for x in topics]
             )
