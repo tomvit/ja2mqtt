@@ -20,7 +20,15 @@ from .simulator import Simulator
 
 from .serial import decode_prfstate, SerialJA121TException
 
+
 class Pattern:
+    """
+    Pattern class is used in the scope to evaluate that a data string matches the pattern
+    defined in the ja2mqtt rule. It is possible to use the equal operator to compare the data string
+    with the pattern object and then use the matcher to retrieve captured groups
+    for the `wrtie` condition of the rule.
+    """
+
     def __init__(self, pattern):
         self.match = None
         self.pattern = pattern
@@ -36,7 +44,10 @@ class Pattern:
 
 class PrfState:
     def __init__(self, prf):
-        if not isinstance(prf, dict) or len([k for k in prf.keys() if re.match('[0-9]+', k)])==0:
+        if (
+            not isinstance(prf, dict)
+            or len([k for k in prf.keys() if re.match("[0-9]+", k)]) == 0
+        ):
             raise Exception(f"Invalid prf object format: {prf}")
         self.prf = prf
         self.prf_decoded = None
@@ -49,7 +60,9 @@ class PrfState:
         if other.startswith("PRFSTATE"):
             d = decode_prfstate(other.split(" ")[1])
             d_filtered = {
-                k: v for k, v in d.items() if k in self.prf.keys() and re.match(self.prf[k],v)
+                k: v
+                for k, v in d.items()
+                if k in self.prf.keys() and re.match(self.prf[k], v)
             }
             if len(d_filtered.keys()) > 0:
                 self.prf_decoded = d_filtered
@@ -75,7 +88,8 @@ class Topic:
                 else:
                     if not isinstance(v, PythonExpression) and type(v) != type(data[k]):
                         raise Exception(
-                            f"Invalid type of property {'.'.join(path)}, found: {type(data[k]).__name__}, expected: {type(v).__name__}"
+                            f"Invalid type of property {'.'.join(path)}, "
+                            + f"found: {type(data[k]).__name__}, expected: {type(v).__name__}"
                         )
                     if type(v) == dict:
                         self.check_rule_data(v, data[k], scope, path)
@@ -84,7 +98,8 @@ class Topic:
                             v = v.eval(scope)
                         if v != data[k]:
                             raise Exception(
-                                f"Invalid value of property {'.'.join(path)}, found: {data[k]}, exepcted: {v}"
+                                f"Invalid value of property {'.'.join(path)}, "
+                                + f"found: {data[k]}, exepcted: {v}"
                             )
         except Exception as e:
             raise Exception(f"Topic data validation failed. {str(e)}")
@@ -92,6 +107,11 @@ class Topic:
 
 class SerialMQTTBridge(Component):
     def __init__(self, config):
+        def _list(topic):
+            return ", ".join(
+                [x.name + ("" if not x.disabled else " (disabled)") for x in topics]
+            )
+
         super().__init__(config, "bridge")
         self.mqtt = None
         self.serial = None
@@ -113,14 +133,11 @@ class SerialMQTTBridge(Component):
 
         self.log.info(f"The ja2mqtt definition file is {ja2mqtt_file}")
         self.log.info(
-            f"There are {len(self.topics_serial2mqtt)} serial2mqtt and {len(self.topics_mqtt2serial)} mqtt2serial topics."
+            f"There are {len(self.topics_serial2mqtt)} serial2mqtt and "
+            + f"{len(self.topics_mqtt2serial)} mqtt2serial topics."
         )
-        self.log.debug(
-            f"The serial2mqtt topics are: {', '.join([x.name + ('' if not x.disabled else ' (disabled)') for x in self.topics_serial2mqtt])}"
-        )
-        self.log.debug(
-            f"The mqtt2serial topics are: {', '.join([x.name + ('' if not x.disabled else ' (disabled)') for x in self.topics_mqtt2serial])}"
-        )
+        self.log.debug(f"The serial2mqtt topics are: {_list(self.topics_serial2mqtt)}")
+        self.log.debug(f"The mqtt2serial topics are: {_list(self.topics_mqtt2serial)}")
 
     def update_correlation(self, data):
         if self.request_queue.qsize() > 0:
@@ -135,7 +152,8 @@ class SerialMQTTBridge(Component):
                 self.request.ttl -= 1
             else:
                 self.log.debug(
-                    "Discarding the request for correlation. The correlation timeout or TTL expired."
+                    "Discarding the request for correlation. The correlation timeout "
+                    + "or TTL expired."
                 )
                 self.request = None
         return data

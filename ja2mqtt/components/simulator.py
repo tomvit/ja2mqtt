@@ -144,20 +144,18 @@ class Simulator:
             return b""
 
     def scope(self):
-
         from .serial import encode_prfstate
 
         def _prf_random_states(*pos, on_prob=0.5):
-            prf = { str(p):("ON" if random.random() < on_prob else "OFF") for p in pos }
+            prf = {str(p): ("ON" if random.random() < on_prob else "OFF") for p in pos}
             return "PRFSTATE " + encode_prfstate(prf, self.prf_state_bits)
 
         return Map(
-            random = lambda a,b: a+round(random.random()*b),
-            prf_randon_states = _prf_random_states,
+            random=lambda a, b: a + round(random.random() * b),
+            prf_randon_states=_prf_random_states,
         )
 
     def worker(self, exit_event):
-
         _scope = self.scope()
 
         def _value(v):
