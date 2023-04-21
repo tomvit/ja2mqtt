@@ -28,6 +28,8 @@ class CoreCommand(click.core.Group):
                     lambda x, y: ja2mqtt_config.exit_event.set(),
                 )
             click.core.Group.invoke(self, ctx)
+        except click.exceptions.Exit as e:
+            sys.exit(int(str(e)))
         except click.core.ClickException as e:
             raise e
         except Exception as e:
