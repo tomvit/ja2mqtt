@@ -93,9 +93,7 @@ mqtt2serial:
 # get prfstate
 - name: ja2mqtt/prfstate/get
   rules:
-    - read:
-        pin: !py pattern("^[0-9]{4}$")
-      write: !py write_prf_state(reset=True)
+    - write: !py write_prf_state(reset=True)
       request_ttl: 128
 
 {% for k,v in topology.section.items() %}

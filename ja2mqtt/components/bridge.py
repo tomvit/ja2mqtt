@@ -212,10 +212,11 @@ class SerialMQTTBridge(Component):
                 if topic.disabled:
                     continue
                 for rule in topic.rules:
-                    topic.check_rule_data(rule.read, data, self.scope())
-                    self.log.debug(
-                        "The event data is valid according to the defined rules."
-                    )
+                    if rule.read is not None:
+                        topic.check_rule_data(rule.read, data, self.scope())
+                        self.log.debug(
+                            "The event data is valid according to the defined rules."
+                        )
                     _data = Map(data)
                     self.update_scope("data", _data)
                     try:
