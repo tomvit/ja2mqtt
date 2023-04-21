@@ -11,8 +11,8 @@ If you do not have access to a JA-121T interface for testing, ja2mqtt offers a s
 * Define Jablotron topology in the YAML configuration file, including sections with their codes, names, and peripherals' positions and names.
 * Implement declarative rules in the ja2mqtt.yaml configuration file to support the serial JA-121T protocol.
 * Read events from Jablotron, such as section arming and disarming, peripheral state changes, and convert them to MQTT events.
-* Use MQTT events to query section states and correlate request and response MQTT events.
-* Implement automated recovery from serial interface failures or MQTT broker connection failures.
+* Use MQTT events to query section and peripheral states and correlate request and response MQTT events.
+* Implement automated recovery from serial interface connection failures or MQTT broker connection failures.
 * JA-121T simulator that simulates section state changes, peripheral state changes and heartbeat messages.
 
 ## Testing using Docker
