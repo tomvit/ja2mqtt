@@ -31,3 +31,4 @@ class Component:
 from .bridge import SerialMQTTBridge
 from .mqtt import MQTT
 from .serial import Serial
+from .simulator import Simulator

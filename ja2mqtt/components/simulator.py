@@ -11,15 +11,12 @@ import threading
 import time
 from queue import Empty, Queue
 
-import paho.mqtt.client as mqtt
-import serial as py_serial
-
-from ja2mqtt.config import Config
 from ja2mqtt.utils import Map, PythonExpression, deep_eval, deep_merge, merge_dicts
 
 ERROR_INVALID_VALUE = "ERROR: 4 INVALID_VALUE"
 ERROR_NO_ACCESS = "ERROR: 3 NO_ACCESS"
 
+from ja2mqtt.config import ENCODING
 
 class SimilatorException(Exception):
     pass
@@ -56,11 +53,11 @@ class Section:
 
 
 class Simulator:
-    def __init__(self, config, encoding):
+    def __init__(self, config, prfstate_bits):
         self.log = logging.getLogger("simulator")
         self.config = config
         self.response_delay = config.value_int("response_delay", default=0.5)
-        self.prf_state_bits = config.value_int("prf_state_bits", default=24)
+        self.prfstate_bits = prfstate_bits
         self.rules = [Map(x) for x in config.value("rules")]
         self.sections = {
             str(x["code"]): Section(Map(x)) for x in config.value("sections")
@@ -68,12 +65,11 @@ class Simulator:
         self.pin = config.value("pin")
         self.timeout = 1
         self.buffer = Queue()
-        self.encoding = encoding
 
     def __str__(self):
         return (
             f"{self.__class__}: pin={self.pin}, timeout={self.timeout}, response_delay={self.response_delay}, "
-            + f"prf_state_bits={self.prf_state_bits}, sections={[str(x) for x in self.sections.values()]}, rules={self.rules}"
+            + f"prfstate_bits={self.prfstate_bits}, sections={[str(x) for x in self.sections.values()]}, rules={self.rules}"
         )
 
     def open(self, exit_event):
@@ -100,7 +96,7 @@ class Simulator:
                 return False
             return True
 
-        data_str = data.decode(self.encoding).strip("\n")
+        data_str = data.decode(ENCODING).strip("\n")
 
         # SET and UNSET commands
         command = _match(
@@ -139,7 +135,7 @@ class Simulator:
 
     def readline(self):
         try:
-            return bytes(self.buffer.get(timeout=self.timeout), self.encoding)
+            return bytes(self.buffer.get(timeout=self.timeout), ENCODING)
         except Empty:
             return b""
 
@@ -148,7 +144,7 @@ class Simulator:
 
         def _prf_random_states(*pos, on_prob=0.5):
             prf = {str(p): ("ON" if random.random() < on_prob else "OFF") for p in pos}
-            return "PRFSTATE " + encode_prfstate(prf, self.prf_state_bits)
+            return "PRFSTATE " + encode_prfstate(prf, self.prfstate_bits)
 
         return Map(
             random=lambda a, b: a + round(random.random() * b),

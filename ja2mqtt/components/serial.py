@@ -14,12 +14,11 @@ from queue import Queue
 import paho.mqtt.client as mqtt
 import serial as py_serial
 
-from ja2mqtt.config import Config
+from ja2mqtt.config import Config, ENCODING
 from ja2mqtt.utils import Map, PythonExpression, deep_eval, deep_merge, merge_dicts
 
 from . import Component
 from .simulator import Simulator
-
 
 class SerialJA121TException(Exception):
     pass
@@ -77,14 +76,13 @@ class Serial(Component):
     Serial provides an interface for the serial port where JA-121T is connected.
     """
 
-    def __init__(self, config):
+    def __init__(self, config, simulator):
         """
         Initialize the serial object. It reads configuration parameters from the config
         and creates `ser` object that can be either `PySerial` or `Simulator` based on the
         `use_simulator` property in the configuration.
         """
-        super().__init__(config.get_part("serial"), "serial")
-        self.encoding = self.config.value_bool("encoding", default="ascii")
+        super().__init__(config, "serial")
         self.use_simulator = self.config.value_bool("use_simulator", default=False)
         if not self.use_simulator:
             self.ser = None
@@ -93,7 +91,7 @@ class Serial(Component):
             self.log.info(f"The serial connection configured, the port is {self.port}")
         else:
             self.port = "<simulator>"
-            self.ser = Simulator(config.get_part("simulator"), self.encoding)
+            self.ser = simulator
             self.log.info("The serial interface events will be simulated.")
             self.log.debug(f"The simulator object is {self.ser}")
         self.buffer = Queue()
@@ -161,7 +159,7 @@ class Serial(Component):
         """
         self.log.debug(f"Writing to serial: {line}")
         try:
-            self.ser.write(bytes(line + "\n", self.encoding))
+            self.ser.write(bytes(line + "\n", ENCODING))
         except Exception as e:
             self.log.error(str(e))
 
@@ -184,7 +182,7 @@ class Serial(Component):
                     self.close()
                     self.open(exit_event)
                     continue
-                data_str = x.decode(self.encoding).strip("\r\n").strip()
+                data_str = x.decode(ENCODING).strip("\r\n").strip()
                 if data_str != "":
                     self.log.debug(f"Received data from serial: {data_str}")
                     self.buffer.put(data_str)

@@ -17,7 +17,6 @@ from ja2mqtt.utils import Map, PythonExpression, deep_eval, deep_merge, merge_di
 
 from . import Component
 from .serial import SerialJA121TException, decode_prfstate
-from .simulator import Simulator
 
 
 class Pattern:
@@ -41,31 +40,25 @@ class Pattern:
         return self.match is not None
 
 
-class PrfState:
-    def __init__(self, prf):
-        if (
-            not isinstance(prf, dict)
-            or len([k for k in prf.keys() if re.match("[0-9]+", k)]) == 0
-        ):
-            raise Exception(f"Invalid prf object format: {prf}")
-        self.prf = prf
-        self.prf_decoded = None
-        self.prf_str = None
+class PrfStateChange:
+    def __init__(self, pos, current_prfstate):
+        self.pos = pos
+        self.current_prfstate = current_prfstate
+        self.state = None
 
     def __str__(self):
-        return f"{self.prf_decoded}" if self.prf_decoded is not None else self.prf
+        return f"position={self.pos}, state={self.state}"
 
     def __eq__(self, other):
         if other.startswith("PRFSTATE"):
             d = decode_prfstate(other.split(" ")[1])
-            d_filtered = {
-                k: v
-                for k, v in d.items()
-                if k in self.prf.keys() and re.match(self.prf[k], v)
-            }
-            if len(d_filtered.keys()) > 0:
-                self.prf_decoded = d_filtered
-        return self.prf_decoded is not None
+            self.state = d[self.pos]
+            return (
+                self.current_prfstate is None
+                or d[self.pos] != self.current_prfstate[self.pos]
+            )
+        else:
+            return False
 
 
 class Topic:
@@ -128,7 +121,9 @@ class SerialMQTTBridge(Component):
         self.correlation_id = ja2mqtt("system.correlation_id", None)
         self.correlation_timeout = ja2mqtt("system.correlation_timeout", 0)
         self.topic_sys_error = ja2mqtt("system.topic_sys_error", None)
+        self.prfstate_bits = ja2mqtt("system.prfstate_bits", 24)
         self.request = None
+        self.prfstate = [decode_prfstate(''.zfill(self.prfstate_bits))]
 
         self.log.info(f"The ja2mqtt definition file is {ja2mqtt_file}")
         self.log.info(
@@ -163,7 +158,9 @@ class SerialMQTTBridge(Component):
                 topology=self.config.root("topology"),
                 pattern=lambda x: Pattern(x),
                 format=lambda x, **kwa: x.format(**kwa),
-                prf_state=lambda x: PrfState(x),
+                prf_state_change=lambda pos: PrfStateChange(
+                    str(pos), self.prfstate[-2] if len(self.prfstate) > 1 else None
+                ),
             )
         return self._scope
 
@@ -176,15 +173,13 @@ class SerialMQTTBridge(Component):
             if key in self._scope:
                 del self._scope[key]
 
-    def decode_prfstate(self, data_str, only_on=False):
+    def update_prfstate(self, data_str):
         try:
-            prfstate = {}
             if data_str.startswith("PRFSTATE"):
-                prfstate = decode_prfstate(data_str.split(" ")[1])
-                if only_on:
-                    prfstate = {k: v for k, v in prfstate.items() if v == "ON"}
-                self.log.debug(f"prfstate_decoded={prfstate}")
-            return prfstate
+                self.prfstate.append(decode_prfstate(data_str.split(" ")[1]))
+                if len(self.prfstate) > 1:
+                    self.prfstate = self.prfstate[-2:]
+                self.log.debug(f"prfstate_decoded={self.prfstate[-1]}")
         except SerialJA121TException as e:
             self.log.error({str(e)})
 
@@ -235,7 +230,7 @@ class SerialMQTTBridge(Component):
             )
             return
 
-        prfstate = self.decode_prfstate(data, only_on=True)
+        self.update_prfstate(data)
         _rule = None
         current_time = time.time()
         for topic in self.topics_serial2mqtt:

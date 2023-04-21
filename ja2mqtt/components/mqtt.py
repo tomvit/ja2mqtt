@@ -26,7 +26,7 @@ class MQTT(Component):
     """
 
     def __init__(self, name, config):
-        super().__init__(config.get_part("mqtt-broker"), "mqtt")
+        super().__init__(config, "mqtt")
         self.client_name = name
         self.address = self.config.value_str("address")
         self.port = self.config.value_int("port", default=1883)

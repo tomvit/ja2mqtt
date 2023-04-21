@@ -47,6 +47,8 @@ CONFIG_ENV = os.getenv("JA2MQTT_ENV", None)
 
 env_variables = ["JA2MQTT_DEBUG", "JA2MQTT_NO_ANSI", "JA2MQTT_CONFIG", "JA2MQTT_ENV"]
 
+ENCODING = "ascii"
+
 # global exit event
 exit_event = Event()
 
@@ -234,7 +236,7 @@ class Config:
         )
 
     def __call__(self, path, default=None, type=None, required=True, no_eval=False):
-        return self.root(path, default=None, type=None, required=True, no_eval=False)
+        return self.root(path, default=default, type=type, required=required, no_eval=no_eval)
 
 
 class ConfigPart:

@@ -15,6 +15,9 @@ system:
   # the request-response will then share the same correlation id
   correlation_timeout: 1.5
 
+  # number of bits in prfstate (default: 24)
+  prfstate_bits: 24
+
 # Definition of MQTT topics for serial output.
 # The topics defined in `serial2mqtt` will be created in MQTT broker according to events that occur in the serial output
 serial2mqtt:
@@ -45,11 +48,12 @@ serial2mqtt:
 {% for v in topology.peripheral if v.type == 'motion-sensor' %}
 - name: ja2mqtt/motion/{{ v.name }}
   rules:
-  - read: !py prf_state({'{{ v['pos'] }}':'ON'})
+  - read: !py prf_state_change('{{ v['pos'] }}')
     write:
       name: {{ v.name }}
       type: {{ v.type }}
       pos: {{ v.pos }}
+      state: !py data.state
 
     # allow to process next rule when this rule matches
     process_next_rule: True
