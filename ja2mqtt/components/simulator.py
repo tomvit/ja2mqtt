@@ -5,23 +5,21 @@ from __future__ import absolute_import, unicode_literals
 
 import json
 import logging
+import random
 import re
 import threading
 import time
-import random
 from queue import Empty, Queue
 
-import paho.mqtt.client as mqtt
-import serial as py_serial
-
-from ja2mqtt.config import Config
 from ja2mqtt.utils import Map, PythonExpression, deep_eval, deep_merge, merge_dicts
 
 ERROR_INVALID_VALUE = "ERROR: 4 INVALID_VALUE"
 ERROR_NO_ACCESS = "ERROR: 3 NO_ACCESS"
 
+from ja2mqtt.config import ENCODING
 
-class SimilatorException(Exception):
+
+class SimulatorException(Exception):
     pass
 
 
@@ -42,7 +40,7 @@ class Section:
         if self.state == "READY":
             self.state = "ARMED"
             return self.__str__()
-        raise SimilatorException(f"Cannot run command SET. Invalid state {self.state}.")
+        raise SimulatorException(f"Cannot run command SET. Invalid state {self.state}.")
 
     def unset(self):
         if self.state == "READY":
@@ -50,30 +48,33 @@ class Section:
         if self.state == "ARMED":
             self.state = "READY"
             return self.__str__()
-        raise SimilatorException(
+        raise SimulatorException(
             f"Cannot run command UNSET. Invalid state {self.state}."
         )
 
 
 class Simulator:
-    def __init__(self, config, encoding):
+    def __init__(self, config, prfstate_bits):
         self.log = logging.getLogger("simulator")
         self.config = config
         self.response_delay = config.value_int("response_delay", default=0.5)
-        self.prf_state_bits = config.value_int("prf_state_bits", default=24)
+        self.prfstate_bits = prfstate_bits
         self.rules = [Map(x) for x in config.value("rules")]
         self.sections = {
             str(x["code"]): Section(Map(x)) for x in config.value("sections")
         }
+        self.peripherals = [
+            int(x.strip())
+            for x in config.value("peripherals", default="1", required=False).split(",")
+        ]
         self.pin = config.value("pin")
         self.timeout = 1
         self.buffer = Queue()
-        self.encoding = encoding
 
     def __str__(self):
         return (
             f"{self.__class__}: pin={self.pin}, timeout={self.timeout}, response_delay={self.response_delay}, "
-            + f"prf_state_bits={self.prf_state_bits}, sections={[str(x) for x in self.sections.values()]}, rules={self.rules}"
+            + f"prfstate_bits={self.prfstate_bits}, sections={[str(x) for x in self.sections.values()]}, rules={self.rules}"
         )
 
     def open(self, exit_event):
@@ -81,6 +82,12 @@ class Simulator:
 
     def close(self):
         pass
+
+    def generate_prfstate(self, on_prob=0.5):
+        return {
+            str(p): ("ON" if random.random() < on_prob else "OFF")
+            for p in self.peripherals
+        }
 
     def _add_to_buffer(self, data):
         time.sleep(self.response_delay)
@@ -100,7 +107,7 @@ class Simulator:
                 return False
             return True
 
-        data_str = data.decode(self.encoding).strip("\n")
+        data_str = data.decode(ENCODING).strip("\n")
 
         # SET and UNSET commands
         command = _match(
@@ -114,7 +121,7 @@ class Simulator:
                     "SET": lambda _: section.set(),
                     "UNSET": lambda _: section.unset(),
                     "N/A": lambda x: (_ for _ in ()).throw(
-                        SimilatorException(f"The command {x} is not implemented.")
+                        SimulatorException(f"The command {x} is not implemented.")
                     ),
                 }.get(command.command, "N/A")(command.command)
                 self._add_to_buffer(data)
@@ -127,7 +134,6 @@ class Simulator:
             "^(?P<pin>[0-9]+) (?P<command>STATE)( (?P<code>[0-9]+))?$", data_str
         )
         if command is not None and _check_pin(command):
-            print(command)
             sections = [
                 x
                 for x in self.sections.values()
@@ -138,27 +144,35 @@ class Simulator:
                 self.buffer.put(str(section))
             return
 
+        # PRFSTATE command
+        command = _match("^(?P<command>PRFSTATE)$", data_str)
+        if command is not None:
+            from .serial import encode_prfstate
+
+            self._add_to_buffer(
+                "PRFSTATE " + encode_prfstate(self.generate_prfstate(on_prob=0.5))
+            )
+            return
+
     def readline(self):
         try:
-            return bytes(self.buffer.get(timeout=self.timeout), self.encoding)
+            return bytes(self.buffer.get(timeout=self.timeout), ENCODING)
         except Empty:
             return b""
 
     def scope(self):
-
         from .serial import encode_prfstate
 
         def _prf_random_states(*pos, on_prob=0.5):
-            prf = { str(p):("ON" if random.random() < on_prob else "OFF") for p in pos }
-            return "PRFSTATE " + encode_prfstate(prf, self.prf_state_bits)
+            prf = self.generate_prfstate(on_prob)
+            return "PRFSTATE " + encode_prfstate(prf, self.prfstate_bits)
 
         return Map(
-            random = lambda a,b: a+round(random.random()*b),
-            prf_randon_states = _prf_random_states,
+            random=lambda a, b: a + round(random.random() * b),
+            prf_random_states=_prf_random_states,
         )
 
     def worker(self, exit_event):
-
         _scope = self.scope()
 
         def _value(v):

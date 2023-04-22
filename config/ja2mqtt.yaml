@@ -15,6 +15,9 @@ system:
   # the request-response will then share the same correlation id
   correlation_timeout: 1.5
 
+  # number of bits in prfstate (default: 128)
+  prfstate_bits: 24
+
 # Definition of MQTT topics for serial output.
 # The topics defined in `serial2mqtt` will be created in MQTT broker according to events that occur in the serial output
 serial2mqtt:
@@ -22,7 +25,7 @@ serial2mqtt:
 # MQTT heartbeat topic; Jablotron writes hearbeat 'OK' messages to serial output
 # that are converted to MQTT heartbeat events
 - name: ja2mqtt/heartbeat
-  disabled: False
+  disabled: True
   rules:
   - read: OK
     write:
@@ -42,14 +45,15 @@ serial2mqtt:
       state: !py data.match.group(1)
 {% endfor %}
 
-{% for v in topology.peripheral if v.type == 'motion-sensor' %}
-- name: ja2mqtt/motion/{{ v.name }}
+{% for v in topology.peripheral if v.type in ['motion','siren','magnet','smoke'] %}
+- name: ja2mqtt/{{ v.type }}/{{ v.name }}
   rules:
-  - read: !py prf_state({'{{ v['pos'] }}':'ON'})
+  - read: !py prf_state_change({{ v['pos'] }})
     write:
       name: {{ v.name }}
       type: {{ v.type }}
       pos: {{ v.pos }}
+      state: !py data.state
 
     # allow to process next rule when this rule matches
     process_next_rule: True
@@ -85,6 +89,12 @@ mqtt2serial:
         pin: !py pattern("^[0-9]{4}$")
       write: !py format("{pin} STATE",pin=data.pin)
       request_ttl: 99
+
+# get prfstate
+- name: ja2mqtt/prfstate/get
+  rules:
+    - write: !py write_prf_state(reset=True)
+      request_ttl: 128
 
 {% for k,v in topology.section.items() %}
 # set state to ARMED for a single section

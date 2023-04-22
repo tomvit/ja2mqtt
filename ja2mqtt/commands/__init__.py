@@ -9,7 +9,7 @@ import click
 from click import Option
 
 import ja2mqtt.config as ja2mqtt_config
-from ja2mqtt import get_version_string
+from ja2mqtt import __version__
 from ja2mqtt.config import Config, init_logging
 
 
@@ -51,9 +51,7 @@ class BaseCommand(click.core.Command):
 
         self.init_logging(config)
         log = logging.getLogger(ctx.command.name + "-loop")
-        log.info(
-            f"ja2mqtt, Jablotron JA-121 Serial MQTT bridge, version {get_version_string()}"
-        )
+        log.info(f"ja2mqtt, Jablotron JA-121 Serial MQTT bridge, version {__version__}")
 
         ctx.params["config"] = config
         ctx.params["log"] = log
@@ -68,35 +66,3 @@ class BaseCommandLogOnly(BaseCommand):
             log_level="DEBUG" if ja2mqtt_config.DEBUG else "INFO",
             handlers=["file"],
         )
-
-
-@click.group()
-@click.option(
-    "--no-ansi",
-    "no_ansi",
-    is_flag=True,
-    default=False,
-    help="Do not use ANSI colors",
-)
-@click.option(
-    "--debug",
-    "debug",
-    is_flag=True,
-    default=False,
-    help="Print debug information",
-)
-@click.version_option(version=get_version_string())
-def ja2mqtt(no_ansi, debug):
-    if no_ansi:
-        ja2mqtt_config.ANSI_COLORS = False
-    if debug:
-        ja2mqtt_config.DEBUG = True
-
-
-from .config import command_config
-from .run import command_run
-from .test import command_publish
-
-ja2mqtt.add_command(command_run)
-ja2mqtt.add_command(command_config)
-ja2mqtt.add_command(command_publish)

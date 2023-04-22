@@ -14,7 +14,7 @@ from queue import Queue
 import paho.mqtt.client as mqtt
 import serial as py_serial
 
-from ja2mqtt.config import Config
+from ja2mqtt.config import Config, ENCODING
 from ja2mqtt.utils import Map, PythonExpression, deep_eval, deep_merge, merge_dicts
 
 from . import Component
@@ -53,36 +53,37 @@ def decode_prfstate(prfstate):
             f"Cannot decode prfstate string {prfstate}. {str(e)}"
         )
 
-def encode_prfstate(prf, prf_state_bits):
+
+def encode_prfstate(prf, prf_state_bits=24):
     """
     Encode prfstate from the prf state object. This is an inverse funtion to decode_prfstate,
     i.e. it must hold that `encode_prfstate(decode_prfstate(X)) == X`
     """
-    b = ''.zfill(prf_state_bits)
+    b = "".zfill(prf_state_bits)
     for p in prf.keys():
-        if prf[p] == 'ON':
+        if prf[p] == "ON":
             index = int(p)
-            b = b[:index] + '1' + b[index + 1:]
-    r = ''
+            b = b[:index] + "1" + b[index + 1 :]
+    r = ""
     for x in range(len(b) // 8):
-        h = hex(int(b[x*8:x*8+8][::-1], 2))
+        h = hex(int(b[x * 8 : x * 8 + 8][::-1], 2))
         h2 = h[2:].upper().zfill(2)
         r += h2
     return r
+
 
 class Serial(Component):
     """
     Serial provides an interface for the serial port where JA-121T is connected.
     """
 
-    def __init__(self, config):
+    def __init__(self, config, simulator):
         """
         Initialize the serial object. It reads configuration parameters from the config
         and creates `ser` object that can be either `PySerial` or `Simulator` based on the
         `use_simulator` property in the configuration.
         """
-        super().__init__(config.get_part("serial"), "serial")
-        self.encoding = self.config.value_bool("encoding", default="ascii")
+        super().__init__(config, "serial")
         self.use_simulator = self.config.value_bool("use_simulator", default=False)
         if not self.use_simulator:
             self.ser = None
@@ -91,10 +92,8 @@ class Serial(Component):
             self.log.info(f"The serial connection configured, the port is {self.port}")
         else:
             self.port = "<simulator>"
-            self.ser = Simulator(config.get_part("simulator"), self.encoding)
-            self.log.info(
-                "The simulation is enabled, events will be simulated. The serial interface is not used."
-            )
+            self.ser = simulator
+            self.log.info("The serial interface events will be simulated.")
             self.log.debug(f"The simulator object is {self.ser}")
         self.buffer = Queue()
 
@@ -120,8 +119,8 @@ class Serial(Component):
 
     def open(self, exit_event):
         """
-        Open serial interface. If the interface cannot be opened due to an error, try opening it
-        with frequency of `wait_on_ready` parameter.
+        Open serial interface. If the interface cannot be opened due to an error,
+        try opening it with frequency of `wait_on_ready` parameter.
         """
         if self.ser is None:
             self.log.info(f"Opening serial port {self.port}")
@@ -161,7 +160,7 @@ class Serial(Component):
         """
         self.log.debug(f"Writing to serial: {line}")
         try:
-            self.ser.write(bytes(line + "\n", self.encoding))
+            self.ser.write(bytes(line + "\n", ENCODING))
         except Exception as e:
             self.log.error(str(e))
 
@@ -170,8 +169,7 @@ class Serial(Component):
         The main worker of the serial object that reads data from the serial port and
         puts them to the queue `buffer`. Althoguh the `worker` method (that only reads
         the data from the serial port) can run in parallel with the `writeline` method,
-        due to the global interpreter lock (https://docs.python.org/3/glossary.html#term-global-interpreter-lock)
-        they both should be thread-safe.
+        due to the "global interpreter lock" they both should be thread-safe.
         """
         self.open(exit_event)
         try:
@@ -185,10 +183,14 @@ class Serial(Component):
                     self.close()
                     self.open(exit_event)
                     continue
-                data_str = x.decode(self.encoding).strip("\r\n").strip()
-                if data_str != "":
-                    self.log.debug(f"Received data from serial: {data_str}")
-                    self.buffer.put(data_str)
+                try:
+                    data_str = x.decode(ENCODING).strip("\r\n").strip()
+                    if data_str != "":
+                        self.log.debug(f"Received data from serial: {data_str}")
+                        self.buffer.put(data_str)
+                except UnicodeDecodeError as e:
+                    self.log.error(str(e))
+                    continue
                 else:
                     # this is necessary to allow other threads to run too
                     exit_event.wait(0.2)
