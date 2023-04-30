@@ -35,13 +35,13 @@ serial2mqtt:
     no_correlation: True
 
 # MQTT topics for sections that will be generated when events in serial output occur
-{% for k,v in topology.section.items() %}
-- name: ja2mqtt/section/{{ k }}
+{% for s in topology.section %}
+- name: ja2mqtt/section/{{ s.name }}
   rules:
-  - read: !py pattern('STATE {{ v }} (READY|ARMED_PART|ARMED|SERVICE|BLOCKED|OFF)')
+  - read: !py pattern('STATE {{ s.code }} (READY|ARMED_PART|ARMED|SERVICE|BLOCKED|OFF)')
     write:
-      section_code: {{ v }}
-      section_name: {{ k }}
+      section_code: {{ s.code }}
+      section_name: {{ s.name }}
       state: !py data.match.group(1)
 {% endfor %}
 
@@ -96,32 +96,32 @@ mqtt2serial:
     - write: !py write_prf_state(reset=True)
       request_ttl: 128
 
-{% for k,v in topology.section.items() %}
+{% for s in topology.section %}
 # set state to ARMED for a single section
-- name: ja2mqtt/section/{{ k }}/set
+- name: ja2mqtt/section/{{ s.name }}/set
   rules:
     - read:
         pin: !py pattern("^[0-9]{4}$")
-      write: !py format("{pin} SET {{ v }}",pin=data.pin)
+      write: !py format("{pin} SET {{ s.code }}",pin=data.pin)
 
 # set state to ARMED_PART for a single section
-- name: ja2mqtt/section/{{ k }}/setp
+- name: ja2mqtt/section/{{ s.name }}/setp
   rules:
     - read:
         pin: !py pattern("^[0-9]{4}$")
-      write: !py format("{pin} SETP {{ v }}",pin=data.pin)
+      write: !py format("{pin} SETP {{ s.code }}",pin=data.pin)
 
 # unset a single section
-- name: ja2mqtt/section/{{ k }}/unset
+- name: ja2mqtt/section/{{ s.name }}/unset
   rules:
     - read:
         pin: !py pattern("^[0-9]{4}$")
-      write: !py format("{pin} UNSET {{ v }}",pin=data.pin)
+      write: !py format("{pin} UNSET {{ s.code }}",pin=data.pin)
 
 # get state of a single section
-- name: ja2mqtt/section/{{ k }}/get
+- name: ja2mqtt/section/{{ s.name }}/get
   rules:
     - read:
         pin: !py pattern("^[0-9]{4}$")
-      write: !py format("{pin} STATE {{ v }}",pin=data.pin)
+      write: !py format("{pin} STATE {{ s.code }}",pin=data.pin)
 {% endfor %}
