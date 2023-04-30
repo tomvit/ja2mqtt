@@ -47,7 +47,8 @@ class BaseCommand(click.core.Command):
     def invoke(self, ctx):
         config_file = ctx.params.pop("config")
         env_file = ctx.params.pop("env")
-        config = Config(config_file, env_file)
+        config = Config(config_file, env_file, schema="config-schema.yaml")
+        config.validate()
 
         self.init_logging(config)
         log = logging.getLogger(ctx.command.name + "-loop")

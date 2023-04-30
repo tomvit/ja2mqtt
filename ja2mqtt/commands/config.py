@@ -42,6 +42,7 @@ def config_env():
         print(f"{e}={os.getenv(e)}")
     print("")
 
+
 @click.command("topics", help="Show MQTT topics.", cls=BaseCommandLogOnly)
 def config_topics(config, log):
     ja2mqtt_file = config.get_dir_path(config.root("ja2mqtt"))
