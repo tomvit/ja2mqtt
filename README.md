@@ -62,7 +62,7 @@ In addition, ja2mqtt requires a running instance of [MQTT broker](https://mqtt.o
 
 <!-- end quickstart -->
 
-### Requirements and installation
+## Requirements and installation
 
 To use ja2mqtt, you will need:
 
