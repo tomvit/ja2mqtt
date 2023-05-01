@@ -214,7 +214,6 @@ def py_constructor(loader, node):
             % (node.value, str(e))
         )
 
-
 class Config:
     """
     The main confuguration.
@@ -245,6 +244,14 @@ class Config:
                 get_schema_file(schema), None, use_template=False
             )[0]
 
+    def check_dupplicates(self, path):
+        _path = path.split('.')
+        _prop = _path[-1]
+        values = [x[_prop] for x in self('.'.join(_path[:-1]),[],required=False)]
+        dupplicates = list(set([x for x in values if values.count(x) > 1]))
+        if len(dupplicates) > 0:
+            raise Exception(f"There are dupplicate values in '{path}': {dupplicates}")
+
     def validate(self, throw_ex=True):
         def __version(c, i):
             return i in SCHEMA_VERSIONS
@@ -265,6 +272,7 @@ class Config:
         ConfigValidator = extend(Draft7Validator, type_checker=type_checker)
         validator = ConfigValidator(self.schema)
         errors = list(validator.iter_errors(self.raw_config))
+
         if errors:
             for e in errors:
                 print(e.message)
@@ -274,6 +282,9 @@ class Config:
                 )
             return errors
         else:
+            self.check_dupplicates('topology.section.code')
+            self.check_dupplicates('topology.peripheral.pos')
+            self.check_dupplicates('simulator.sections.code')
             return True
 
     def get_dir_path(self, path, base_dir=None, check=False):
