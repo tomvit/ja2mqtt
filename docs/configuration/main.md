@@ -1,6 +1,6 @@
 # Main configuration
 
-The main configuration defines the serial interface where JA-121T serial bus is connected to, MQTT broker connection details and your Jablotron topology.
+The main configuration defines the serial interface where JA-121T serial bus is connected to, MQTT broker connection details, your Jablotron topology and an optional simulator.
 
 The configuration file includes a version property that defines the version of the configuration file. ja2mqtt uses this property to check if the version is supported. The current supported version is `1.0`.
 
@@ -87,3 +87,30 @@ Ja2mqtt utilizes the Jablotron topology to define MQTT events that can be publis
 ## Simulator
 
 The simulator is a component of ja2mqtt that replicates the JA-121T protocol in a way that resembles the JA-121T serial bus interface. Its primary purpose is to enable testing of ja2mqtt's functionality without requiring a JA-121T serial bus interface or a Jablotron system. The simulator is utilised only when the `use_simulator` property is set to `True` in the definition of the [serial interface](#serial-interface).
+
+The `pin` property specifies a PIN that must be entered to modify the state of the sections. The `sections` property is a list of sections that the simulator will use, each with a code and an initial state of `ARMED`, `READY`, or `OFF`. Note that the section codes must exist in the topology.
+
+The `response_delay` property specifies the time in seconds that the simulator will wait after receiving a request message before sending the response. This is used, for instance, when the user changes the state of a section, and the simulator records the new section state.
+
+```yaml
+simulator:
+  pin: 1234
+  sections:
+    - code: 1
+      state: "ARMED"
+    - code: 2
+      state: "READY"
+  response_delay: 0.5
+```
+
+The `rules` property specifies rules for simulating various events based on their time occurrence. It has two sub-properties: `time_next`, which defines the time interval in seconds at which the event should occur, and `write`, which defines the data to be written to the simulated serial interface. Both sub-properties can have a value (either a string or an integer) or a Python expression.
+
+For instance, consider the following YAML definition, where the first rule generates a heartbeat event every 10 seconds, and the second rule generates a random `prfstate` event once every 10-20 seconds. The `prf_random_states` function is used with a probability of `0.8` to simulate the `ON` state of any of the three peripherals, with peripheral positions `1`, `2`, and `3`. Note that the three peripheral positions should exist in the topology.
+
+```yaml
+rules:
+- time_next: 10
+  write: OK
+- time_next: !py random(10,20)
+  write: !py prf_random_states(1,2,3, on_prob=0.8)
+```
