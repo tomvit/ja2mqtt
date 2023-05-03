@@ -10,6 +10,19 @@ ja2mqtt reads input from the JA-121T serial interface, converts it into MQTT eve
 
 If you do not have access to a JA-121T interface for testing, ja2mqtt offers a simulator that can simulate the interaction with the JA-121T interface. This allows you to test and verify the functionality of ja2mqtt even without the physical JA-121T interface available.
 
+## Features
+
+<!-- start features -->
+
+* Jablotron topology definition in the YAML configuration file, including sections and their codes, names, and peripherals' positions, types, and names.
+* Declarative rules that define how JA-121T serial bus protocol is implemented.
+* Reading events from Jablotron, such as section arming and disarming, peripheral state changes, and converting them to MQTT events.
+* MQTT topics that clients can use to retrieve section and peripheral states.
+* Automated recovery of serial interface and MQTT broker connection failures.
+* JA-121T simulator to simulate section state changes, peripheral state changes, and heartbeat messages.
+
+<!-- end features -->
+
 ## Quickstart
 
 <!-- start quickstart -->
@@ -77,15 +90,6 @@ To use ja2mqtt, you will need:
    ```
 
 * Download the sample configuration file and ja2mqtt definition file from the [config directory](https://github.com/tomvit/ja2mqtt/tree/master/config) of the ja2mqtt GitHub repository. In the sample configuration file, you only need to define your Jablotron topology, such as section names and their numbers.
-
-## Features
-
-* Define Jablotron topology in the YAML configuration file, including sections with their codes, names, and peripherals' positions and names.
-* Implement declarative rules in the ja2mqtt.yaml configuration file to support the serial JA-121T protocol.
-* Read events from Jablotron, such as section arming and disarming, peripheral state changes, and convert them to MQTT events.
-* Use MQTT events to query section and peripheral states and correlate request and response MQTT events.
-* Implement automated recovery from serial interface connection failures or MQTT broker connection failures.
-* JA-121T simulator that simulates section state changes, peripheral state changes and heartbeat messages.
 
 <!-- ## Usage
 

@@ -6,6 +6,8 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+from ja2mqtt import __version__
+
 project = 'ja2mqtt'
 copyright = '2023, Tomas Vitvar'
 author = 'Tomas Vitvar'
@@ -14,18 +16,21 @@ release = '1.0'
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ['myst_parser']
+extensions = ['myst_parser',  'sphinx.ext.autosectionlabel']
 
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
+myst_heading_anchors = 2
+autosectionlabel_prefix_document = True
 
+highlight_language = 'jinja'
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "furo"
-html_title = "ja2mqtt"
+html_title = f"ja2mqtt v{__version__}"
 language = "en"
 
 html_static_path = ["_static"]
