@@ -6,7 +6,9 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-from ja2mqtt import __version__
+#from ja2mqtt import __version__
+
+__version__ = "1.0.4.dev"
 
 project = 'ja2mqtt'
 copyright = '2023, Tomas Vitvar'
