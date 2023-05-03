@@ -118,4 +118,4 @@ Here's the example YAML configuration:
 ```
 ### Subscribing topics
 
-ja2mqtt subscribes to a number of topics to receive requests that a client can use to control Jablotron system.
+ja2mqtt subscribes to a number of topics to receive requests that a client can use to query and control Jablotron system.
