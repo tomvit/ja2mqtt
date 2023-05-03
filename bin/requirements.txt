@@ -3,3 +3,6 @@ Jinja2>=3.0.3
 paho-mqtt>=1.6.1
 pyserial>=3.5
 PyYAML>=6.0
+sphinx
+myst_parser
+furo
