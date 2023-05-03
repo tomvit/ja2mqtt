@@ -38,7 +38,7 @@ jobs:
           python -m pip install --upgrade pip
           if [ -f bin/requirements.txt ]; then pip install -r bin/requirements.txt; fi
           cd docs
-          make build
+          make html
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
