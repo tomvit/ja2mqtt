@@ -1,0 +1,394 @@
+<!doctype html>
+<html class="no-js" lang="en">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="prev" title="Main configuration" href="main.html" />
+
+    <!-- Generated with Sphinx 6.2.1 and Furo 2023.03.27 -->
+        <title>Protocol definition - ja2mqtt v1.0.4.dev</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?digest=fad236701ea90a88636c2a8c73b44ae642ed2a53" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
+    <link rel="stylesheet" type="text/css" href="../_static/pied-piper-admonition.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">ja2mqtt v1.0.4.dev</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  
+  
+  <span class="sidebar-brand-text">ja2mqtt v1.0.4.dev</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart</a></li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Configuration</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="main.html">Main configuration</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Protocol definition</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="edit-this-page">
+  <a class="muted-link" href="https://github.com/tomvit/ja2mqtt/edit/main/docs/configuration/ja2mqtt.md" title="Edit this page">
+    <svg aria-hidden="true" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <path d="M4 20h4l10.5 -10.5a1.5 1.5 0 0 0 -4 -4l-10.5 10.5v4" />
+      <line x1="13.5" y1="6.5" x2="17.5" y2="10.5" />
+    </svg>
+    <span class="visually-hidden">Edit this page</span>
+  </a>
+</div><div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="protocol-definition">
+<h1>Protocol definition<a class="headerlink" href="#protocol-definition" title="Permalink to this heading">#</a></h1>
+<p>The JA-121T protocol definition provides a definition of generic system properties, as well as two groups of MQTT topics. The first group consists of a list of topics where ja2mqtt publishes state changes as they occur in Jablotron. The second group consists of a list of topics that ja2mqtt subscribes to, which clients can use to query section and peripheral states. The protocol definition is a YAML configuration file that uses <a class="reference external" href="https://jinja.palletsprojects.com/en/3.1.x/">Jinja2 template</a> with data from the <a class="reference internal" href="main.html#topology"><span class="std std-ref">Jablotron topology</span></a> provided in the main configuration file.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The protocol definition is provided in <code class="docutils literal notranslate"><span class="pre">ja2mqtt.yaml</span></code> and you normally do not need to modify this file unless you want to change the way how JA121 protocol is implemented by ja2mqtt.</p>
+</div>
+<p>The definition file should include a <code class="docutils literal notranslate"><span class="pre">version</span></code> property that defines the schema version of the file. ja2mqtt validates the file against the schema of the specified version, and the valid version is <code class="docutils literal notranslate"><span class="pre">1.0</span></code>.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
+</pre></div>
+</div>
+<section id="system-properties">
+<h2>System properties<a class="headerlink" href="#system-properties" title="Permalink to this heading">#</a></h2>
+<p>The system properties provide a definition for the correlation ID, correlation timeout, and the number of bits in peripheral states.</p>
+<p>The correlation ID is the field name in incoming requests (received via a topic that ja2mqtt is subscribed to) that ja2mqtt copies to the outgoing response (sent via a topic that ja2mqtt publishes). The correlation timeout is the maximum time in seconds that ja2mqtt uses to relate incoming and outgoing events and to which the correlation ID applies. When correlation ID is not present, ja2mqtt will not correlate any data.</p>
+<p>The property <code class="docutils literal notranslate"><span class="pre">prfstate_bits</span></code> defines a number of bits in <code class="docutils literal notranslate"><span class="pre">PRFSTATE</span></code> object. This value depends on a number of peripherals that your Jablotron system uses.</p>
+<p>The following configuration shows the system property definitions with initial values.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">system</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">correlation_id</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;corrid&#39;</span>
+<span class="w">  </span><span class="nt">correlation_timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.5</span>
+<span class="w">  </span><span class="nt">prfstate_bits</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">24</span>
+</pre></div>
+</div>
+</section>
+<section id="jinja-templates">
+<h2>Jinja templates<a class="headerlink" href="#jinja-templates" title="Permalink to this heading">#</a></h2>
+<p>The Jablotron topology may have multiple sections and peripherals that could have different rules but share the same parameters. To address this, ja2mqtt definition file utilizes Jinja2 templates and Jablotron topology data to define parametrized publishing and subscribing topic rules.</p>
+<p>For instance, the following code shows how MQTT topics for all sections can be defined:</p>
+<div class="highlight-jinja notranslate"><div class="highlight"><pre><span></span><span class="cp">{%</span> <span class="k">for</span> <span class="nv">s</span> <span class="k">in</span> <span class="nv">topology.section</span> <span class="cp">%}</span>
+<span class="x">- name: ja2mqtt/section/</span><span class="cp">{{</span> <span class="nv">s.name</span> <span class="cp">}}</span>
+<span class="x">  rules:</span>
+<span class="x">  - read: !py pattern(&#39;STATE </span><span class="cp">{{</span> <span class="nv">s.code</span> <span class="cp">}}</span><span class="x"> (READY|ARMED_PART|ARMED|SERVICE|BLOCKED|OFF)&#39;)</span>
+<span class="x">    write:</span>
+<span class="x">      section_code: </span><span class="cp">{{</span> <span class="nv">s.code</span> <span class="cp">}}</span>
+<span class="x">      section_name: </span><span class="cp">{{</span> <span class="nv">s.name</span> <span class="cp">}}</span>
+<span class="x">      state: !py data.match.group(1)</span>
+<span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+</pre></div>
+</div>
+<p>This code uses a <code class="docutils literal notranslate"><span class="pre">for</span></code> loop to iterate through all sections in the topology and generates MQTT topics based on the specified rules.</p>
+</section>
+<section id="mqtt-topics">
+<h2>MQTT topics<a class="headerlink" href="#mqtt-topics" title="Permalink to this heading">#</a></h2>
+<p>ja2mqtt publishes events on a number of topics and subscribes to topics to receive requests to query or control Jablotron system. Any topic starts with <code class="docutils literal notranslate"><span class="pre">ja2mqtt</span></code> and is followed by a type and an optional sub-type or a location. The topic names are automatically generated based on ja2mqtt topic definition and Jablotron topology.</p>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>You can use the command <code class="docutils literal notranslate"><span class="pre">ja2mqtt</span> <span class="pre">config</span> <span class="pre">topics</span> <span class="pre">-c</span> <span class="pre">config.yaml</span></code> to retrieve the publishing and subscribing topics that your configuration defines.</p>
+</div>
+<section id="publishing-topics">
+<h3>Publishing topics<a class="headerlink" href="#publishing-topics" title="Permalink to this heading">#</a></h3>
+<p>ja2mqtt utilizes MQTT topics to publish state changes for both sections and peripherals. The topics include general-purpose topics such as <code class="docutils literal notranslate"><span class="pre">ja2mqtt/heartbeat</span></code>, <code class="docutils literal notranslate"><span class="pre">ja2mqtt/error</span></code>, and <code class="docutils literal notranslate"><span class="pre">ja2mqtt/response</span></code>, as well as specific topics for section and peripheral state changes. The publishing topics are defined in the <code class="docutils literal notranslate"><span class="pre">serial2mqtt</span></code> property, which apart from the topic name it also defines a set of rules that determine the data to be read from the serial interface and written to MQTT.</p>
+<section id="sections">
+<h4>Sections<a class="headerlink" href="#sections" title="Permalink to this heading">#</a></h4>
+<p>The section topics follow the format <code class="docutils literal notranslate"><span class="pre">ja2mqtt/section/{name}</span></code>, where <code class="docutils literal notranslate"><span class="pre">{name}</span></code> refers to the section name. As an example of a topic and a rule for the <code class="docutils literal notranslate"><span class="pre">house</span></code> section, suppose we have the following configuration that specifies a topic for publishing section state changes under the name <code class="docutils literal notranslate"><span class="pre">ja2mqtt/section/house</span></code>:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ja2mqtt/section/house</span>
+<span class="w">  </span><span class="nt">rules</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">read</span><span class="p">:</span><span class="w"> </span><span class="kt">!py</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pattern(&#39;STATE 1 (READY|ARMED_PART|ARMED|SERVICE|BLOCKED|OFF)&#39;)</span>
+<span class="w">    </span><span class="nt">write</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">section_code</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">      </span><span class="nt">section_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">house</span>
+<span class="w">      </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="kt">!py</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">data.match.group(1)</span>
+</pre></div>
+</div>
+<p>In this configuration, the <code class="docutils literal notranslate"><span class="pre">read</span></code> property of the rule matches the data in the serial interface using the given regular expression, which defines the possible section 1 state changes as <code class="docutils literal notranslate"><span class="pre">READY</span></code>, <code class="docutils literal notranslate"><span class="pre">ARMED_PART</span></code>, <code class="docutils literal notranslate"><span class="pre">ARMED</span></code>, <code class="docutils literal notranslate"><span class="pre">SERVICE</span></code>, <code class="docutils literal notranslate"><span class="pre">BLOCKED</span></code>, or <code class="docutils literal notranslate"><span class="pre">OFF</span></code>. Once the <code class="docutils literal notranslate"><span class="pre">read</span></code> condition is satisfied, the data is written to MQTT under the topic with the name <code class="docutils literal notranslate"><span class="pre">ja2mqtt/section/house</span></code>. The data fields that are written include the section code (set to 1), the section name (set to “house”), and the section state (set to the matched group from the regular expression).</p>
+<p>In the <code class="docutils literal notranslate"><span class="pre">write</span></code> property, you can define arbitrary sub-properties as data to be sent to MQTT. When specifying values for the data, you can use any arbitrary values or a <a class="reference internal" href="index.html#python-expressions"><span class="std std-ref">Python expression</span></a>. The scope to evaluate the expression includes the <code class="docutils literal notranslate"><span class="pre">data</span></code> variable that contains the data read from the serial interface. If you use the <code class="docutils literal notranslate"><span class="pre">pattern</span></code> function in the <code class="docutils literal notranslate"><span class="pre">read</span></code> property of the rule, you can access captured groups using the <a class="reference external" href="https://docs.python.org/3/library/re.html#match-objects"><code class="docutils literal notranslate"><span class="pre">match</span></code> object</a>.</p>
+<p>In the example, for the following serial interface data,</p>
+<div class="highlight-jinja notranslate"><div class="highlight"><pre><span></span><span class="x">STATE 1 ARMED</span>
+</pre></div>
+</div>
+<p>the topic with name <code class="docutils literal notranslate"><span class="pre">ja2mqtt/section/house</span></code> will be published with the following data:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;section_code&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;section_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;house&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;state&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ARMED&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="peripherals">
+<h4>Peripherals<a class="headerlink" href="#peripherals" title="Permalink to this heading">#</a></h4>
+<p>The ja2mqtt definition file specifies the topics for publishing changes in peripheral states. The peripheral topics follow the format <code class="docutils literal notranslate"><span class="pre">ja2mqtt/{type}/{location}</span></code>, where <code class="docutils literal notranslate"><span class="pre">{type}</span></code> refers to the type of peripheral (e.g. motion, siren, magnet, smoke) and <code class="docutils literal notranslate"><span class="pre">{location}</span></code> refers to the location of the peripheral device (e.g. <code class="docutils literal notranslate"><span class="pre">garage</span></code>, <code class="docutils literal notranslate"><span class="pre">house/groundfloor/office</span></code>, etc.). The types and locations are taken from the Jablotron topology in the main configuration file and can be defined by the user.</p>
+<p>Although the rules for these topics are similar to the ones for MQTT topics, ja2mqtt uses different functions to decode the peripheral states that JA-121T transmits through the serial interface as <code class="docutils literal notranslate"><span class="pre">PRFSTATE</span> <span class="pre">{number}</span></code>. Here, <code class="docutils literal notranslate"><span class="pre">{number}</span></code> is an octal number that encodes the peripheral states. ja2mqtt includes decoding and encoding functions for this <code class="docutils literal notranslate"><span class="pre">PRFSTATE</span></code> octal number based on the <a class="reference external" href="https://github.com/tomvit/ja2mqtt/tree/master/etc/JA-121T.pdf">JA-121T serial protocol</a>.</p>
+<p>This topic definition provides an example of a rule for reading <code class="docutils literal notranslate"><span class="pre">PRFSTATE</span></code> and creating event data with four properties: <code class="docutils literal notranslate"><span class="pre">name</span></code>, <code class="docutils literal notranslate"><span class="pre">type</span></code>, <code class="docutils literal notranslate"><span class="pre">pos</span></code>, and <code class="docutils literal notranslate"><span class="pre">state</span></code>. The <code class="docutils literal notranslate"><span class="pre">read</span></code> property of the rule uses a Python expression with the <code class="docutils literal notranslate"><span class="pre">prf_state_change</span></code> function to detect changes in the state of a peripheral on position <code class="docutils literal notranslate"><span class="pre">3</span></code>. If a change is detected, the <code class="docutils literal notranslate"><span class="pre">write</span></code> property specifies the data to be generated for the event, including the name of the peripheral, its type, position, and state. Since the rule is only applicable to a single peripheral state change topic and the <code class="docutils literal notranslate"><span class="pre">PRFSTATE</span></code> octal number may indicate state changes for multiple peripherals, the <code class="docutils literal notranslate"><span class="pre">process_next_rule</span></code> property is included to allow for the processing of the next topic rule and the generation of events for other peripheral state changes.</p>
+<p>Here’s the example YAML configuration:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ja2mqtt/motion/garage</span>
+<span class="w">  </span><span class="nt">rules</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">read</span><span class="p">:</span><span class="w"> </span><span class="kt">!py</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">prf_state_change(3)</span>
+<span class="w">    </span><span class="nt">write</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">garage</span>
+<span class="w">      </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">motion</span>
+<span class="w">      </span><span class="nt">pos</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">      </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="kt">!py</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">data.state</span>
+<span class="w">    </span><span class="nt">process_next_rule</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="subscribing-topics">
+<h3>Subscribing topics<a class="headerlink" href="#subscribing-topics" title="Permalink to this heading">#</a></h3>
+<p>ja2mqtt subscribes to a number of topics to receive requests that a client can use to control Jablotron system.</p>
+</section>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          <a class="prev-page" href="main.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Main configuration</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2023, Tomas Vitvar
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            <div class="icons">
+              <a class="muted-link " href="https://github.com/tomvit/ja2mqtt" aria-label="GitHub">
+                <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path>
+                </svg>
+            </a>
+              
+            </div>
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Protocol definition</a><ul>
+<li><a class="reference internal" href="#system-properties">System properties</a></li>
+<li><a class="reference internal" href="#jinja-templates">Jinja templates</a></li>
+<li><a class="reference internal" href="#mqtt-topics">MQTT topics</a><ul>
+<li><a class="reference internal" href="#publishing-topics">Publishing topics</a><ul>
+<li><a class="reference internal" href="#sections">Sections</a></li>
+<li><a class="reference internal" href="#peripherals">Peripherals</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#subscribing-topics">Subscribing topics</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/scripts/furo.js"></script>
+    </body>
+</html>
