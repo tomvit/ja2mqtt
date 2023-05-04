@@ -8,12 +8,21 @@
 
 #from ja2mqtt import __version__
 
-__version__ = "1.0.4.dev"
+import os
+import re
 
 project = 'ja2mqtt'
 copyright = '2023, Tomas Vitvar'
 author = 'Tomas Vitvar'
 release = '1.0'
+
+# determine the version of ja2mqtt
+try:
+    version_file = os.path.join(os.path.realpath(os.path.dirname(__file__) + "/.."),'ja2mqtt', '__init__.py')
+    __version__ = re.search('__version__\s+=\s+\"([0-9\.a-z]+)\"', open(version_file).read()).group(1)
+    print(f"ja2mqtt version is {__version__}")
+except Exception as e:
+    raise Exception(f"Cannot determine the ja2mqtt version from {version_file}. {str(e)}")
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
