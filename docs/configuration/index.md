@@ -23,6 +23,20 @@ main
 ja2mqtt
 ```
 
+## Environment variables
+
+You can make your configuration files more flexible by parametrizing them with environment variables, which can be provided either via an environment variables file or defined in your shell. This is particularly useful when you don't want to expose certain information in your configuration files, such as when you store them in a public repository.
+
+For instance, you can use an environment variable `${MQTT_ADDRESS}` in your `config.yaml` file, like this:
+
+```yaml
+mqtt-broker:
+  address: ${MQTT_ADDRESS}
+  port: 1883
+```
+
+You can define the variable in your shell or in an environment file that you can supply using the `--env` option of the ja2mqtt CLI.
+
 ## Python expressions
 
 Configuration files for ja2mqtt may include Python expressions that are evaluated by the program when reading the file. These expressions can use a provided scope that includes various contextual data or functions that are available for use in Python. The resulting value of the expression is then assigned to the property where the expression is used.
@@ -35,3 +49,7 @@ foo:
 ```
 
 In this example, when the `bar` property is read, its value will be a random number between `0` and `10`. The `random` function must exist in the scope where the expression is evaluated. Please refer to the specific configuration documentation to see how Python expressions can be used.
+
+## Validation
+
+The configuration files are validated against JSON schema. You can use the command `ja2mqtt config validate` to validate the configurations and to retrieve validation errors. 
