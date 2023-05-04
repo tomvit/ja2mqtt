@@ -37,6 +37,13 @@ mqtt-broker:
 
 You can define the variable in your shell or in an environment file that you can supply using the `--env` option of the ja2mqtt CLI.
 
+In addition, the following env variables specify default values for ja2mqtt options.
+
+* `JA2MQTT_CONFIG` - main configuration file (default for option `--config`).
+* `JA2MQTT_ENV` - environment variable file (default for option `--env`).
+* `JA2MQTT_DEBUG` - `True` to turn on debug information (default for option `--debug`).
+* `JA2MQTT_NO_ANSI` - `True` to turn off ansi colours (default for option `--no-ansi`)
+
 ## Python expressions
 
 Configuration files for ja2mqtt may include Python expressions that are evaluated by the program when reading the file. These expressions can use a provided scope that includes various contextual data or functions that are available for use in Python. The resulting value of the expression is then assigned to the property where the expression is used.
@@ -52,4 +59,4 @@ In this example, when the `bar` property is read, its value will be a random num
 
 ## Validation
 
-The configuration files are validated against JSON schema. You can use the command `ja2mqtt config validate` to validate the configurations and to retrieve validation errors. 
+The configuration files are validated against JSON schema. You can use the command `ja2mqtt config validate` to validate the configurations and to retrieve validation errors.
