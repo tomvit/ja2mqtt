@@ -274,18 +274,16 @@ class Config:
         errors = list(validator.iter_errors(self.raw_config))
 
         if errors:
-            for e in errors:
-                print(e.message)
             if throw_ex:
                 raise Exception(
                     f"The configuration file '{self.config_file}' is not valid!"
                 )
-            return errors
+            return False, errors
         else:
             self.check_dupplicates('topology.section.code')
             self.check_dupplicates('topology.peripheral.pos')
             self.check_dupplicates('simulator.sections.code')
-            return True
+            return True, None
 
     def get_dir_path(self, path, base_dir=None, check=False):
         """
