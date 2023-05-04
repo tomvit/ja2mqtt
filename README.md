@@ -5,7 +5,7 @@
 ja2mqtt is a bridge that connects a Jablotron control unit, extended with the [JA-121T RS-485 bus interface](https://www.jablotron.com/en/produkt/rs-485-bus-interface-426/), to an MQTT broker.
 
 <p align="center">
-  <img src="https://user-images.githubusercontent.com/643634/236320381-31a3ecd7-3ac5-44f6-904f-79e72af31e74.png" />
+  <img src="https://docs.google.com/drawings/export/svg?id=1MXZwvAJA_NKdUnVm-1DNBtgFdCsoYSNIjkfaP2Q4TlY" />
 </p>
 
 ja2mqtt reads input from the JA-121T serial interface, converts it into MQTT events, and publishes them to the MQTT broker using defined MQTT topics. It utilizes a ja2mqtt definition file that outlines the implementation of the JA-121T protocol. Additionally, ja2mqtt defines MQTT events that can be converted into input for the JA-121T serial interface, such as changing the state of a section to ARMED or READY. Each MQTT request may contain a correlation ID that is copied to the corresponding generated MQTT event.
