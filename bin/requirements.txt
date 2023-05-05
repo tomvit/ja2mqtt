@@ -6,3 +6,4 @@ PyYAML>=6.0
 sphinx
 myst_parser
 furo
+sphinx_copybutton

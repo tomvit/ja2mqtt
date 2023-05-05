@@ -19,9 +19,6 @@ copyright = '2023, Tomas Vitvar'
 author = 'Tomas Vitvar'
 release = '1.0'
 
-# def setup(app):
-#     app.add_directive('gdrawing', GDriveDrawing)
-
 # determine the version of ja2mqtt
 try:
     version_file = os.path.join(os.path.realpath(os.path.dirname(__file__) + "/.."),'ja2mqtt', '__init__.py')
