@@ -2,7 +2,7 @@ name: Build html from sphinx source and deploy it to GitHub pages
 
 on:
   push:
-    branches: ["v1.0.4.dev"]
+    branches: [ "master" ]
   workflow_dispatch:
 
 permissions:
