@@ -1,5 +1,6 @@
 include README.md
 include README-pypi.text
-exclude Makefile 
+recursive-include ja2mqtt/schemas *
+exclude Makefile
 exclude .gitignore
 recursive-exclude .github *

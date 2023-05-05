@@ -11,7 +11,7 @@ import click
 from ja2mqtt.config import Config, env_variables
 from ja2mqtt.utils import Map
 
-from . import BaseCommandLogOnly
+from . import BaseCommandLogOnly, BaseCommandLogOnlyNoValidate
 
 
 @click.group("config", help="Configuration commands")
@@ -42,6 +42,7 @@ def config_env():
         print(f"{e}={os.getenv(e)}")
     print("")
 
+
 @click.command("topics", help="Show MQTT topics.", cls=BaseCommandLogOnly)
 def config_topics(config, log):
     ja2mqtt_file = config.get_dir_path(config.root("ja2mqtt"))
@@ -55,8 +56,18 @@ def config_topics(config, log):
     for t in ja2mqtt("mqtt2serial"):
         print(f"- {t['name']}")
 
+@click.command("validate", help="Validate configuration.", cls=BaseCommandLogOnlyNoValidate)
+def config_validate(config, log):
+    res, errors = config.validate(throw_ex=False)
+    if not res:
+        click.echo("Validation failed with the following errors:")
+        for e in errors:
+            print(f"- {e.message}, in {e.json_path[2:]}")
+    else:
+        print("The configuration is valid.")
 
 command_config.add_command(config_main)
 command_config.add_command(config_ja2mqtt)
 command_config.add_command(config_env)
 command_config.add_command(config_topics)
+command_config.add_command(config_validate)

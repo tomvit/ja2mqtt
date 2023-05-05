@@ -1,0 +1,154 @@
+$schmea: "http://json-schema.org/draft-04/schema#"
+id: "ja2mqtt-config"
+
+# root properties
+type: "object"
+required:
+  - "version"
+  - "ja2mqtt"
+  - "mqtt-broker"
+  - "serial"
+  - "topology"
+additionalProperties: False
+properties:
+  version:
+    type: "__version"
+  ja2mqtt:
+    type: "string"
+  mqtt-broker:
+    type: "object"
+    required:
+      - "address"
+    additionalProperties: False
+    properties:
+      address:
+        type: "string"
+      port:
+        type: "integer"
+  logs:
+    type: "string"
+
+  # serial interface properties
+  serial:
+    type: "object"
+    required:
+      - "port"
+    additionalProperties: False
+    properties:
+      use_simulator:
+        type: "boolean"
+      port:
+        type: "string"
+      baudrate:
+        type: "integer"
+        enum:
+          - 110
+          - 300
+          - 1200
+          - 2400
+          - 4800
+          - 9600
+          - 19200
+          - 38400
+          - 57600
+          - 115200
+      bytesize:
+        type: "integer"
+        minimum: 7
+        maximum: 8
+      parity:
+        type: "string"
+        enum:
+          - "N"
+          - "P"
+      stopbits:
+        type: "integer"
+        enum:
+          - 1
+          - 2
+      rtscts:
+        type: "boolean"
+      xonxoff:
+        type: "boolean"
+
+  # Jablotron topology
+  topology:
+    type: "object"
+    required:
+      - section
+    additionalProperties: False
+    properties:
+      section:
+        type: "array"
+        items:
+          type: "object"
+          required:
+            - "name"
+            - "code"
+          additionalProperties: False
+          properties:
+            name:
+              type: "string"
+            code:
+              type: "integer"
+      peripheral:
+        type: "array"
+        items:
+          type: "object"
+          required:
+            - "name"
+            - "type"
+            - "pos"
+          additionalProperties: false
+          properties:
+            name:
+              type: "string"
+            type:
+              type: "string"
+            pos:
+              type: "integer"
+
+  # simulator
+  simulator:
+    type: "object"
+    required:
+      - "pin"
+      - "sections"
+    additionalProperties: False
+    properties:
+      pin:
+        type: "integer"
+      sections:
+        type: "array"
+        items:
+          type: "object"
+          required:
+            - "code"
+            - "state"
+          additionalProperties: False
+          properties:
+            code:
+              type: "integer"
+            state:
+              type: "string"
+              enum:
+                - "ARMED"
+                - "READY"
+                - "OFF"
+      response_delay:
+        type: "number"
+        minimum: 0
+      rules:
+        type: "array"
+        items:
+          type: "object"
+          required:
+            - "time_next"
+            - "write"
+          additionalProperties: False
+          properties:
+            time_next:
+              type: "__time_condition"
+            write:
+              type: "__write_expr"
+            

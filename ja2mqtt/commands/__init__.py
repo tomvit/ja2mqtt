@@ -44,10 +44,14 @@ class BaseCommand(click.core.Command):
             log_level="DEBUG" if ja2mqtt_config.DEBUG else "INFO",
         )
 
+    def validate_config(self, config):
+        config.validate()
+
     def invoke(self, ctx):
         config_file = ctx.params.pop("config")
         env_file = ctx.params.pop("env")
-        config = Config(config_file, env_file)
+        config = Config(config_file, env_file, schema="config-schema.yaml")
+        self.validate_config(config)
 
         self.init_logging(config)
         log = logging.getLogger(ctx.command.name + "-loop")
@@ -66,3 +70,7 @@ class BaseCommandLogOnly(BaseCommand):
             log_level="DEBUG" if ja2mqtt_config.DEBUG else "INFO",
             handlers=["file"],
         )
+
+class BaseCommandLogOnlyNoValidate(BaseCommandLogOnly):
+    def validate_config(self, config):
+        pass

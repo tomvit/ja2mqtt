@@ -10,3 +10,4 @@ config/config.yaml
 dist/
 docker/files
 bin/shift*
+docs/_build

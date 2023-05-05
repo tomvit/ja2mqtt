@@ -28,6 +28,10 @@ clean:
 	rm -fr build
 	rm -fr dist
 	rm -fr ja2mqtt/*.egg-info
+	rm -fr docs/_build
+
+html:
+	cd docs && make clean && make html
 
 format:
 	black ja2mqtt

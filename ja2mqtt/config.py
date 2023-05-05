@@ -17,6 +17,12 @@ import click
 import jinja2
 import yaml
 
+import jsonschema
+from jsonschema import validate
+from jsonschema import Draft7Validator
+
+from jsonschema.validators import extend
+
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 import imp
@@ -51,6 +57,9 @@ ENCODING = "ascii"
 
 # global exit event
 exit_event = Event()
+
+# valid schema versions
+SCHEMA_VERSIONS = ["1.0"]
 
 
 class Jinja2TemplateLoader(jinja2.BaseLoader):
@@ -89,6 +98,13 @@ class Jinja2Template(io.BytesIO):
             raise Exception(
                 f"Error when processing template {os.path.basename(file)}: {str(e)}"
             )
+
+
+def get_schema_file(name):
+    sfile = os.path.dirname(os.path.realpath(__file__)) + f"/schemas/{name}"
+    if not os.path.exists(sfile):
+        raise Exception(f"The schema {sfile} does not exist!")
+    return sfile
 
 
 def get_dir_path(config_dir, path, base_dir=None, check=False):
@@ -198,18 +214,24 @@ def py_constructor(loader, node):
             % (node.value, str(e))
         )
 
-
 class Config:
     """
     The main confuguration.
     """
 
     def __init__(
-        self, file, env=None, log_level="INFO", scope=None, use_template=False
+        self,
+        file,
+        env=None,
+        schema=None,
+        log_level="INFO",
+        scope=None,
+        use_template=False,
     ):
         """
         Read and parse the configuration from the yaml file and initializes the logging.
         """
+        self.schema = None
         self.log_level = log_level
         if not (os.path.exists(file)):
             raise Exception(f"The configuration file {file} does not exist!")
@@ -217,6 +239,51 @@ class Config:
             file, env, use_template=use_template, scope=scope
         )
         self.root = self.get_part(None)
+        if schema:
+            self.schema = read_config(
+                get_schema_file(schema), None, use_template=False
+            )[0]
+
+    def check_dupplicates(self, path):
+        _path = path.split('.')
+        _prop = _path[-1]
+        values = [x[_prop] for x in self('.'.join(_path[:-1]),[],required=False)]
+        dupplicates = list(set([x for x in values if values.count(x) > 1]))
+        if len(dupplicates) > 0:
+            raise Exception(f"There are dupplicate values in '{path}': {dupplicates}")
+
+    def validate(self, throw_ex=True):
+        def __version(c, i):
+            return i in SCHEMA_VERSIONS
+
+        def __time_condition(c, i):
+            return isinstance(i, PythonExpression) or isinstance(i, int)
+
+        def __write_expr(c, i):
+            return isinstance(i, PythonExpression) or isinstance(i, str)
+
+        type_checker = Draft7Validator.TYPE_CHECKER.redefine_many(
+            Map(
+                __version=__version,
+                __time_condition=__time_condition,
+                __write_expr=__write_expr,
+            )
+        )
+        ConfigValidator = extend(Draft7Validator, type_checker=type_checker)
+        validator = ConfigValidator(self.schema)
+        errors = list(validator.iter_errors(self.raw_config))
+
+        if errors:
+            if throw_ex:
+                raise Exception(
+                    f"The configuration file '{self.config_file}' is not valid!"
+                )
+            return False, errors
+        else:
+            self.check_dupplicates('topology.section.code')
+            self.check_dupplicates('topology.peripheral.pos')
+            self.check_dupplicates('simulator.sections.code')
+            return True, None
 
     def get_dir_path(self, path, base_dir=None, check=False):
         """

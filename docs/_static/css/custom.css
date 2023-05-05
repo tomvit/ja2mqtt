@@ -1,0 +1,24 @@
+h1 {
+  margin-top: 10.0px;
+  font-size: 2.2em
+}
+
+h2 {
+  font-size: 1.75em
+}
+
+.highlight button {
+  display: none !important;
+}
+
+.copy-button button {
+  display: block !important;
+}
+
+div.highlight pre .highlight-copy {
+  opacity: 0;
+}
+
+div.highlight pre:hover .highlight-copy {
+  opacity: 1;
+}

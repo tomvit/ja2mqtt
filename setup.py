@@ -33,7 +33,8 @@ install_requires = [
     'Jinja2>=3.0.3',
     'paho-mqtt>=1.6.1',
     'pyserial>=3.5',
-    'PyYAML>=6.0'
+    'PyYAML>=6.0',
+    'jsonschema>=4.17.3'
 ]
 
 setup(

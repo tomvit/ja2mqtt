@@ -84,18 +84,19 @@ class Serial(Component):
         `use_simulator` property in the configuration.
         """
         super().__init__(config, "serial")
+        self.buffer = Queue()
+        self.wait_on_ready = self.config.value_int("wait_on_ready", default=10)
         self.use_simulator = self.config.value_bool("use_simulator", default=False)
         if not self.use_simulator:
             self.ser = None
             self.port = self.config.value_str("port", required=True)
-            self.wait_on_ready = self.config.value_int("wait_on_ready", default=10)
             self.log.info(f"The serial connection configured, the port is {self.port}")
         else:
             self.port = "<simulator>"
             self.ser = simulator
             self.log.info("The serial interface events will be simulated.")
             self.log.debug(f"The simulator object is {self.ser}")
-        self.buffer = Queue()
+
 
     def create_serial(self):
         """
