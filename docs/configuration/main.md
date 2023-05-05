@@ -4,7 +4,7 @@ The main configuration defines the serial interface where JA-121T serial bus is 
 
 The configuration file includes a version property that defines the version of the configuration file. ja2mqtt uses this property to check if the version is supported. The current supported version is `1.0`.
 
-```yaml
+```yaml nohighlight
 version: 1.0
 ```
 

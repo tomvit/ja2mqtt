@@ -21,6 +21,8 @@ hide-toc: true
 
 quickstart
 configuration/index
+installation
+usage
 ```
 
 <!-- ```{toctree}

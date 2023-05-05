@@ -20,12 +20,12 @@ Read the [ja2mqtt documentation](https://ja2mqtt.vitvar.com) for more details.
 
 <!-- start features -->
 
-* Jablotron topology definition in the YAML configuration file, including sections and their codes, names, and peripherals' positions, types, and names.
-* Declarative rules that define how JA-121T serial bus protocol is implemented.
-* Reading events from Jablotron, such as section arming and disarming, peripheral state changes, and converting them to MQTT events.
-* MQTT topics that clients can use to retrieve section and peripheral states.
-* Automated recovery of serial interface and MQTT broker connection failures.
-* JA-121T simulator to simulate section state changes, peripheral state changes, and heartbeat messages.
+* **Jablotron topology** definition in the YAML configuration file, including sections and their codes, names, and peripherals' positions, types, and names.
+* **Declarative rules** that define how JA-121T serial bus protocol is implemented.
+* Reading events from Jablotron, such as section arming and disarming, peripheral state changes, and converting them to **MQTT events**.
+* MQTT topics that clients can use to **control sections** and **retrieve section and peripheral states**.
+* **Automated recovery** of serial interface and MQTT broker connection failures.
+* **JA-121T simulator** to simulate section state changes, peripheral state changes, and heartbeat messages.
 
 <!-- end features -->
 

@@ -10,11 +10,17 @@
 
 import os
 import re
+import sys
+
+#from directives import GDriveDrawing
 
 project = 'ja2mqtt'
 copyright = '2023, Tomas Vitvar'
 author = 'Tomas Vitvar'
 release = '1.0'
+
+# def setup(app):
+#     app.add_directive('gdrawing', GDriveDrawing)
 
 # determine the version of ja2mqtt
 try:
@@ -27,7 +33,12 @@ except Exception as e:
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ['myst_parser',  'sphinx.ext.autosectionlabel']
+sys.path.append(os.path.abspath('_exts'))
+
+extensions = ['myst_parser',  'sphinx.ext.autosectionlabel',  'sphinx_copybutton', 'gdrawing']
+
+copybutton_only_copy_prompt_lines = True
+copybutton_prompt_text = "$ "
 
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
