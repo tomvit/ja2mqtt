@@ -1,5 +1,7 @@
 # $ ja2mqtt
 
+[![](https://img.shields.io/pypi/v/ja2mqtt.svg)](https://pypi.org/project/ja2mqtt/)
+
 <!-- start elevator-pitch -->
 
 ja2mqtt is a bridge that connects a Jablotron control unit, extended with the [JA-121T RS-485 bus interface](https://www.jablotron.com/en/produkt/rs-485-bus-interface-426/), to an MQTT broker.
