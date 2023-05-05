@@ -1,4 +1,4 @@
-name: Build html from sphinx source and deploy it to GitHub pages
+name: build-sphinx-deploy-gh
 
 on:
   push:
