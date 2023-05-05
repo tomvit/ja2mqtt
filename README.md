@@ -14,7 +14,7 @@ ja2mqtt reads input from the JA-121T serial interface, converts it into MQTT eve
 
 If you do not have access to a JA-121T interface for testing, ja2mqtt offers a simulator that can simulate the interaction with the JA-121T interface. This allows you to test and verify the functionality of ja2mqtt even without the physical JA-121T interface available.
 
-Read the [ja2mqtt documentation](https://ja2mqtt.vitvar.com) for more details.  
+Read the [ja2mqtt documentation](https://ja2mqtt.vitvar.com) for details on how to configure, run and use ja2mqtt.  
 
 ## Features
 
@@ -80,30 +80,3 @@ In addition, ja2mqtt requires a running instance of [MQTT broker](https://mqtt.o
 4. Check the log entries in the ja2mqtt log again to see if the events were generated.
 
 <!-- end quickstart -->
-
-## Requirements and installation
-
-To use ja2mqtt, you will need:
-
-* Jablotron alarms with the control unit and the JA-121T serial interface connected to a serial port on your computer. The device uses RS485 interface, which can be connected to your computer using a [USB to RS485 adapter](https://www.aliexpress.com/w/wholesale-ch340-usb-rs485.html).
-
-* A running instance of an MQTT broker. [Mosquitto](https://mosquitto.org/) is the recommended MQTT broker, but others should also work without issues. You can run the MQTT broker on the same machine as ja2mqtt, on a separate machine, or use an existing instance of MQTT broker if you have one.
-
-* Install ja2mqtt on a computer with access to the serial port where JA-121T is connected.
-
-   ```
-   $ pip install ja2mqtt
-   ```
-
-* Download the sample configuration file and ja2mqtt definition file from the [config directory](https://github.com/tomvit/ja2mqtt/tree/master/config) of the ja2mqtt GitHub repository. In the sample configuration file, you only need to define your Jablotron topology, such as section names and their numbers.
-
-<!-- ## Usage
-
-ja2mqtt is a CLI that provides the following commands. You can use the `--help` option to get more information on command usage.
-
-* `run` - the main command that reads/writes data from/to the serial interface and sends/receives MQTT events.
-* `pub` - publishes MQTT events and waits for the response. It uses the correlation ID to relate the event request with the event response.
-* `config main` - shows the main configuration in JSON.
-* `config ja2mqtt` - shows the ja2mqtt definition file after Jinja2 templating is processed.
-* `config env` - shows the environment variables used by ja2mqtt. You can define the variables in your system to set defaults for ja2mqtt options.
-* `config topics` - shows publishing and subscribing topics. You can subscribe to publishing topics from your client or send subscribing topics to control the operation of your Jablotron control unit. -->

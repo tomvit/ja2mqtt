@@ -1,8 +1,12 @@
 # Installation
 
-There are two ways to install and run ja2mqtt. You can install it as a Python package in your Python environment using PyPI, or you can use a Docker image. An image is always provided for the current version. Before running ja2mqtt, you need to have access to an MQTT broker. If you don't have one, you can start your own instance. For example, the Mosquitto MQTT broker is the most popular broker that works seamlessly with ja2mqtt.
+To use ja2mqtt, you will need:
 
-The below steps assume that you have a sub-directory created in your working directory.
+* Jablotron alarms with the control unit and the JA-121T serial interface connected to a serial port on your computer. The device uses RS485 interface, which can be connected to your computer using a [USB to RS485 adapter](https://www.aliexpress.com/w/wholesale-ch340-usb-rs485.html).
+
+* A running instance of an MQTT broker. [Mosquitto](https://mosquitto.org/) is the recommended MQTT broker, but others should also work without issues. You can run the MQTT broker on the same machine as ja2mqtt, on a separate machine, or use an existing instance of MQTT broker if you have one.
+
+There are two ways to install and run ja2mqtt. You can install it as a Python package in your Python environment using PyPI, or you can use a Docker image. An image is always provided for the current version. This guide assumes that you have a sub-directory created in your working directory.
 
 ```{code-block} bash
 :class: copy-button
