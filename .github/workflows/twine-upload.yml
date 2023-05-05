@@ -21,4 +21,4 @@ jobs:
           if [ -f bin/requirements.txt ]; then pip install -r bin/requirements.txt; fi
           rm -fr dist/*
           python3 setup.py egg_info sdist
-          twine upload -u secrets.PYPI_USERNAME -p secrets.PYPI_PASSWORD -r pypi dist/*
+          twine upload -u ${{ secrets.PYPI_USERNAME }} -p ${{ secrets.PYPI_PASSWORD }} -r pypi dist/*
