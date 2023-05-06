@@ -17,7 +17,7 @@ ja2mqtt reads input from the JA-121T serial interface, converts it into MQTT eve
 
 If you do not have access to a JA-121T interface for testing, ja2mqtt offers a simulator that can simulate the interaction with the JA-121T interface. This allows you to test and verify the functionality of ja2mqtt even without the physical JA-121T interface available.
 
-Read the [ja2mqtt documentation](https://ja2mqtt.vitvar.com) for details on how to configure, run and use ja2mqtt.  
+Read the [ja2mqtt documentation](https://ja2mqtt.vitvar.com) for details on how to [configure](https://ja2mqtt.vitvar.com/configuration/), [install](https://ja2mqtt.vitvar.com/installation.html) and [use](https://ja2mqtt.vitvar.com/usage.html) ja2mqtt.  
 
 ## Features
 
