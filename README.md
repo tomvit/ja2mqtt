@@ -35,7 +35,7 @@ Read the [ja2mqtt documentation](https://ja2mqtt.vitvar.com) for details on how 
 
 <!-- start quickstart -->
 
-ja2mqtt requires JA-121T bus interface, however, you can test it using the simulator if you do not have one. The Docker image comes with a sample configuration that uses the simulator. ja2mqtt also requires a running instance of [MQTT broker](https://mqtt.org/). The below steps use the [Eclipse Mosquitto MQTT broker](https://mosquitto.org/) with a sample configuration. For complete installation instructions, please refer to the guide available at [here](https://ja2mqtt.vitvar.com/installation.html).
+ja2mqtt requires JA-121T bus interface, however, you can test it using the simulator if you do not have one. The Docker image comes with a sample configuration that uses the simulator. ja2mqtt also requires a running instance of [MQTT broker](https://mqtt.org/). The below steps use the [Eclipse Mosquitto MQTT broker](https://mosquitto.org/) with a sample configuration. For complete installation instructions, please refer to the [installation guide](https://ja2mqtt.vitvar.com/installation.html).
 
 1. In your working directory, create a sub-directory `mqtt-config` and add the [`mosquitto.conf`](https://github.com/tomvit/ja2mqtt/tree/master/docker/mqtt-config/mosquitto.conf) into it.
 
