@@ -1,6 +1,7 @@
 # $ ja2mqtt
 
-[![](https://img.shields.io/pypi/v/ja2mqtt.svg)](https://pypi.org/project/ja2mqtt/)
+[![PyPI](https://img.shields.io/pypi/v/ja2mqtt?label=PyPI)](https://pypi.org/project/ja2mqtt/)
+[![Docker Image Version (tag latest semver)](https://img.shields.io/docker/v/tomvit/ja2mqtt/latest?label=Docker)](https://hub.docker.com/r/tomvit/ja2mqtt/tags)
 
 <!-- start elevator-pitch -->
 

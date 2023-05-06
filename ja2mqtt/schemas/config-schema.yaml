@@ -1,5 +1,5 @@
 $schmea: "http://json-schema.org/draft-04/schema#"
-id: "ja2mqtt-config"
+id: "main-config"
 
 # root properties
 type: "object"
@@ -151,4 +151,3 @@ properties:
               type: "__time_condition"
             write:
               type: "__write_expr"
-            
