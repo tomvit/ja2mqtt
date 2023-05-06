@@ -34,7 +34,7 @@ install_requires = [
     'paho-mqtt>=1.6.1',
     'pyserial>=3.5',
     'PyYAML>=6.0',
-    'jsonschema>=4.17.3'
+    'jsonschema>=4.0.0'
 ]
 
 setup(
