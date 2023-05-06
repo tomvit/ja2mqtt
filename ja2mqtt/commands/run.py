@@ -24,7 +24,9 @@ def command_run(config, log):
     if config("simulator") is not None:
         simulator = Simulator(config.get_part("simulator"), bridge.prfstate_bits)
     elif config("serial.use_simulator", False):
-        log.error("The serial interface is be simulated but the simulator configuration does not exist!")
+        log.error(
+            "The serial interface is be simulated but the simulator configuration does not exist!"
+        )
 
     serial = Serial(config.get_part("serial"), simulator)
     mqtt = MQTT(f"ja2mqtt-client+{randomString(10)}", config.get_part("mqtt-broker"))

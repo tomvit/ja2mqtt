@@ -56,7 +56,10 @@ def config_topics(config, log):
     for t in ja2mqtt("mqtt2serial"):
         print(f"- {t['name']}")
 
-@click.command("validate", help="Validate configuration.", cls=BaseCommandLogOnlyNoValidate)
+
+@click.command(
+    "validate", help="Validate configuration.", cls=BaseCommandLogOnlyNoValidate
+)
 def config_validate(config, log):
     res, errors = config.validate(throw_ex=False)
     if not res:
@@ -65,6 +68,7 @@ def config_validate(config, log):
             print(f"- {e.message}, in {e.json_path[2:]}")
     else:
         print("The configuration is valid.")
+
 
 command_config.add_command(config_main)
 command_config.add_command(config_ja2mqtt)
