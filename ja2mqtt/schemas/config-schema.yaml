@@ -25,6 +25,23 @@ properties:
         type: "string"
       port:
         type: "integer"
+      username:
+        type: "string"
+      password:
+        type: "string"
+      clean_session:
+        type: "boolean"
+      transport:
+        type: "string"
+        enum:
+          - "tcp"
+          - "websockets"
+      protocol:
+        type: "string"
+        enum:
+          - "MQTTv311"
+          - "MQTTv31"
+
   logs:
     type: "string"
 
