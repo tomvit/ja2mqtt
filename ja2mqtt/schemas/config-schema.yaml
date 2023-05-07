@@ -1,5 +1,5 @@
 $schmea: "http://json-schema.org/draft-04/schema#"
-id: "ja2mqtt-config"
+id: "main-config"
 
 # root properties
 type: "object"
@@ -25,6 +25,23 @@ properties:
         type: "string"
       port:
         type: "integer"
+      username:
+        type: "string"
+      password:
+        type: "string"
+      clean_session:
+        type: "boolean"
+      transport:
+        type: "string"
+        enum:
+          - "tcp"
+          - "websockets"
+      protocol:
+        type: "string"
+        enum:
+          - "MQTTv311"
+          - "MQTTv31"
+
   logs:
     type: "string"
 
@@ -148,7 +165,6 @@ properties:
           additionalProperties: False
           properties:
             time_next:
-              type: "__time_condition"
+              type: "__python_expr_or_int"
             write:
-              type: "__write_expr"
-            
+              type: "__python_expr_or_str"

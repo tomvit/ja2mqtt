@@ -12,13 +12,9 @@ You can use the following options that are applicable to all commands:
 
 ## Logging
 
-When you run a ja2mqtt command, logs are created in the `logs` directory by default (you can change the location of the logs in the [main configuration](configuration/main)). The logs are automatically rotated. Some commands also display additional information on the console, and the `run` command displays the log on the console as well as storing it in the log file.
+When you run a ja2mqtt command, logs are created in the `logs` directory by default (you can change the location of the logs in the [main configuration](configuration/main)). The logs are automatically rotated on daily basis and logs older than 30 days are automatically deleted. Some commands also display additional information on the console, and the `run` command displays the log on the console as well as storing it in the log file.
 
 You can increase the verbosity of the logs by using the `--debug` option.
-
-```{note}
-ja2mqtt does not perform any housekeeping of the logs. You will need to remove old logs manually or use your own script to manage them to ensure sufficient space on your storage.
-```
 
 ## Configuration commands
 
@@ -59,12 +55,19 @@ Use configuration commands to explore configuration that ja2mqtt uses including 
     ja2mqtt config validate -c config/config.yaml
     ```
 
+    The command validates both the main configuration and protocol definition configurations against their respective JSON schemas. These schemas use custom types that are prefixed with `__` to perform specific validation. The valid values for these types are as follows:
+
+    * `__version` - A string representing a valid schema version.
+    * `__python_expr_or_int` - A Python expression or integer.
+    * `__python_expr_or_str` - A Python expression or string.
+    * `__python_expr_or_str_or_number`  - A Python expression or string or integer or float.
 
 ## Run command
 
 ja2mqtt run command is the main command the performs the function of the bridge between Jablotron control unit and MQTT broker. You can use it as follows:
 
-```
+```{code-block} bash
+:class: copy-button
 ja2mqtt run -c config/config.yaml
 ```
 

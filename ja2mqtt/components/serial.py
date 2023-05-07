@@ -97,7 +97,6 @@ class Serial(Component):
             self.log.info("The serial interface events will be simulated.")
             self.log.debug(f"The simulator object is {self.ser}")
 
-
     def create_serial(self):
         """
         Create serial object and initialize the parameters from the configuration.

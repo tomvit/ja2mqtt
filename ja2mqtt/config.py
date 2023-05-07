@@ -214,6 +214,7 @@ def py_constructor(loader, node):
             % (node.value, str(e))
         )
 
+
 class Config:
     """
     The main confuguration.
@@ -245,9 +246,9 @@ class Config:
             )[0]
 
     def check_dupplicates(self, path):
-        _path = path.split('.')
+        _path = path.split(".")
         _prop = _path[-1]
-        values = [x[_prop] for x in self('.'.join(_path[:-1]),[],required=False)]
+        values = [x[_prop] for x in self(".".join(_path[:-1]), [], required=False)]
         dupplicates = list(set([x for x in values if values.count(x) > 1]))
         if len(dupplicates) > 0:
             raise Exception(f"There are dupplicate values in '{path}': {dupplicates}")
@@ -256,17 +257,26 @@ class Config:
         def __version(c, i):
             return i in SCHEMA_VERSIONS
 
-        def __time_condition(c, i):
+        def __python_expr_or_int(c, i):
             return isinstance(i, PythonExpression) or isinstance(i, int)
 
-        def __write_expr(c, i):
+        def __python_expr_or_str(c, i):
             return isinstance(i, PythonExpression) or isinstance(i, str)
+
+        def __python_expr_or_str_or_number(c, i):
+            return (
+                isinstance(i, PythonExpression)
+                or isinstance(i, str)
+                or isinstance(i, int)
+                or isinstance(i, float)
+            )
 
         type_checker = Draft7Validator.TYPE_CHECKER.redefine_many(
             Map(
                 __version=__version,
-                __time_condition=__time_condition,
-                __write_expr=__write_expr,
+                __python_expr_or_int=__python_expr_or_int,
+                __python_expr_or_str=__python_expr_or_str,
+                __python_expr_or_str_or_number=__python_expr_or_str_or_number,
             )
         )
         ConfigValidator = extend(Draft7Validator, type_checker=type_checker)
@@ -280,9 +290,9 @@ class Config:
                 )
             return False, errors
         else:
-            self.check_dupplicates('topology.section.code')
-            self.check_dupplicates('topology.peripheral.pos')
-            self.check_dupplicates('simulator.sections.code')
+            self.check_dupplicates("topology.section.code")
+            self.check_dupplicates("topology.peripheral.pos")
+            self.check_dupplicates("simulator.sections.code")
             return True, None
 
     def get_dir_path(self, path, base_dir=None, check=False):

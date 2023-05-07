@@ -30,7 +30,10 @@ def config_main(config, log):
 def config_ja2mqtt(config, log):
     ja2mqtt_file = config.get_dir_path(config.root("ja2mqtt"))
     scope = Map(topology=config.root("topology"))
-    ja2mqtt = Config(ja2mqtt_file, scope=scope, use_template=True)
+    ja2mqtt = Config(
+        ja2mqtt_file, scope=scope, use_template=True, schema="ja2mqtt-schema.yaml"
+    )
+    ja2mqtt.validate(throw_ex=True)
     print(json.dumps(ja2mqtt.root._config, indent=4, default=str))
 
 
@@ -56,15 +59,35 @@ def config_topics(config, log):
     for t in ja2mqtt("mqtt2serial"):
         print(f"- {t['name']}")
 
-@click.command("validate", help="Validate configuration.", cls=BaseCommandLogOnlyNoValidate)
+
+@click.command(
+    "validate", help="Validate configuration.", cls=BaseCommandLogOnlyNoValidate
+)
 def config_validate(config, log):
+    def _display_validation(res, errors, file):
+        if not res:
+            if errors is not None:
+                click.echo(f"Validation of {file} failed with the following errors:")
+                for e in errors:
+                    print(f"- {e.message}, in {e.json_path[2:]}")
+            else:
+                click.echo(f"Validation of {file} failed.")
+        else:
+            click.echo(f"The configuration file {file} is valid.")
+
     res, errors = config.validate(throw_ex=False)
-    if not res:
-        click.echo("Validation failed with the following errors:")
-        for e in errors:
-            print(f"- {e.message}, in {e.json_path[2:]}")
-    else:
-        print("The configuration is valid.")
+    _display_validation(res, errors, config.config_file)
+    try:
+        ja2mqtt_file = config.get_dir_path(config.root("ja2mqtt"))
+        scope = Map(topology=config.root("topology"))
+        ja2mqtt = Config(
+            ja2mqtt_file, scope=scope, use_template=True, schema="ja2mqtt-schema.yaml"
+        )
+        res, errors = ja2mqtt.validate(throw_ex=False)
+        _display_validation(res, errors, ja2mqtt_file)
+    except:
+        _display_validation(False, None, None)
+
 
 command_config.add_command(config_main)
 command_config.add_command(config_ja2mqtt)

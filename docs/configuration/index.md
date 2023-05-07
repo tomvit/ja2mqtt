@@ -59,4 +59,4 @@ In this example, when the `bar` property is read, its value will be a random num
 
 ## Validation
 
-The configuration files are validated against JSON schema. You can use the command `ja2mqtt config validate` to validate the configurations and to retrieve validation errors.
+The configuration files are validated against JSON schema. You can use the command `ja2mqtt config validate` to validate the main and protocol definitions configurations and to retrieve validation errors.

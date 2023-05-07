@@ -71,6 +71,7 @@ class BaseCommandLogOnly(BaseCommand):
             handlers=["file"],
         )
 
+
 class BaseCommandLogOnlyNoValidate(BaseCommandLogOnly):
     def validate_config(self, config):
         pass

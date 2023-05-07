@@ -1,0 +1,62 @@
+$schmea: "http://json-schema.org/draft-04/schema#"
+id: "ja2mqtt-config"
+
+# root properties
+type: "object"
+required:
+  - "version"
+  - "serial2mqtt"
+additionalProperties: False
+properties:
+  version:
+    type: "__version"
+  system:
+    type: "object"
+    additionalProperties: False
+    properties:
+      correlation_id:
+        type: "string"
+      correlation_timeout:
+        type: "number"
+        minimum: 0
+        maximum: 60
+      prfstate_bits:
+        type: "integer"
+        minimum: 8
+        maximum: 128
+  serial2mqtt:
+    type: "array"
+    items:
+      type: "object"
+      additionalProperties: False
+      required:
+        - "name"
+      properties:
+        name:
+          type: "string"
+        disabled:
+          type: "boolean"
+        rules:
+          type: "array"
+          items:
+            type: "object"
+            additionalProperties: False
+            required:
+              - "read"
+              - "write"
+            properties:
+              read:
+                type: "__python_expr_or_str"
+              write:
+                type: "object"
+                patternProperties:
+                  "[a-zA-Z0-9]+":
+                    type: "__python_expr_or_str_or_number"
+              no_correlation:
+                type: "boolean"
+              process_next_rule:
+                type: "boolean"
+              require_request:
+                type: "boolean"
+  mqtt2serial:
+    type: "array"

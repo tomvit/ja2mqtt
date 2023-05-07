@@ -33,6 +33,16 @@ class MQTT(Component):
         self.keepalive = self.config.value_int("keepalive", default=60)
         self.reconnect_after = self.config.value_int("reconnect_after", default=30)
         self.loop_timeout = self.config.value_int("loop_timeout", default=1)
+        self.username = self.config.value_str("username", default=None)
+        self.password = self.config.value_str("password", default=None)
+        self.protocol = {
+            "MQTTv311": mqtt.MQTTv311,
+            "MQTTv31": mqtt.MQTTv31,
+            "MQTTv5": mqtt.MQTTv5,
+            "default": None,
+        }[self.config.value_str("protocol", default="MQTTv311")]
+        self.transport = self.config.value_str("transport", default="tcp")
+        self.clean_session = self.config.value_str("clean_session", default=None)
         self.client = None
         self.connected = False
         self.on_connect_ext = None
@@ -82,7 +92,19 @@ class MQTT(Component):
             self.on_error(e)
 
     def init_client(self):
-        self.client = mqtt.Client(self.client_name)
+        self.client = mqtt.Client(
+            self.client_name,
+            clean_session=self.clean_session,
+            protocol=self.protocol,
+            transport=self.transport,
+        )
+        if self.username is not None:
+            self.log.debug(
+                f"Using '{self.username}/*******' to authenticate with the MQTT broker."
+            )
+            if self.password is None:
+                self.log.warning("The password was not specified!")
+            self.client.username_pw_set(username=self.username, password=self.password)
         self.client.on_connect = self.on_connect
         self.client.on_disconnect = self.on_disconnect
 
