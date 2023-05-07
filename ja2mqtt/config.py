@@ -269,7 +269,7 @@ class Config:
         type_checker = Draft7Validator.TYPE_CHECKER.redefine_many(
             Map(
                 __version=__version,
-                __time_condition=__time_condition,
+                __python_expr_or_int=__python_expr_or_int,
                 __python_expr_or_str=__python_expr_or_str,
                 __python_expr_or_str_or_number=__python_expr_or_str_or_number
             )
