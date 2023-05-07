@@ -6,6 +6,8 @@ hide-toc: true
 
 [![PyPI](https://img.shields.io/pypi/v/ja2mqtt?label=PyPI)](https://pypi.org/project/ja2mqtt/)
 [![Docker Image Version (tag latest semver)](https://img.shields.io/docker/v/tomvit/ja2mqtt/latest?label=Docker)](https://hub.docker.com/r/tomvit/ja2mqtt/tags)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/ja2mqtt)]()
+
 
 ```{include} ../README.md
 :start-after: <!-- start elevator-pitch -->
@@ -29,11 +31,8 @@ usage
 ```
 
 ```{toctree}
-:caption: vitvar.com
+:caption: Links
 :hidden:
 
-Home <https://vitvar.com>
-Lectures <https://vitvar.com/lectures>
-Posts <https://vitvar.com/post>
-About <https://vitvar.com/about>
+vitvar.com <https://vitvar.com>
 ```
