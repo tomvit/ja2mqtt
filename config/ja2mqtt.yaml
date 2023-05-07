@@ -4,6 +4,9 @@
 # You normally do not need to edit this file unless you want to change the way how JA121 protocol is implemented.
 # The file uses Jinja templates and data from the yaml configuration file that defines Jablotron topology
 
+# ja2mqtt schema version
+version: "1.0"
+
 system:
   # name of the propery for the correlation id in request payloads
   # the id will be copied from requests and copied to responses

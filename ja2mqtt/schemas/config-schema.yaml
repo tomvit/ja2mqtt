@@ -165,6 +165,6 @@ properties:
           additionalProperties: False
           properties:
             time_next:
-              type: "__time_condition"
+              type: "__python_expr_or_int"
             write:
-              type: "__write_expr"
+              type: "__python_expr_or_str"

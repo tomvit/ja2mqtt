@@ -55,6 +55,13 @@ Use configuration commands to explore configuration that ja2mqtt uses including 
     ja2mqtt config validate -c config/config.yaml
     ```
 
+    The command validates both main and protocol definition configurations against a respective JSON schema. The schemas use the following custom types prefixed with `__` to perform specific validation. The valid values for the types are as follows.
+
+    * `__version` - a string representing a valid schema version.
+    * `__python_expr_or_int` - a Python expression or interger.
+    * `__python_expr_or_str` - a Python expression or string.
+    * `__python_expr_or_str_or_number`  - a Python expression or string or integer or float.
+
 
 ## Run command
 
