@@ -28,13 +28,12 @@ installation
 usage
 ```
 
-<!-- ```{toctree}
-:caption: Development
+```{toctree}
+:caption: vitvar.com
 :hidden:
 
-contributing/index
-kitchen-sink/index
-stability
-changelog
-license
-``` -->
+Home <https://vitvar.com>
+Lectures <https://vitvar.com/lectures>
+Posts <https://vitvar.com/post>
+About <https://vitvar.com/about>
+```
