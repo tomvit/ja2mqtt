@@ -69,6 +69,6 @@ html_theme_options: Dict[str, Any] = {
         },
     ],
     "source_repository": "https://github.com/tomvit/ja2mqtt/",
-    "source_branch": "main",
+    "source_branch": "master",
     "source_directory": "docs/",
 }
