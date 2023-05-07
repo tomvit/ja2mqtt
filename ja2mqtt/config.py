@@ -264,14 +264,19 @@ class Config:
             return isinstance(i, PythonExpression) or isinstance(i, str)
 
         def __python_expr_or_str_or_number(c, i):
-            return isinstance(i, PythonExpression) or isinstance(i, str) or isinstance(i, int) or isinstance(i, float)
+            return (
+                isinstance(i, PythonExpression)
+                or isinstance(i, str)
+                or isinstance(i, int)
+                or isinstance(i, float)
+            )
 
         type_checker = Draft7Validator.TYPE_CHECKER.redefine_many(
             Map(
                 __version=__version,
                 __python_expr_or_int=__python_expr_or_int,
                 __python_expr_or_str=__python_expr_or_str,
-                __python_expr_or_str_or_number=__python_expr_or_str_or_number
+                __python_expr_or_str_or_number=__python_expr_or_str_or_number,
             )
         )
         ConfigValidator = extend(Draft7Validator, type_checker=type_checker)

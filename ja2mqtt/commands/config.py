@@ -30,7 +30,9 @@ def config_main(config, log):
 def config_ja2mqtt(config, log):
     ja2mqtt_file = config.get_dir_path(config.root("ja2mqtt"))
     scope = Map(topology=config.root("topology"))
-    ja2mqtt = Config(ja2mqtt_file, scope=scope, use_template=True, schema="ja2mqtt-schema.yaml")
+    ja2mqtt = Config(
+        ja2mqtt_file, scope=scope, use_template=True, schema="ja2mqtt-schema.yaml"
+    )
     ja2mqtt.validate(throw_ex=True)
     print(json.dumps(ja2mqtt.root._config, indent=4, default=str))
 
@@ -62,7 +64,6 @@ def config_topics(config, log):
     "validate", help="Validate configuration.", cls=BaseCommandLogOnlyNoValidate
 )
 def config_validate(config, log):
-
     def _display_validation(res, errors, file):
         if not res:
             if errors is not None:
@@ -79,7 +80,9 @@ def config_validate(config, log):
     try:
         ja2mqtt_file = config.get_dir_path(config.root("ja2mqtt"))
         scope = Map(topology=config.root("topology"))
-        ja2mqtt = Config(ja2mqtt_file, scope=scope, use_template=True, schema="ja2mqtt-schema.yaml")
+        ja2mqtt = Config(
+            ja2mqtt_file, scope=scope, use_template=True, schema="ja2mqtt-schema.yaml"
+        )
         res, errors = ja2mqtt.validate(throw_ex=False)
         _display_validation(res, errors, ja2mqtt_file)
     except:
