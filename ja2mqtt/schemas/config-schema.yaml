@@ -87,6 +87,9 @@ properties:
         type: "boolean"
       xonxoff:
         type: "boolean"
+      minimum_write_delay:
+        type: "number"
+        minimum: 0
 
   # Jablotron topology
   topology:
