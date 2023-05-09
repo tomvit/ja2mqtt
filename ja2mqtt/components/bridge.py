@@ -62,8 +62,14 @@ class PrfStateChange:
 
 
 class Topic:
-    def __init__(self, topic):
-        self.name = topic["name"]
+    def __init__(self, prefix, topic):
+        if topic["name"].startswith(prefix):
+            self.name = topic["name"]
+        else:
+            sep = "/"
+            if prefix[-1] == "/" or topic["name"][0] == "/":
+                sep = ""
+            self.name = prefix + sep + topic["name"]
         self.disabled = topic.get("disabled", False)
         self.rules = []
         for rule_def in topic["rules"]:
@@ -113,15 +119,21 @@ class SerialMQTTBridge(Component):
         self.request_queue = Queue()
 
         ja2mqtt_file = self.config.get_dir_path(config.root("ja2mqtt"))
-        ja2mqtt = Config(ja2mqtt_file, scope=self.scope(), use_template=True)
-        for topic_def in ja2mqtt("serial2mqtt"):
-            self.topics_serial2mqtt.append(Topic(topic_def))
-        for topic_def in ja2mqtt("mqtt2serial"):
-            self.topics_mqtt2serial.append(Topic(topic_def))
+        ja2mqtt = Config(ja2mqtt_file, scope=self.scope(), use_template=True, schema="ja2mqtt-schema.yaml")
+
+        # system properties
+        self.topic_prefix = ja2mqtt("system.topic_prefix", "ja2mqtt")
         self.correlation_id = ja2mqtt("system.correlation_id", None)
         self.correlation_timeout = ja2mqtt("system.correlation_timeout", 0)
         self.topic_sys_error = ja2mqtt("system.topic_sys_error", None)
         self.prfstate_bits = ja2mqtt("system.prfstate_bits", 128)
+        self.prfstate_bits = ja2mqtt("system.minimum_write_delay", 1)
+
+        # topics
+        for topic_def in ja2mqtt("serial2mqtt"):
+            self.topics_serial2mqtt.append(Topic(self.topic_prefix, topic_def))
+        for topic_def in ja2mqtt("mqtt2serial"):
+            self.topics_mqtt2serial.append(Topic(self.topic_prefix, topic_def))
         self.request = None
         self.prfstate = [decode_prfstate("".zfill(self.prfstate_bits))]
 
