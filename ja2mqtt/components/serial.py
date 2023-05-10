@@ -87,7 +87,9 @@ class Serial(Component):
         self.buffer = Queue()
         self.wait_on_ready = self.config.value_int("wait_on_ready", default=10)
         self.use_simulator = self.config.value_bool("use_simulator", default=False)
-        self.minimum_write_delay = self.config.value_bool("minimum_write_delay", default=1)
+        self.minimum_write_delay = self.config.value_int(
+            "minimum_write_delay", default=1
+        )
         self.last_write_time = None
         if not self.use_simulator:
             self.ser = None
@@ -164,9 +166,15 @@ class Serial(Component):
         try:
             current_time = time.time()
             # wait the minimum_write_delay
-            if self.last_write_time is not None and current_time - self.last_write_time < self.minimum_write_delay:
-                self.log.debug(f"Too frequent writes, waiting {current_time - self.last_write_time}.")
-                time.sleep(current_time - self.last_write_time)
+            if (
+                self.last_write_time is not None
+                and current_time - self.last_write_time < self.minimum_write_delay
+            ):
+                waiting_time = self.minimum_write_delay - (current_time - self.last_write_time)
+                self.log.debug(
+                    f"Too frequent writes, waiting {waiting_time}."
+                )
+                time.sleep(waiting_time)
             self.ser.write(bytes(line + "\n", ENCODING))
             self.last_write_time = time.time()
         except Exception as e:
