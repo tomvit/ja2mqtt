@@ -25,7 +25,7 @@ from ja2mqtt.utils import (
 from . import Component
 from .serial import SerialJA121TException, decode_prfstate
 
-PRFSTATE_RE = re.compile("PRFSTATE ([0-7]+)")
+PRFSTATE_RE = re.compile("PRFSTATE ([0-9A-F]+)")
 
 
 class Pattern:
