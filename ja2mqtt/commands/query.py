@@ -153,12 +153,28 @@ class StatsTable():
     required=False,
     help="Data as a key=value pair",
 )
-def command_stats(config, log, data, init_topic):
+@click.option(
+    "--timeout",
+    "timeout",
+    metavar="<timeout>",
+    required=False,
+    type=float,
+    help="Timeout to wait for responses. The default is correlation timeout from the ja2mqtt configuration.",
+)
+@click.option(
+    "--watch", "-w"
+    "watch",
+    required=False,
+    is_flag=True,
+    default=False,
+    help="Watch stats continuously.",
+)
+def command_stats(config, log, data, init_topic, timeout, watch):
 
     stats = None
 
     def _on_message(topic, payload):
-        if stats.update(topic, Map(json.loads(payload))):
+        if stats.update(topic, Map(json.loads(payload))) and watch:
             stats.refresh()
 
     def _on_connect(client, userdata, flags, rc):
@@ -175,7 +191,8 @@ def command_stats(config, log, data, init_topic):
     for topic in ja2mqtt.topics_serial2mqtt:
         if not topic.disabled:
             stats.add(topic)
-    stats.refresh()
+    if watch:
+        stats.refresh()
 
     # mqtt client
     mqtt = MQTT(f"ja2mqtt-test-{randomString(5)}", config.get_part("mqtt-broker"))
@@ -191,8 +208,13 @@ def command_stats(config, log, data, init_topic):
             _data = dict_from_string(d, _data)
         mqtt.publish(init_topic, json.dumps(_data))
 
-    try:
-        while not ja2mqtt_config.exit_event.is_set():
-            ja2mqtt_config.exit_event.wait(5)
-    finally:
-        ja2mqtt_config.exit_event.set()
+    if not watch:
+        click.echo("Waiting for stats to be updated...")
+        time.sleep(ja2mqtt.correlation_timeout if timeout is None else timeout)
+        stats.refresh()
+    else:
+        try:
+            while not ja2mqtt_config.exit_event.is_set():
+                ja2mqtt_config.exit_event.wait(5)
+        finally:
+            ja2mqtt_config.exit_event.set()
