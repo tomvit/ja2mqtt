@@ -16,7 +16,7 @@ system:
   # correlation timeout in seconds
   # when a mqtt request is received, then within this timeout the response must be collected
   # the request-response will then share the same correlation id
-  correlation_timeout: 1.5
+  correlation_timeout: 2
 
   # number of bits in prfstate (default: 128)
   prfstate_bits: 24
