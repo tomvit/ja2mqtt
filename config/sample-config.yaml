@@ -19,6 +19,7 @@ mqtt-broker:
 # The serial port requires 9600 baud, 8 data bits, no parity, 1 stop-bit
 # see https://jablotron.com.hk/image/data/pdf/manuel/JA-121T.pdf
 serial:
+  minimum_write_delay: 1
   use_simulator: True
   port: /dev/ttyUSB0
   baudrate: 9600

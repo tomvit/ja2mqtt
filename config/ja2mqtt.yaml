@@ -21,12 +21,9 @@ system:
   # number of bits in prfstate (default: 128)
   prfstate_bits: 24
 
-  # minimum time to write messages to serial interface in seconds
-  minimum_write_delay: 1
-
   # prefix for all topics (default: ja2mqtt); if there are multiple instances of ja2mqtt using the same
   # MQTT broker, this property can be used to distinguish among them
-  topic_prefix: ja2mqtt2
+  topic_prefix: ja2mqtt
 
 # Definition of MQTT topics for serial output.
 # The topics defined in `serial2mqtt` will be created in MQTT broker according to events that occur in the serial output
@@ -48,11 +45,13 @@ serial2mqtt:
 {% for s in topology.section %}
 - name: section/{{ s.name }}
   rules:
-  - read: !py pattern('STATE {{ s.code }} (READY|ARMED_PART|ARMED|SERVICE|BLOCKED|OFF)')
+  #- read: !py pattern('STATE {{ s.code }} (READY|ARMED_PART|ARMED|SERVICE|BLOCKED|OFF)')
+  - read: !py section_state('STATE ({{ s.code }}) (READY|ARMED_PART|ARMED|SERVICE|BLOCKED|OFF)',1,2)
     write:
       section_code: {{ s.code }}
       section_name: {{ s.name }}
-      state: !py data.match.group(1)
+      state: !py data.match.group(2)
+      updated: !py data.updated
 {% endfor %}
 
 {% for v in topology.peripheral if v.type in ['motion','siren','magnet','smoke'] %}
@@ -64,6 +63,7 @@ serial2mqtt:
       type: {{ v.type }}
       pos: {{ v.pos }}
       state: !py data.state
+      updated: !py data.updated
 
     # allow to process next rule when this rule matches
     process_next_rule: True
@@ -111,7 +111,9 @@ mqtt2serial:
   rules:
     - write: !py write_prf_state(reset=True)
       request_ttl: 128
-    - write: !py format("{pin} STATE",pin=data.pin)
+    - read:
+        pin: !py pattern("^[0-9]{4}$")
+      write: !py format("{pin} STATE",pin=data.pin)
       request_ttl: 99
 
 {% for s in topology.section %}

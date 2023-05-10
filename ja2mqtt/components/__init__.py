@@ -28,7 +28,7 @@ class Component:
         self.thread.start()
 
 
-from .bridge import SerialMQTTBridge
+from .bridge import SerialMQTTBridge, JA2MQTTConfig
 from .mqtt import MQTT
 from .serial import Serial
 from .simulator import Simulator

@@ -14,8 +14,8 @@ import click
 
 import ja2mqtt.config as ja2mqtt_config
 from ja2mqtt import __version__ as version
-from ja2mqtt.components import MQTT
-from ja2mqtt.config import Config, correlation_id, init_logging, ja2mqtt_def
+from ja2mqtt.components import MQTT, SerialMQTTBridge, JA2MQTTConfig
+from ja2mqtt.config import Config, init_logging
 from ja2mqtt.utils import Map, dict_from_string, randomString
 from ja2mqtt.json2table import Table
 
@@ -50,8 +50,8 @@ from . import BaseCommandLogOnly
     help="Timeout to wait for responses. The default is correlation timeout from the ja2mqtt configuration.",
 )
 def command_publish(config, topic, data, log, timeout):
-    ja2mqtt = ja2mqtt_def(config)
-    _topic = next(filter(lambda x: x["name"] == topic, ja2mqtt("mqtt2serial")), None)
+    bridge = SerialMQTTBridge(config)
+    _topic = next(filter(lambda x: x.name == topic, bridge.topics_mqtt2serial), None)
     if _topic is None:
         raise Exception(
             f"The topic with name '{topic}' does not exist in the ja2mqtt definition file!"
@@ -61,7 +61,7 @@ def command_publish(config, topic, data, log, timeout):
     for d in data:
         _data = dict_from_string(d, _data)
 
-    field, id = correlation_id(ja2mqtt.root)
+    field, id = bridge.corr_id()
     if field is not None:
         _data[field] = id
 
@@ -71,8 +71,8 @@ def command_publish(config, topic, data, log, timeout):
             print(f"--> recv: {topic}: {payload}")
 
     def _on_connect(client, userdata, flags, rc):
-        for topic in ja2mqtt.root("serial2mqtt"):
-            client.subscribe(topic["name"])
+        for topic in bridge.topics_serial2mqtt:
+            client.subscribe(topic.name)
 
     mqtt = MQTT(f"ja2mqtt-test-{randomString(5)}", config.get_part("mqtt-broker"))
     mqtt.on_message_ext = _wait_for_response
@@ -80,19 +80,69 @@ def command_publish(config, topic, data, log, timeout):
     mqtt.start(ja2mqtt_config.exit_event)
     try:
         mqtt.wait_is_connected(ja2mqtt_config.exit_event)
-        print(f"<-- send: {_topic['name']}: {json.dumps(_data)}")
-        mqtt.publish(_topic["name"], json.dumps(_data))
-        time.sleep(
-            ja2mqtt.root("system.correlation_timeout", 1.5)
-            if timeout is None
-            else timeout
-        )
+        print(f"<-- send: {_topic.name}: {json.dumps(_data)}")
+        mqtt.publish(_topic.name, json.dumps(_data))
+        time.sleep(bridge.correlation_timeout if timeout is None else timeout)
     finally:
         ja2mqtt_config.exit_event.set()
 
 
+class StatsTable():
+    def __init__(self):
+        table_def = [
+            {"name": "TOPIC", "value": "{topic}"},
+            {"name": "UPDATED", "value": "{updated}", "format": self._format_time},
+            {"name": "STATE", "value": "{state}"},
+            {"name": "COUNT", "value": "{count}"},
+        ]
+        self.table = Table(table_def, None, False)
+        self.data = []
+        self.displayed = False
+
+    def _format_time(self, a, b, c):
+        if b is not None:
+            return datetime.fromtimestamp(b).strftime("%d-%m-%Y %H:%M:%S")
+        else:
+            return "N/A"
+
+    def add(self, topic):
+        self.data.append({"topic": topic.name, "count": 0, "updated": None, "state": None})
+
+    def topic_data(self, name):
+        for inx, d in enumerate(self.data):
+            if d["topic"] == name:
+                return inx
+        return None
+
+    def update(self, topic, data):
+        updated = False
+        inx = self.topic_data(topic)
+        if inx is not None and isinstance(data, dict):
+            for k,v in data.items():
+                if k in self.data[inx].keys():
+                    # print(topic, k, self.data[inx][k], v)
+                    self.data[inx][k] = v
+                    updated = True
+        return updated
+
+    def refresh(self):
+        if self.displayed and sys.stdout.isatty():
+            print("".join(["\033[A" for i in range(len(self.data) + 2)]))
+        self.table.display(self.data)
+        self.displayed = True
+
+
 @click.command(
     "stats", help="Subscribe to topics and display stats.", cls=BaseCommandLogOnly
+)
+@click.option(
+    "-i",
+    "--init",
+    "init_topic",
+    metavar="<name>",
+    is_flag=False,
+    required=False,
+    help="The initi topic name to be published.",
 )
 @click.option(
     "-d",
@@ -103,61 +153,44 @@ def command_publish(config, topic, data, log, timeout):
     required=False,
     help="Data as a key=value pair",
 )
-def command_stats(config, log, data):
-    ja2mqtt = ja2mqtt_def(config)
-    topics = [x["name"] for x in ja2mqtt("serial2mqtt") if not x.get("disabled", False)]
-    stats = []
-    for topic in topics:
-        stats.append({"topic": topic, "count": 0, "updated": None, "state": None})
+def command_stats(config, log, data, init_topic):
 
-    _data = {}
-    for d in data:
-        _data = dict_from_string(d, _data)
-
-    def _format_time(a, b, c):
-        if b is not None:
-            return datetime.fromtimestamp(b).strftime("%d-%m-%Y %H:%M:%S")
-        else:
-            return "N/A"
-
-    table_def = [
-        {"name": "TOPIC", "value": "{topic}"},
-        {"name": "UPDATED", "value": "{updated}", "format": _format_time},
-        {"name": "STATE", "value": "{state}"},
-        {"name": "COUNT", "value": "{count}"},
-    ]
-
-    table = Table(table_def, None, False)
-    table.display(stats)
-
-    def _update_table():
-        if sys.stdout.isatty():
-            print("".join(["\033[A" for i in range(len(stats) + 2)]))
-        table.display(stats)
+    stats = None
 
     def _on_message(topic, payload):
-        data = Map(json.loads(payload))
-        d = [x for x in stats if x["topic"] == topic]
-        if len(d) == 1:
-            d[0]["count"] += 1
-            d[0]["updated"] = time.time()
-            if data.get("state") is not None:
-                d[0]["state"] = data["state"]
-            _update_table()
+        if stats.update(topic, Map(json.loads(payload))):
+            stats.refresh()
 
     def _on_connect(client, userdata, flags, rc):
-        for d in stats:
+        for d in stats.data:
             client.subscribe(d["topic"])
 
+    # configuration
+    ja2mqtt = JA2MQTTConfig(config)
+    if init_topic is not None and not ja2mqtt.topic_exists(init_topic):
+        raise Exception(f"The topic {init_topic} does not exist!")
+
+    # stats table
+    stats = StatsTable()
+    for topic in ja2mqtt.topics_serial2mqtt:
+        if not topic.disabled:
+            stats.add(topic)
+    stats.refresh()
+
+    # mqtt client
     mqtt = MQTT(f"ja2mqtt-test-{randomString(5)}", config.get_part("mqtt-broker"))
     mqtt.on_message_ext = _on_message
     mqtt.on_connect_ext = _on_connect
     mqtt.start(ja2mqtt_config.exit_event)
     mqtt.wait_is_connected(ja2mqtt_config.exit_event)
-    mqtt.publish("ja2mqtt/section/get", json.dumps(_data))
-    time.sleep(1)
-    mqtt.publish("ja2mqtt/prfstate/get", json.dumps(_data))
-    time.sleep(1)
+
+    # get all states
+    if init_topic is not None:
+        _data = {}
+        for d in data:
+            _data = dict_from_string(d, _data)
+        mqtt.publish(init_topic, json.dumps(_data))
+
     try:
         while not ja2mqtt_config.exit_event.is_set():
             ja2mqtt_config.exit_event.wait(5)

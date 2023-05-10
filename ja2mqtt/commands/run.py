@@ -23,9 +23,9 @@ def command_run(config, log):
     simulator = None
     if config("simulator") is not None:
         simulator = Simulator(config.get_part("simulator"), bridge.prfstate_bits)
-    elif config("serial.use_simulator", False):
+    elif config("serial.use_simulator", True):
         log.error(
-            "The serial interface is be simulated but the simulator configuration does not exist!"
+            "The serial interface is set to be simulated but the simulator configuration does not exist!"
         )
 
     serial = Serial(config.get_part("serial"), simulator)
