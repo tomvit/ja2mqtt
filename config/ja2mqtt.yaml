@@ -45,7 +45,6 @@ serial2mqtt:
 {% for s in topology.section %}
 - name: section/{{ s.name }}
   rules:
-  #- read: !py pattern('STATE {{ s.code }} (READY|ARMED_PART|ARMED|SERVICE|BLOCKED|OFF)')
   - read: !py section_state('STATE ({{ s.code }}) (READY|ARMED_PART|ARMED|SERVICE|BLOCKED|OFF)',1,2)
     write:
       section_code: {{ s.code }}

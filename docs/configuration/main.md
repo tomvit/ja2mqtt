@@ -36,17 +36,18 @@ mqtt-broker:
   loop_timeout: 1
 ```  
 
-
 ## Serial interface
 
 You must specify the configuration of the serial interface where JA-121T is connected. The required property is port, and you can also define other serial interface properties such as `baudrate`, `bytesize`, `parity`, etc. However, it is essential to note that JA-121T requires the serial interface to use specific settings that you should not alter. Changing these settings may result in communication issues with JA-121T.
 
 You can set the `use_simulator` property to `True` (default is `False`) to use the serial interface simulator instead of the actual JA-121T device connected to the serial interface. You can use the simulator if you do not have access to Jablotron, do not have a JA-121T serial interface, or want to test how ja2mqtt works.
 
+The `minimum_write_delay` property sets a minimum delay in seconds between two write operations to the serial interface. By default, the value is set to 1 second. This delay is important to ensure that Jablotron can process requests sequentially.
 
 ```yaml
 serial:
   use_simulator: False
+  minimum_write_delay: 1
   port: /dev/ttyUSB0
   baudrate: 9600
   bytesize: 8

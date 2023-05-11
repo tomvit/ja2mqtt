@@ -87,7 +87,7 @@ def command_publish(config, topic, data, log, timeout):
         ja2mqtt_config.exit_event.set()
 
 
-class StatsTable():
+class StatsTable:
     def __init__(self):
         table_def = [
             {"name": "TOPIC", "value": "{topic}"},
@@ -106,7 +106,9 @@ class StatsTable():
             return "N/A"
 
     def add(self, topic):
-        self.data.append({"topic": topic.name, "count": 0, "updated": None, "state": None})
+        self.data.append(
+            {"topic": topic.name, "count": 0, "updated": None, "state": None}
+        )
 
     def topic_data(self, name):
         for inx, d in enumerate(self.data):
@@ -118,7 +120,7 @@ class StatsTable():
         updated = False
         inx = self.topic_data(topic)
         if inx is not None and isinstance(data, dict):
-            for k,v in data.items():
+            for k, v in data.items():
                 if k in self.data[inx].keys():
                     # print(topic, k, self.data[inx][k], v)
                     self.data[inx][k] = v
@@ -162,15 +164,14 @@ class StatsTable():
     help="Timeout to wait for responses. The default is correlation timeout from the ja2mqtt configuration.",
 )
 @click.option(
-    "--watch", "-w"
-    "watch",
+    "--watch",
+    "-w" "watch",
     required=False,
     is_flag=True,
     default=False,
     help="Watch stats continuously.",
 )
 def command_stats(config, log, data, init_topic, timeout, watch):
-
     stats = None
 
     def _on_message(topic, payload):

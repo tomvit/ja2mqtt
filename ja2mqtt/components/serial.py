@@ -170,10 +170,10 @@ class Serial(Component):
                 self.last_write_time is not None
                 and current_time - self.last_write_time < self.minimum_write_delay
             ):
-                waiting_time = self.minimum_write_delay - (current_time - self.last_write_time)
-                self.log.debug(
-                    f"Too frequent writes, waiting {waiting_time}."
+                waiting_time = self.minimum_write_delay - (
+                    current_time - self.last_write_time
                 )
+                self.log.debug(f"Too frequent writes, waiting {waiting_time}.")
                 time.sleep(waiting_time)
             self.ser.write(bytes(line + "\n", ENCODING))
             self.last_write_time = time.time()

@@ -59,6 +59,7 @@ class PrfStateChange:
     the current state of the peripheral and property `updated` contains the updated
     time of the peripheral.
     """
+
     def __init__(self, pos, current_state):
         self.pos = pos
         self.current_state = current_state
@@ -84,17 +85,17 @@ class PrfStateChange:
     def __eq__(self, other):
         res, d = self.decode(other)
         if res:
+            if self.state != d[self.pos]:
+                self.updated = time.time()
             self.state = d[self.pos]
             res = (
                 self.current_state is None
                 or d[self.pos] != self.current_state[self.pos]
             )
-            if res:
-                self.updated = time.time()
         return res
 
 
-class SectionState():
+class SectionState:
     def __init__(self, pattern, state_group=1, section_group=2):
         self.re = re.compile(pattern)
         self.state_group = state_group
@@ -113,6 +114,7 @@ class SectionState():
             return True
         else:
             return False
+
 
 class Topic:
     def __init__(self, prefix, topic):
@@ -191,6 +193,7 @@ class JA2MQTTConfig:
 
     def scope(self):
         section_states = {}
+
         def _section_state(pattern, g1, g2):
             if pattern not in section_states:
                 section_states[pattern] = SectionState(pattern, g1, g2)
@@ -202,6 +205,13 @@ class JA2MQTTConfig:
                 self.prfstate = []
             return "PRFSTATE"
 
+        prf_states = {}
+
+        def _prf_state(pos):
+            if pos not in prf_states:
+                prf_states[pos] = PrfState(pos)
+            return prf_state[pos]
+
         if self._scope is None:
             self._scope = Map(
                 topology=self.config.root("topology"),
@@ -210,7 +220,7 @@ class JA2MQTTConfig:
                 prf_state_change=lambda pos: PrfStateChange(
                     str(pos), self.prfstate[-2] if len(self.prfstate) > 1 else None
                 ),
-                section_state=lambda pattern,g1,g2: _section_state(pattern, g1, g2),
+                section_state=lambda pattern, g1, g2: _section_state(pattern, g1, g2),
                 write_prf_state=_write_prf_state,
             )
         return self._scope
@@ -222,6 +232,7 @@ class JA2MQTTConfig:
 
     def topic_exists(self, name):
         return name in [x.name for x in self.topics_mqtt2serial]
+
 
 class SerialMQTTBridge(Component, JA2MQTTConfig):
     def __init__(self, config):
