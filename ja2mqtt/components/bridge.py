@@ -96,12 +96,13 @@ class PrfStateChange:
 
 
 class SectionState:
-    def __init__(self, pattern, state_group=1, section_group=2):
+    def __init__(self, pattern, section_group=1, state_group=2):
         self.re = re.compile(pattern)
-        self.state_group = state_group
         self.section_group = section_group
+        self.state_group = state_group
         self.state = None
         self.match = None
+        self.updated = None
 
     def __eq__(self, other):
         self.match = self.re.match(other)
@@ -114,6 +115,26 @@ class SectionState:
             return True
         else:
             return False
+
+
+class PrfState:
+    def __init__(self, pos):
+        self.state = None
+        self.pos = str(pos)
+        self.report_on_next = False
+
+    def __eq__(self, other):
+        res = False
+        if other.startswith("PRFSTATE"):
+            d = decode_prfstate(other.split(" ")[1])
+            if self.state != d[self.pos]:
+                self.state = d[self.pos]
+                self.updated = time.time()
+                res = True
+            if self.report_on_next:
+                self.report_on_next = False
+                res = True
+        return res
 
 
 class Topic:
@@ -199,27 +220,26 @@ class JA2MQTTConfig:
                 section_states[pattern] = SectionState(pattern, g1, g2)
             return section_states[pattern]
 
-        def _write_prf_state(reset=False):
-            if reset:
-                self.log.debug("Reseting prfstate object to None.")
-                self.prfstate = []
-            return "PRFSTATE"
-
         prf_states = {}
 
         def _prf_state(pos):
             if pos not in prf_states:
                 prf_states[pos] = PrfState(pos)
-            return prf_state[pos]
+            return prf_states[pos]
+
+        def _write_prf_state(reset=False):
+            if reset:
+                self.log.debug("Setting prfstate objects to report state on the next PRFSTATE event.")
+                for k, v in prf_states.items():
+                    v.report_on_next = True
+            return "PRFSTATE"
 
         if self._scope is None:
             self._scope = Map(
                 topology=self.config.root("topology"),
                 pattern=lambda x: Pattern(x),
                 format=lambda x, **kwa: x.format(**kwa),
-                prf_state_change=lambda pos: PrfStateChange(
-                    str(pos), self.prfstate[-2] if len(self.prfstate) > 1 else None
-                ),
+                prf_state=lambda pos: _prf_state(pos),
                 section_state=lambda pattern, g1, g2: _section_state(pattern, g1, g2),
                 write_prf_state=_write_prf_state,
             )

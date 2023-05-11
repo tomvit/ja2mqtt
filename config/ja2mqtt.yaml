@@ -56,7 +56,7 @@ serial2mqtt:
 {% for v in topology.peripheral if v.type in ['motion','siren','magnet','smoke'] %}
 - name: {{ v.type }}/{{ v.name }}
   rules:
-  - read: !py prf_state_change({{ v['pos'] }})
+  - read: !py prf_state({{ v['pos'] }})
     write:
       name: {{ v.name }}
       type: {{ v.type }}

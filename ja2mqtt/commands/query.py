@@ -87,13 +87,12 @@ def command_publish(config, topic, data, log, timeout):
         ja2mqtt_config.exit_event.set()
 
 
-class StatsTable:
+class StatesTable:
     def __init__(self):
         table_def = [
             {"name": "TOPIC", "value": "{topic}"},
             {"name": "UPDATED", "value": "{updated}", "format": self._format_time},
             {"name": "STATE", "value": "{state}"},
-            {"name": "COUNT", "value": "{count}"},
         ]
         self.table = Table(table_def, None, False)
         self.data = []
@@ -135,7 +134,7 @@ class StatsTable:
 
 
 @click.command(
-    "stats", help="Subscribe to topics and display stats.", cls=BaseCommandLogOnly
+    "states", help="Show states of devices.", cls=BaseCommandLogOnly
 )
 @click.option(
     "-i",
@@ -169,17 +168,17 @@ class StatsTable:
     required=False,
     is_flag=True,
     default=False,
-    help="Watch stats continuously.",
+    help="Watch states continuously.",
 )
-def command_stats(config, log, data, init_topic, timeout, watch):
-    stats = None
+def command_states(config, log, data, init_topic, timeout, watch):
+    states = None
 
     def _on_message(topic, payload):
-        if stats.update(topic, Map(json.loads(payload))) and watch:
-            stats.refresh()
+        if states.update(topic, Map(json.loads(payload))) and watch:
+            states.refresh()
 
     def _on_connect(client, userdata, flags, rc):
-        for d in stats.data:
+        for d in states.data:
             client.subscribe(d["topic"])
 
     # configuration
@@ -187,13 +186,14 @@ def command_stats(config, log, data, init_topic, timeout, watch):
     if init_topic is not None and not ja2mqtt.topic_exists(init_topic):
         raise Exception(f"The topic {init_topic} does not exist!")
 
-    # stats table
-    stats = StatsTable()
+    # states table
+    states = StatesTable()
     for topic in ja2mqtt.topics_serial2mqtt:
         if not topic.disabled:
-            stats.add(topic)
+            if len([x for x in [ r.write for r in topic.rules] if "state" in x])>0:
+                states.add(topic)
     if watch:
-        stats.refresh()
+        states.refresh()
 
     # mqtt client
     mqtt = MQTT(f"ja2mqtt-test-{randomString(5)}", config.get_part("mqtt-broker"))
@@ -210,9 +210,9 @@ def command_stats(config, log, data, init_topic, timeout, watch):
         mqtt.publish(init_topic, json.dumps(_data))
 
     if not watch:
-        click.echo("Waiting for stats to be updated...")
+        click.echo("Waiting for states to be updated...")
         time.sleep(ja2mqtt.correlation_timeout if timeout is None else timeout)
-        stats.refresh()
+        states.refresh()
     else:
         try:
             while not ja2mqtt_config.exit_event.is_set():
