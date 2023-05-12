@@ -87,10 +87,7 @@ class Simulator:
         _pos = self.peripherals
         if len(pos) > 0:
             _pos = list(pos)
-        return {
-            str(p): ("ON" if random.random() < on_prob else "OFF")
-            for p in _pos
-        }
+        return {str(p): ("ON" if random.random() < on_prob else "OFF") for p in _pos}
 
     def _add_to_buffer(self, data):
         time.sleep(self.response_delay)

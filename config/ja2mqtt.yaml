@@ -49,7 +49,7 @@ serial2mqtt:
     write:
       section_code: {{ s.code }}
       section_name: {{ s.name }}
-      state: !py data.match.group(2)
+      state: !py data.state
       updated: !py data.updated
 {% endfor %}
 
@@ -102,13 +102,13 @@ mqtt2serial:
 # get prfstate
 - name: prfstate/get
   rules:
-    - write: !py write_prf_state(reset=True)
+    - write: !py write_prf_state()
       request_ttl: 128
 
 # get states of all: sections, peripherals
 - name: all/get
   rules:
-    - write: !py write_prf_state(reset=True)
+    - write: !py write_prf_state()
       request_ttl: 128
     - read:
         pin: !py pattern("^[0-9]{4}$")

@@ -227,11 +227,12 @@ class JA2MQTTConfig:
                 prf_states[pos] = PrfState(pos)
             return prf_states[pos]
 
-        def _write_prf_state(reset=False):
-            if reset:
-                self.log.debug("Setting prfstate objects to report state on the next PRFSTATE event.")
-                for k, v in prf_states.items():
-                    v.report_on_next = True
+        def _write_prf_state():
+            self.log.debug(
+                "Setting prfstate objects to report state on the next PRFSTATE event."
+            )
+            for k, v in prf_states.items():
+                v.report_on_next = True
             return "PRFSTATE"
 
         if self._scope is None:

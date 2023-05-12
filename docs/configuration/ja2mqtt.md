@@ -75,7 +75,7 @@ The section topics follow the format `{prefix}/section/{name}`, where `{prefix}`
     write:
       section_code: 1
       section_name: house
-      state: !py data.match.group(1)
+      state: !py data.state
       updated: !py data.updated
 ```
 
@@ -106,14 +106,14 @@ The ja2mqtt definition file specifies the topics for publishing changes in perip
 
 Although the rules for these topics are similar to the ones for MQTT topics, ja2mqtt uses different functions to decode the peripheral states that JA-121T transmits through the serial interface as `PRFSTATE {number}`. Here, `{number}` is an octal number that encodes the peripheral states. ja2mqtt includes decoding and encoding functions for this `PRFSTATE` octal number based on the [JA-121T serial protocol](https://github.com/tomvit/ja2mqtt/tree/master/etc/JA-121T.pdf).
 
-The following example provides a topic rule to read the `PRFSTATE` message in the serial interface and generate event data with five properties: `name`, `type`, `pos`, `state`, and `updated`. The `read` property of the rule uses a Python expression with the `prf_state_change` function that utilizes the internal peripheral state object and checks if the state of the peripheral on position `3` has changed (i.e., from ON to OFF or from OFF to ON). If the state has changed, the `write` property specifies the data to be generated for the event, including the name of the peripheral, its type, position, state and updated time. Since this rule is only applicable to a single peripheral state change topic, and the `PRFSTATE` number may indicate state changes for multiple peripherals, the `process_next_rule` property is included to allow for the processing of the next topic rule and the generation of events for other peripheral state changes.
+The following example provides a topic rule to read the `PRFSTATE` message in the serial interface and generate event data with five properties: `name`, `type`, `pos`, `state`, and `updated`. The `read` property of the rule uses a Python expression with the `prf_state` function that utilizes the internal peripheral state object and checks if the state of the peripheral on position `3` has changed (i.e., from ON to OFF or from OFF to ON). If the state has changed, the `write` property specifies the data to be generated for the event, including the name of the peripheral, its type, position, state and updated time. Since this rule is only applicable to a single peripheral state change topic, and the `PRFSTATE` number may indicate state changes for multiple peripherals, the `process_next_rule` property is included to allow for the processing of the next topic rule and the generation of events for other peripheral state changes.
 
 Here is the example YAML configuration:
 
 ```yaml
 - name: motion/garage
   rules:
-  - read: !py prf_state_change(3)
+  - read: !py prf_state(3)
     write:
       name: garage
       type: motion
@@ -144,12 +144,12 @@ In addition, there is a topic with the name `ja2mqtt/section/get` that can be us
 
 #### Peripherals
 
-To retrieve the state of peripherals, the following rule uses the `write_prf_state` function that generates the string `PRFSTATE`, which is then written to the serial interface. The `reset` parameter is set to `True` to reset the internal peripheral state object, so that subsequent events will be published under the corresponding MQTT topics, regardless of the change in the peripheral state.
+To retrieve the state of peripherals, the following rule uses the `write_prf_state` function that generates the string `PRFSTATE`, which is then written to the serial interface. The function makes sure that subsequent peripheral state events will be published under the corresponding MQTT topics, regardless of the change in the peripheral state.
 
 ```yaml
 - name: prfstate/get
   rules:
-    - write: !py write_prf_state(reset=True)
+    - write: !py write_prf_state()
       request_ttl: 128
 ```
 
@@ -160,7 +160,7 @@ The ja2mqtt protocol definition includes a `all/get` topic that allows retrieval
 ```YAML
 - name: all/get
   rules:
-    - write: !py write_prf_state(reset=True)
+    - write: !py write_prf_state()
       request_ttl: 128
     - read:
         pin: !py pattern("^[0-9]{4}$")
