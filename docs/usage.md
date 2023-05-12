@@ -136,7 +136,7 @@ You can use the following command options to customize the output:
 Here is an example command:
 
 ```
-ja2mqtt states -c config/config.yaml -i ja2mqtt/all/get -d pin=7401 -w -t -s
+ja2mqtt states -c config/config.yaml -i ja2mqtt/all/get -d pin=1234 -w -t -s
 TOPIC                                       UPDATED            STATE
 ja2mqtt/motion/house/livingroom             20 minutes ago     OFF
 ja2mqtt/section/house                       1 hour ago         READY
