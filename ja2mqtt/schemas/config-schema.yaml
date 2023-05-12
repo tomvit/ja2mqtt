@@ -87,6 +87,9 @@ properties:
         type: "boolean"
       xonxoff:
         type: "boolean"
+      minimum_write_delay:
+        type: "number"
+        minimum: 0
 
   # Jablotron topology
   topology:
@@ -155,6 +158,9 @@ properties:
       response_delay:
         type: "number"
         minimum: 0
+      peripherals:
+        type: "string"
+        pattern: "^[0-9]+(,[0-9]+)*$"
       rules:
         type: "array"
         items:

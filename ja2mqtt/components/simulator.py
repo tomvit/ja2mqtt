@@ -83,11 +83,11 @@ class Simulator:
     def close(self):
         pass
 
-    def generate_prfstate(self, on_prob=0.5):
-        return {
-            str(p): ("ON" if random.random() < on_prob else "OFF")
-            for p in self.peripherals
-        }
+    def generate_prfstate(self, *pos, on_prob=0.5):
+        _pos = self.peripherals
+        if len(pos) > 0:
+            _pos = list(pos)
+        return {str(p): ("ON" if random.random() < on_prob else "OFF") for p in _pos}
 
     def _add_to_buffer(self, data):
         time.sleep(self.response_delay)
@@ -164,7 +164,7 @@ class Simulator:
         from .serial import encode_prfstate
 
         def _prf_random_states(*pos, on_prob=0.5):
-            prf = self.generate_prfstate(on_prob)
+            prf = self.generate_prfstate(*pos, on_prob=on_prob)
             return "PRFSTATE " + encode_prfstate(prf, self.prfstate_bits)
 
         return Map(

@@ -16,10 +16,14 @@ system:
   # correlation timeout in seconds
   # when a mqtt request is received, then within this timeout the response must be collected
   # the request-response will then share the same correlation id
-  correlation_timeout: 1.5
+  correlation_timeout: 2
 
   # number of bits in prfstate (default: 128)
   prfstate_bits: 24
+
+  # prefix for all topics (default: ja2mqtt); if there are multiple instances of ja2mqtt using the same
+  # MQTT broker, this property can be used to distinguish among them
+  topic_prefix: ja2mqtt
 
 # Definition of MQTT topics for serial output.
 # The topics defined in `serial2mqtt` will be created in MQTT broker according to events that occur in the serial output
@@ -27,7 +31,7 @@ serial2mqtt:
 
 # MQTT heartbeat topic; Jablotron writes hearbeat 'OK' messages to serial output
 # that are converted to MQTT heartbeat events
-- name: ja2mqtt/heartbeat
+- name: heartbeat
   disabled: True
   rules:
   - read: OK
@@ -39,31 +43,33 @@ serial2mqtt:
 
 # MQTT topics for sections that will be generated when events in serial output occur
 {% for s in topology.section %}
-- name: ja2mqtt/section/{{ s.name }}
+- name: section/{{ s.name }}
   rules:
-  - read: !py pattern('STATE {{ s.code }} (READY|ARMED_PART|ARMED|SERVICE|BLOCKED|OFF)')
+  - read: !py section_state('STATE ({{ s.code }}) (READY|ARMED_PART|ARMED|SERVICE|BLOCKED|OFF)',1,2)
     write:
       section_code: {{ s.code }}
       section_name: {{ s.name }}
-      state: !py data.match.group(1)
+      state: !py data.state
+      updated: !py data.updated
 {% endfor %}
 
 {% for v in topology.peripheral if v.type in ['motion','siren','magnet','smoke'] %}
-- name: ja2mqtt/{{ v.type }}/{{ v.name }}
+- name: {{ v.type }}/{{ v.name }}
   rules:
-  - read: !py prf_state_change({{ v['pos'] }})
+  - read: !py prf_state({{ v['pos'] }})
     write:
       name: {{ v.name }}
       type: {{ v.type }}
       pos: {{ v.pos }}
       state: !py data.state
+      updated: !py data.updated
 
     # allow to process next rule when this rule matches
     process_next_rule: True
 {% endfor %}
 
 # generic error
-- name: ja2mqtt/error
+- name: error
   rules:
   - read: !py pattern('ERROR. ([0-9]+) (.+)')
     write:
@@ -72,7 +78,7 @@ serial2mqtt:
 
 # generic response to events with OK result
 # this happens, for example, when a state of a section is not changed
-- name: ja2mqtt/response
+- name: response
   rules:
   - read: OK
     write:
@@ -86,7 +92,7 @@ serial2mqtt:
 mqtt2serial:
 
 # get all section states
-- name: ja2mqtt/section/get
+- name: section/get
   rules:
     - read:
         pin: !py pattern("^[0-9]{4}$")
@@ -94,35 +100,45 @@ mqtt2serial:
       request_ttl: 99
 
 # get prfstate
-- name: ja2mqtt/prfstate/get
+- name: prfstate/get
   rules:
-    - write: !py write_prf_state(reset=True)
+    - write: !py write_prf_state()
       request_ttl: 128
+
+# get states of all: sections, peripherals
+- name: all/get
+  rules:
+    - write: !py write_prf_state()
+      request_ttl: 128
+    - read:
+        pin: !py pattern("^[0-9]{4}$")
+      write: !py format("{pin} STATE",pin=data.pin)
+      request_ttl: 99
 
 {% for s in topology.section %}
 # set state to ARMED for a single section
-- name: ja2mqtt/section/{{ s.name }}/set
+- name: section/{{ s.name }}/set
   rules:
     - read:
         pin: !py pattern("^[0-9]{4}$")
       write: !py format("{pin} SET {{ s.code }}",pin=data.pin)
 
 # set state to ARMED_PART for a single section
-- name: ja2mqtt/section/{{ s.name }}/setp
+- name: section/{{ s.name }}/setp
   rules:
     - read:
         pin: !py pattern("^[0-9]{4}$")
       write: !py format("{pin} SETP {{ s.code }}",pin=data.pin)
 
 # unset a single section
-- name: ja2mqtt/section/{{ s.name }}/unset
+- name: section/{{ s.name }}/unset
   rules:
     - read:
         pin: !py pattern("^[0-9]{4}$")
       write: !py format("{pin} UNSET {{ s.code }}",pin=data.pin)
 
 # get state of a single section
-- name: ja2mqtt/section/{{ s.name }}/get
+- name: section/{{ s.name }}/get
   rules:
     - read:
         pin: !py pattern("^[0-9]{4}$")

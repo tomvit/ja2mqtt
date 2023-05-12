@@ -20,6 +20,8 @@ The correlation ID is the field name in incoming requests (received via a topic 
 
 The property `prfstate_bits` defines a number of bits in `PRFSTATE` object. This value depends on a number of peripherals that your Jablotron system uses.
 
+The `topic_prefix` property defines a prefix for both publishing and subscribing topics. By default, the prefix is `ja2mqtt`. However, it may be useful to change the prefix when you have multiple ja2mqtt instances using a single MQTT broker, and you want to segregate events from both instances.
+
 The following configuration shows the system property definitions with initial values.
 
 ```yaml
@@ -27,6 +29,7 @@ system:
   correlation_id: 'corrid'
   correlation_timeout: 1.5
   prfstate_bits: 24
+  topic_prefix: 'ja2mqtt'
 ```
 
 ## Jinja templates
@@ -51,7 +54,7 @@ This code uses a `for` loop to iterate through all sections in the topology and 
 
 ## MQTT topics
 
-ja2mqtt publishes events on a number of topics and subscribes to topics to receive requests to query or control Jablotron system. Any topic starts with `ja2mqtt` and is followed by a type and an optional sub-type or a location. The topic names are automatically generated based on ja2mqtt topic definition and Jablotron topology.
+ja2mqtt publishes events on a number of topics and subscribes to topics to receive requests to query or control Jablotron system. Any topic starts with a topic prefix (`ja2mqtt` by default) and is followed by a type and an optional sub-type or a location. The topic names are automatically generated based on ja2mqtt topic definition and Jablotron topology.
 
 ```{hint}
 You can use the command `ja2mqtt config topics -c config.yaml` to retrieve the publishing and subscribing topics that your configuration defines.
@@ -63,21 +66,22 @@ ja2mqtt utilizes MQTT topics to publish state changes for both sections and peri
 
 #### Sections
 
-The section topics follow the format `ja2mqtt/section/{name}`, where `{name}` refers to the section name. As an example of a topic and a rule for the `house` section, suppose we have the following configuration that specifies a topic for publishing section state changes under the name `ja2mqtt/section/house`:
+The section topics follow the format `{prefix}/section/{name}`, where `{prefix}` is the topic prefix defined in `system` properties and `{name}` refers to the section name. As an example of a topic and a rule for the `house` section, suppose we have the following configuration that specifies a topic for publishing section state changes under the name `ja2mqtt/section/house`:
 
 ```yaml
-- name: ja2mqtt/section/house
+- name: section/house
   rules:
-  - read: !py pattern('STATE 1 (READY|ARMED_PART|ARMED|SERVICE|BLOCKED|OFF)')
+  - read: !py section_state('STATE (1) (READY|ARMED_PART|ARMED|SERVICE|BLOCKED|OFF)',1,2)
     write:
       section_code: 1
       section_name: house
-      state: !py data.match.group(1)
+      state: !py data.state
+      updated: !py data.updated
 ```
 
-In this configuration, the `read` property of the rule matches the data in the serial interface using the given regular expression, which defines the possible section 1 state changes as `READY`, `ARMED_PART`, `ARMED`, `SERVICE`, `BLOCKED`, or `OFF`. Once the `read` condition is satisfied, the data is written to MQTT under the topic with the name `ja2mqtt/section/house`. The data fields that are written include the section code (set to 1), the section name (set to "house"), and the section state (set to the matched group from the regular expression).
+In this configuration, the `read` property of the rule matches the data in the serial interface using the provided regular expression, which defines the possible state changes for section 1 as `READY`, `ARMED_PART`, `ARMED`, `SERVICE`, `BLOCKED`, or `OFF`. The function `section_state` is a built-in function that tracks the state change for a section and updates the time at which the section state was last changed. Once the `read` condition is met, the data is written to MQTT under the topic named `ja2mqtt/section/house`. The written data fields include the section code (set to 1), the section name (set to "house"), the section state (set to the matched group from the regular expression), and the time of the last section state update.
 
-In the `write` property, you can define arbitrary sub-properties as data to be sent to MQTT. When specifying values for the data, you can use any arbitrary values or a {ref}`Python expression <configuration/index:python expressions>`. The scope to evaluate the expression includes the `data` variable that contains the data read from the serial interface. If you use the `pattern` function in the `read` property of the rule, you can access captured groups using the [`match` object](https://docs.python.org/3/library/re.html#match-objects).
+In the `write` property, you can define arbitrary sub-properties as data to be sent to MQTT. When specifying values for the data, you can use any arbitrary values or a {ref}`Python expression <configuration/index:python expressions>`. The scope to evaluate the expression includes the `data` variable that contains the data read from the serial interface. If you use a built-in function in the `read` property of the rule, you can access various properties of the result of the function such as the [`match` object](https://docs.python.org/3/library/re.html#match-objects) that can be used for `pattern` and `section_state` functions.
 
 In the example, for the following serial interface data,
 
@@ -91,7 +95,8 @@ the topic with name `ja2mqtt/section/house` will be published with the following
  {
    "section_code": 1,
    "section_name": "house",
-   "state": "ARMED"
+   "state": "ARMED",
+   "updated": 1683727085.619606
  }
  ```
 
@@ -101,19 +106,20 @@ The ja2mqtt definition file specifies the topics for publishing changes in perip
 
 Although the rules for these topics are similar to the ones for MQTT topics, ja2mqtt uses different functions to decode the peripheral states that JA-121T transmits through the serial interface as `PRFSTATE {number}`. Here, `{number}` is an octal number that encodes the peripheral states. ja2mqtt includes decoding and encoding functions for this `PRFSTATE` octal number based on the [JA-121T serial protocol](https://github.com/tomvit/ja2mqtt/tree/master/etc/JA-121T.pdf).
 
-The following example provides a topic rule to read the `PRFSTATE` message in the serial interface and generate event data with four properties: `name`, `type`, `pos`, and `state`. The `read` property of the rule uses a Python expression with the `prf_state_change` function that utilizes the internal peripheral state object and checks if the state of the peripheral on position `3` has changed (i.e., from ON to OFF or from OFF to ON). If the state has changed, the `write` property specifies the data to be generated for the event, including the name of the peripheral, its type, position, and state. Since this rule is only applicable to a single peripheral state change topic, and the `PRFSTATE` octal number may indicate state changes for multiple peripherals, the `process_next_rule` property is included to allow for the processing of the next topic rule and the generation of events for other peripheral state changes.
+The following example provides a topic rule to read the `PRFSTATE` message in the serial interface and generate event data with five properties: `name`, `type`, `pos`, `state`, and `updated`. The `read` property of the rule uses a Python expression with the `prf_state` function that utilizes the internal peripheral state object and checks if the state of the peripheral on position `3` has changed (i.e., from ON to OFF or from OFF to ON). If the state has changed, the `write` property specifies the data to be generated for the event, including the name of the peripheral, its type, position, state and updated time. Since this rule is only applicable to a single peripheral state change topic, and the `PRFSTATE` number may indicate state changes for multiple peripherals, the `process_next_rule` property is included to allow for the processing of the next topic rule and the generation of events for other peripheral state changes.
 
 Here is the example YAML configuration:
 
 ```yaml
-- name: ja2mqtt/motion/garage
+- name: motion/garage
   rules:
-  - read: !py prf_state_change(3)
+  - read: !py prf_state(3)
     write:
       name: garage
       type: motion
       pos: 1
       state: !py data.state
+      updated: !py data.updated
     process_next_rule: True
 ```
 
@@ -123,12 +129,12 @@ Ja2mqtt subscribes to multiple topics to receive requests that clients can use t
 
 #### Sections
 
-Topics for sections are in a form `ja2mqtt/section/{name}/{verb}` where `{name}` is the section name, and `{verb}` represents a type of operation to perform, i.e. `get`, `set`, `unset`, and `setp` to retrieve a section state, arm or disarm a section or partially arm a section.
+Topics for sections are in a form `{prefix}/section/{name}/{verb}` where `{prefix}` is a topic prefix, `{name}` is the section name, and `{verb}` represents a type of operation to perform, i.e. `get`, `set`, `unset`, and `setp` to retrieve a section state, arm or disarm a section or partially arm a section.
 
 In addition, there is a topic with the name `ja2mqtt/section/get` that can be used to retrieve the state of all sections. The following example presents a rule for this topic with a `read` property that defines incoming event data with a `pin` property. The `pattern` function specifies a regular expression that the `pin` property value must match. If the value does not match, the request will not be processed, and an error will be logged. The `write` property defines a string to be written to the serial interface. The `format` function formats the string with the `pin` parameter taken from the event data. The `request_ttl` property defines a TTL (time-to-live) for the corresponding responses that will be generated as a result of the operation. A TTL value of `99` indicates that up to 99 responses will be correlated with this request. This is necessary because the JA-121T command `STATE` results in several `STATE` serial interface events generated by Jablotron, for which ja2mqtt creates publishing events. The correlation of such messages is still limited by the `correlation_timeout` system property.
 
 ```yaml
-- name: ja2mqtt/section/get
+- name: section/get
   rules:
     - read:
         pin: !py pattern("^[0-9]{4}$")
@@ -138,11 +144,26 @@ In addition, there is a topic with the name `ja2mqtt/section/get` that can be us
 
 #### Peripherals
 
-To retrieve the state of peripherals, the following rule uses the `write_prf_state` function that generates the string `PRFSTATE`, which is then written to the serial interface. The `reset` parameter is set to `True` to reset the internal peripheral state object, so that subsequent events will be published under the corresponding MQTT topics, regardless of the change in the peripheral state.
+To retrieve the state of peripherals, the following rule uses the `write_prf_state` function that generates the string `PRFSTATE`, which is then written to the serial interface. The function makes sure that subsequent peripheral state events will be published under the corresponding MQTT topics, regardless of the change in the peripheral state.
 
 ```yaml
-- name: ja2mqtt/prfstate/get
+- name: prfstate/get
   rules:
-    - write: !py write_prf_state(reset=True)
+    - write: !py write_prf_state()
       request_ttl: 128
+```
+
+#### All states
+
+The ja2mqtt protocol definition includes a `all/get` topic that allows retrieval of states for both sections and peripherals. The following YAML code displays the rules for this topic, which are constructed from rules of the `section/get` and `prfstate/get` topics.
+
+```YAML
+- name: all/get
+  rules:
+    - write: !py write_prf_state()
+      request_ttl: 128
+    - read:
+        pin: !py pattern("^[0-9]{4}$")
+      write: !py format("{pin} STATE",pin=data.pin)
+      request_ttl: 99
 ```

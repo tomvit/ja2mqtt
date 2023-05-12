@@ -466,17 +466,3 @@ def init_logging(
             },
         }
     )
-
-
-def ja2mqtt_def(config):
-    return Config(
-        config.get_dir_path(config.root("ja2mqtt")),
-        scope=Map(topology=config.root("topology")),
-        use_template=True,
-    )
-
-
-def correlation_id(ja2mqtt):
-    corrid_field = ja2mqtt("system.correlation_id", None)
-    corr_id = randomString(12, letters="abcdef0123456789")
-    return corrid_field, corr_id if corrid_field is not None else None

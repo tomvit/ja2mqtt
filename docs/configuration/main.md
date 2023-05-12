@@ -20,10 +20,13 @@ The `logs` property specifies the directory where the ja2mqtt logs will be store
 logs: ../logs
 ```
 
-
 ## MQTT broker
 
 The MQTT broker is an external system that ja2mqtt uses to publish and subscribe to events. To use the MQTT broker, you need to specify the MQTT address and an optional TCP port (default is 1883). The address can be a domain name or an IP address.
+
+You can provide a username and password for the client to authenticate with the MQTT broker. If you don't provide them, the client will not be authenticated, and the broker must have `allow_anonymous` set to `True`. For more information, refer to the [Mosquitto configuration](https://mosquitto.org/man/mosquitto-conf-5.html).
+
+The `protocol` property determines the communication protocol used by the client to interact with the broker. The default value is `MQTTv311`, and `MQTTv31` is also supported. However, the `MQTTv5` protocol version is currently not supported. The `transport` property can be used to specify the underlying transport protocol, which can be `tcp` (default) or `websockets`. Additionally, the `clean_session` property can be set to ensure that session data is cleared after the connection is closed.
 
 The `keepalive` property (default is 60 seconds) defines the maximum time interval between two messages for the MQTT broker to keep track of clients that are still connected. This enables the broker to know when to send the Last Will and Testament (LWT) message for the client. You can refer to the [MQTT keepalive](http://docs.oasis-open.org/mqtt/mqtt/v3.1.1/os/mqtt-v3.1.1-os.html#_Toc385349238) for further details.
 
@@ -31,11 +34,15 @@ The `keepalive` property (default is 60 seconds) defines the maximum time interv
 mqtt-broker:
   address: 192.168.10.20
   port: 1883
+  username: user1
+  password: password1
+  protocol: MQTTv311
+  transport: tcp
+  clean_session: False
   keepalive: 60
   reconnect_after: 30
   loop_timeout: 1
 ```  
-
 
 ## Serial interface
 
@@ -43,10 +50,12 @@ You must specify the configuration of the serial interface where JA-121T is conn
 
 You can set the `use_simulator` property to `True` (default is `False`) to use the serial interface simulator instead of the actual JA-121T device connected to the serial interface. You can use the simulator if you do not have access to Jablotron, do not have a JA-121T serial interface, or want to test how ja2mqtt works.
 
+The `minimum_write_delay` property sets a minimum delay in seconds between two write operations to the serial interface. By default, the value is set to 1 second. This delay is important to ensure that Jablotron can process requests sequentially.
 
 ```yaml
 serial:
   use_simulator: False
+  minimum_write_delay: 1
   port: /dev/ttyUSB0
   baudrate: 9600
   bytesize: 8
