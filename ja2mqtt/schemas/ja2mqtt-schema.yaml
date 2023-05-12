@@ -24,6 +24,8 @@ properties:
         type: "integer"
         minimum: 8
         maximum: 128
+      topic_prefix:
+        type: "string"
   serial2mqtt:
     type: "array"
     items:

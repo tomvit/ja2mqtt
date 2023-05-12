@@ -105,11 +105,11 @@ The command first reads the configurations, establishes connections with serial 
 ```
 
 
-## Query commands
+## Publish command
 
-ja2mqtt offers a command that allows you to send events to the MQTT broker to control or query Jablotron via ja2mqtt.
+ja2mqtt provides `pub` command that allows you to send events to the MQTT broker to control or query Jablotron via ja2mqtt.
 
-You can use the `pub` command to publish data to an MQTT topic. For example, to retrieve all section states, use the topic `ja2mqtt/section/get` as shown below. You also need to specify input data for the event to be generated using the `-d` option, where the data is in the form `key=value`. In this case, you need to provide the `PIN` for Jablotron to process the command. The input data for the event is defined in the [protocol definition](configuration/ja2mqtt).
+For example, to retrieve all section states, use the topic `ja2mqtt/section/get` as shown below. You also need to specify input data for the event to be generated using the `-d` option, where the data is in the form `key=value`. In this case, you need to provide the `PIN` for Jablotron to process the command. The input data for the event is defined in the [protocol definition](configuration/ja2mqtt).
 
 ```
 ja2mqtt pub -c config/config.yaml -t ja2mqtt/section/get -d pin=1234
@@ -120,3 +120,28 @@ ja2mqtt pub -c config/config.yaml -t ja2mqtt/section/get -d pin=1234
 ```
 
 To view a list of topics that can be used, run the `ja2mqtt config topics` command. These topics can be found under the "subscribing topics" section.
+
+## States command
+
+You can use the `states` command to view the current states of all sections and peripherals. The command provides information on the corresponding topic, the time when the section or peripheral was last updated, and its current state.
+
+You can use the following command options to customize the output:
+
+* `-i`, `--init`: Send an initialization publish event to the broker. Use `ja2mqtt/all/get` to retrieve all section and peripheral states.
+* `-t`, `--time-diff`: Display the time difference since the last update instead of the actual updated time.
+* `-s`, `--sort`: Sort the data in reverse order by updated time.
+* `-w`, `--watch`: Continuously display the data, refreshing the output when an event is received.
+* `-d`, `--data`: Provide input data for the initialization event, such as setting the PIN to retrieve section states.
+
+Here is an example command:
+
+```
+ja2mqtt states -c config/config.yaml -i ja2mqtt/all/get -d pin=7401 -w -t -s
+TOPIC                                       UPDATED            STATE
+ja2mqtt/motion/house/livingroom             20 minutes ago     OFF
+ja2mqtt/section/house                       1 hour ago         READY
+ja2mqtt/section/cellar                      2 hours ago        ARMED
+ja2mqtt/section/garage                      2 hours ago        ARMED
+ja2mqtt/motion/garage                       2 hours ago        OFF
+ja2mqtt/siren/house/siren                   2 hours ago        OFF
+```

@@ -13,10 +13,19 @@ from queue import Empty, Queue
 import paho.mqtt.client as mqtt
 
 from ja2mqtt.config import Config
-from ja2mqtt.utils import Map, PythonExpression, deep_eval, deep_merge, merge_dicts
+from ja2mqtt.utils import (
+    Map,
+    PythonExpression,
+    deep_eval,
+    deep_merge,
+    merge_dicts,
+    randomString,
+)
 
 from . import Component
 from .serial import SerialJA121TException, decode_prfstate
+
+PRFSTATE_RE = re.compile("PRFSTATE ([0-9A-F]+)")
 
 
 class Pattern:
@@ -41,29 +50,102 @@ class Pattern:
 
 
 class PrfStateChange:
-    def __init__(self, pos, current_prfstate):
+    """
+    PrfStateChange evaluates a state change in a peripheral at position `pos`. It uses
+    the current state object that represents decoded peripheral states (a result of
+    `decode_prfstate`) and compares a new decoded state with the curent state at
+    a position `pos`. If the state changes, the `__eq__` method returns True otherwise
+    it returns False. After the evaluation of equality, the property `state` contains
+    the current state of the peripheral and property `updated` contains the updated
+    time of the peripheral.
+    """
+
+    def __init__(self, pos, current_state):
         self.pos = pos
-        self.current_prfstate = current_prfstate
+        self.current_state = current_state
         self.state = None
+        self.updated = None
 
     def __str__(self):
-        return f"position={self.pos}, state={self.state}"
+        """
+        String representation of the oject.
+        """
+        return f"pos={self.pos}, state={self.state}"
+
+    def decode(self, line):
+        """
+        Decode line to dict where keys are codes and values are states.
+        """
+        if line.startswith("PRFSTATE"):
+            d = decode_prfstate(line.split(" ")[1])
+            return True, d
+        else:
+            return False, None
 
     def __eq__(self, other):
-        if other.startswith("PRFSTATE"):
-            d = decode_prfstate(other.split(" ")[1])
+        res, d = self.decode(other)
+        if res:
+            if self.state != d[self.pos]:
+                self.updated = time.time()
             self.state = d[self.pos]
-            return (
-                self.current_prfstate is None
-                or d[self.pos] != self.current_prfstate[self.pos]
+            res = (
+                self.current_state is None
+                or d[self.pos] != self.current_state[self.pos]
             )
+        return res
+
+
+class SectionState:
+    def __init__(self, pattern, section_group=1, state_group=2):
+        self.re = re.compile(pattern)
+        self.section_group = section_group
+        self.state_group = state_group
+        self.state = None
+        self.match = None
+        self.updated = None
+
+    def __eq__(self, other):
+        self.match = self.re.match(other)
+        if self.match:
+            section = self.match.group(self.section_group)
+            state = self.match.group(self.state_group)
+            if self.state != state:
+                self.updated = time.time()
+                self.state = state
+            return True
         else:
             return False
 
 
+class PrfState:
+    def __init__(self, pos):
+        self.state = None
+        self.pos = str(pos)
+        self.report_on_next = False
+
+    def __eq__(self, other):
+        res = False
+        if other.startswith("PRFSTATE"):
+            d = decode_prfstate(other.split(" ")[1])
+            if self.state != d[self.pos]:
+                self.state = d[self.pos]
+                self.updated = time.time()
+                res = True
+            if self.report_on_next:
+                self.report_on_next = False
+                res = True
+        return res
+
+
 class Topic:
-    def __init__(self, topic):
-        self.name = topic["name"]
+    def __init__(self, prefix, topic):
+        if topic["name"].startswith(prefix):
+            self.name = topic["name"]
+        else:
+            sep = "/"
+            if prefix[-1] == "/" or topic["name"][0] == "/":
+                sep = ""
+            self.name = prefix + sep + topic["name"]
         self.disabled = topic.get("disabled", False)
         self.rules = []
         for rule_def in topic["rules"]:
@@ -96,42 +178,104 @@ class Topic:
         except Exception as e:
             raise Exception(f"Topic data validation failed. {str(e)}")
 
+    @classmethod
+    def list(cls, topics):
+        return ", ".join(
+            [x.name + ("" if not x.disabled else " (disabled)") for x in topics]
+        )
 
-class SerialMQTTBridge(Component):
+
+class JA2MQTTConfig:
     def __init__(self, config):
-        def _list(topics):
-            return ", ".join(
-                [x.name + ("" if not x.disabled else " (disabled)") for x in topics]
-            )
-
-        super().__init__(config, "bridge")
-        self.mqtt = None
-        self.serial = None
+        self._scope = None
+        self.config = config
         self.topics_serial2mqtt = []
         self.topics_mqtt2serial = []
+        self.ja2mqtt_file = self.config.get_dir_path(config.root("ja2mqtt"))
+        self.ja2mqtt = Config(
+            self.ja2mqtt_file,
+            scope=self.scope(),
+            use_template=True,
+            schema="ja2mqtt-schema.yaml",
+        )
+
+        # system properties
+        self.topic_prefix = self.ja2mqtt("system.topic_prefix", "ja2mqtt")
+        self.correlation_id = self.ja2mqtt("system.correlation_id", None)
+        self.correlation_timeout = self.ja2mqtt("system.correlation_timeout", 0)
+        self.topic_sys_error = self.ja2mqtt("system.topic_sys_error", None)
+        self.prfstate_bits = self.ja2mqtt("system.prfstate_bits", 128)
+
+        # topics
+        for topic_def in self.ja2mqtt("serial2mqtt"):
+            self.topics_serial2mqtt.append(Topic(self.topic_prefix, topic_def))
+        for topic_def in self.ja2mqtt("mqtt2serial"):
+            self.topics_mqtt2serial.append(Topic(self.topic_prefix, topic_def))
+
+    def scope(self):
+        section_states = {}
+
+        def _section_state(pattern, g1, g2):
+            if pattern not in section_states:
+                section_states[pattern] = SectionState(pattern, g1, g2)
+            return section_states[pattern]
+
+        prf_states = {}
+
+        def _prf_state(pos):
+            if pos not in prf_states:
+                prf_states[pos] = PrfState(pos)
+            return prf_states[pos]
+
+        def _write_prf_state():
+            for k, v in prf_states.items():
+                v.report_on_next = True
+            return "PRFSTATE"
+
+        if self._scope is None:
+            self._scope = Map(
+                topology=self.config.root("topology"),
+                pattern=lambda x: Pattern(x),
+                format=lambda x, **kwa: x.format(**kwa),
+                prf_state=lambda pos: _prf_state(pos),
+                section_state=lambda pattern, g1, g2: _section_state(pattern, g1, g2),
+                write_prf_state=_write_prf_state,
+            )
+        return self._scope
+
+    def corr_id(self):
+        corrid_field = self.ja2mqtt("system.correlation_id", None)
+        corr_id = randomString(12, letters="abcdef0123456789")
+        return corrid_field, corr_id if corrid_field is not None else None
+
+    def topic_exists(self, name):
+        return name in [x.name for x in self.topics_mqtt2serial]
+
+
+class SerialMQTTBridge(Component, JA2MQTTConfig):
+    def __init__(self, config):
+        Component.__init__(self, config, "bridge")
+        JA2MQTTConfig.__init__(self, config)
+        self.mqtt = None
+        self.serial = None
         self._scope = None
         self.request_queue = Queue()
-
-        ja2mqtt_file = self.config.get_dir_path(config.root("ja2mqtt"))
-        ja2mqtt = Config(ja2mqtt_file, scope=self.scope(), use_template=True)
-        for topic_def in ja2mqtt("serial2mqtt"):
-            self.topics_serial2mqtt.append(Topic(topic_def))
-        for topic_def in ja2mqtt("mqtt2serial"):
-            self.topics_mqtt2serial.append(Topic(topic_def))
-        self.correlation_id = ja2mqtt("system.correlation_id", None)
-        self.correlation_timeout = ja2mqtt("system.correlation_timeout", 0)
-        self.topic_sys_error = ja2mqtt("system.topic_sys_error", None)
-        self.prfstate_bits = ja2mqtt("system.prfstate_bits", 128)
         self.request = None
-        self.prfstate = [decode_prfstate("".zfill(self.prfstate_bits))]
 
-        self.log.info(f"The ja2mqtt definition file is {ja2mqtt_file}")
+        self.log.info(f"The ja2mqtt definition file is {self.ja2mqtt_file}")
         self.log.info(
             f"There are {len(self.topics_serial2mqtt)} serial2mqtt and "
             + f"{len(self.topics_mqtt2serial)} mqtt2serial topics."
         )
-        self.log.debug(f"The serial2mqtt topics are: {_list(self.topics_serial2mqtt)}")
-        self.log.debug(f"The mqtt2serial topics are: {_list(self.topics_mqtt2serial)}")
+        self.log.debug(
+            f"The serial2mqtt topics are: {Topic.list(self.topics_serial2mqtt)}"
+        )
+        self.log.debug(
+            f"The mqtt2serial topics are: {Topic.list(self.topics_mqtt2serial)}"
+        )
+
+        # states of perihperals
+        self.prfstate = [decode_prfstate("".zfill(self.prfstate_bits))]
 
     def update_correlation(self, data):
         if self.request_queue.qsize() > 0:
@@ -152,25 +296,6 @@ class SerialMQTTBridge(Component):
                 self.request = None
         return data
 
-    def scope(self):
-        def _write_prf_state(reset=False):
-            if reset:
-                self.log.debug("Reseting prfstate object to None.")
-                self.prfstate = []
-            return "PRFSTATE"
-
-        if self._scope is None:
-            self._scope = Map(
-                topology=self.config.root("topology"),
-                pattern=lambda x: Pattern(x),
-                format=lambda x, **kwa: x.format(**kwa),
-                prf_state_change=lambda pos: PrfStateChange(
-                    str(pos), self.prfstate[-2] if len(self.prfstate) > 1 else None
-                ),
-                write_prf_state=_write_prf_state,
-            )
-        return self._scope
-
     def update_scope(self, key, value=None, remove=False):
         if self._scope is None:
             self.scope()
@@ -182,8 +307,9 @@ class SerialMQTTBridge(Component):
 
     def update_prfstate(self, data_str):
         try:
-            if data_str.startswith("PRFSTATE"):
-                self.prfstate.append(decode_prfstate(data_str.split(" ")[1]))
+            m = PRFSTATE_RE.match(data_str)
+            if m:
+                self.prfstate.append(decode_prfstate(m.group(1)))
                 if len(self.prfstate) > 1:
                     self.prfstate = self.prfstate[-2:]
                 self.log.debug(f"prfstate_decoded={self.prfstate[-1]}")

@@ -6,6 +6,8 @@ hide-toc: true
 
 [![PyPI](https://img.shields.io/pypi/v/ja2mqtt?label=PyPI)](https://pypi.org/project/ja2mqtt/)
 [![Docker Image Version (tag latest semver)](https://img.shields.io/docker/v/tomvit/ja2mqtt/latest?label=Docker)](https://hub.docker.com/r/tomvit/ja2mqtt/tags)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/ja2mqtt)]()
+
 
 ```{include} ../README.md
 :start-after: <!-- start elevator-pitch -->
@@ -28,13 +30,9 @@ installation
 usage
 ```
 
-<!-- ```{toctree}
-:caption: Development
+```{toctree}
+:caption: Links
 :hidden:
 
-contributing/index
-kitchen-sink/index
-stability
-changelog
-license
-``` -->
+vitvar.com <https://vitvar.com>
+```

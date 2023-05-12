@@ -38,7 +38,6 @@ class MQTT(Component):
         self.protocol = {
             "MQTTv311": mqtt.MQTTv311,
             "MQTTv31": mqtt.MQTTv31,
-            "MQTTv5": mqtt.MQTTv5,
             "default": None,
         }[self.config.value_str("protocol", default="MQTTv311")]
         self.transport = self.config.value_str("transport", default="tcp")
