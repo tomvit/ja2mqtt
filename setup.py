@@ -34,7 +34,8 @@ install_requires = [
     'paho-mqtt>=1.6.1',
     'pyserial>=3.5',
     'PyYAML>=6.0',
-    'jsonschema>=4.0.0'
+    'jsonschema>=4.0.0',
+    'pytz>=2023.3'
 ]
 
 setup(
@@ -49,7 +50,6 @@ setup(
     include_package_data=True,
     install_requires=install_requires,
     python_requires='>=3.6.0',
-    #scripts=['bin/ja2mqtt'],
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Console',
