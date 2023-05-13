@@ -362,7 +362,6 @@ class SerialMQTTBridge(Component, JA2MQTTConfig):
 
         self.update_prfstate(data)
         _rule = None
-        current_time = time.time()
         for topic in self.topics_serial2mqtt:
             for rule in topic.rules:
                 if isinstance(rule.read, PythonExpression):
