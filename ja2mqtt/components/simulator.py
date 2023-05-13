@@ -160,7 +160,7 @@ class Simulator:
                 "PRFSTATE " + encode_prfstate(self.generate_prfstate(on_prob=0.5))
             )
             return
-
+    
     def readline(self):
         try:
             return bytes(self.buffer.get(timeout=self.timeout), ENCODING)
