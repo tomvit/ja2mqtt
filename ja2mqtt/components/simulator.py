@@ -18,10 +18,16 @@ from ja2mqtt.config import ENCODING
 
 
 class SimulatorException(Exception):    
+    """
+    Exception raised by the simulator.
+    """
     pass
 
 
 class Section:
+    """
+    Represents a section in Jablotron system.
+    """
     def __init__(self, data):
         self.code = data.code
         self.state = data.state
@@ -52,6 +58,9 @@ class Section:
 
 
 class Simulator:
+    """
+    Simulator of the Jablotron JA-121T system. It is used for testing purposes.
+    """
     def __init__(self, config, prfstate_bits):
         self.log = logging.getLogger("simulator")
         self.config = config
