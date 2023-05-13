@@ -2,13 +2,9 @@
 # @author: Tomas Vitvar, https://vitvar.com, tomas@vitvar.com
 
 import json
-import logging
 import re
-import threading
 import time
 from queue import Empty, Queue
-
-import paho.mqtt.client as mqtt
 
 from ja2mqtt.config import Config
 from ja2mqtt.utils import (
@@ -93,6 +89,9 @@ class PrfStateChange:
 
 
 class SectionState:
+    """
+    SectionState evaluates a state change in a section.
+    """
     def __init__(self, pattern, section_group=1, state_group=2):
         self.re = re.compile(pattern)
         self.section_group = section_group

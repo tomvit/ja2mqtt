@@ -16,9 +16,14 @@ from ja2mqtt.utils import bcolors, format_str_color
 
 
 class CoreCommand(click.core.Group):
+    """
+    The `CoreCommand` is the main entry point for the CLI.
+    """
     def invoke(self, ctx):
         ja2mqtt_config.ANSI_COLORS = not ctx.params.get("no-ansi", False)
         ja2mqtt_config.DEBUG = ctx.params.get("debug", False)
+        
+        # pylint: disable=broad-except
         try:
             for sig in ("TERM", "INT"):
                 signal.signal(
@@ -26,14 +31,14 @@ class CoreCommand(click.core.Group):
                     lambda x, y: ja2mqtt_config.exit_event.set(),
                 )
             click.core.Group.invoke(self, ctx)
-        except click.exceptions.Exit as e:
-            sys.exit(int(str(e)))
-        except click.core.ClickException as e:
-            raise e
-        except Exception as e:
+        except click.exceptions.Exit as exception:
+            sys.exit(int(str(exception)))
+        except click.core.ClickException as exception:
+            raise exception
+        except Exception as exception:
             sys.stderr.write(
                 format_str_color(
-                    f"ERROR: {str(e)}\n", bcolors.ERROR, not ja2mqtt_config.ANSI_COLORS
+                    f"ERROR: {str(exception)}\n", bcolors.ERROR, not ja2mqtt_config.ANSI_COLORS
                 )
             )
             if ja2mqtt_config.DEBUG:
@@ -49,6 +54,9 @@ class CoreCommand(click.core.Group):
 @click.option("-d", "--debug", "debug", is_flag=True, default=False, help="Be verbose.")
 @click.version_option(version=__version__)
 def ja2mqtt(debug, no_ansi):
+    """
+    The `ja2mqtt` is a command line interface for the `ja2mqtt`.
+    """
     pass
 
 
