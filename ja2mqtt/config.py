@@ -17,7 +17,6 @@ import click
 import jinja2
 import yaml
 
-import jsonschema
 from jsonschema import validate
 from jsonschema import Draft7Validator
 

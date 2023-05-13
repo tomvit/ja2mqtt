@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # @author: Tomas Vitvar, https://vitvar.com, tomas@vitvar.com
 
-from __future__ import absolute_import, unicode_literals
-
 import json
 import logging
 import re
@@ -18,7 +16,6 @@ from ja2mqtt.utils import (
     PythonExpression,
     deep_eval,
     deep_merge,
-    merge_dicts,
     randomString,
 )
 

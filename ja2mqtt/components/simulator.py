@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 # @author: Tomas Vitvar, https://vitvar.com, tomas@vitvar.com
 
-from __future__ import absolute_import, unicode_literals
-
 import json
 import logging
 import random
@@ -19,7 +17,7 @@ ERROR_NO_ACCESS = "ERROR: 3 NO_ACCESS"
 from ja2mqtt.config import ENCODING
 
 
-class SimulatorException(Exception):
+class SimulatorException(Exception):    
     pass
 
 
