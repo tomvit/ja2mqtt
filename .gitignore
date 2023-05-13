@@ -11,3 +11,4 @@ dist/
 docker/files
 bin/shift*
 docs/_build
+.vscode
