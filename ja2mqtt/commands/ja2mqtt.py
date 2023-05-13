@@ -17,7 +17,7 @@ from ja2mqtt.utils import bcolors, format_str_color
 
 class CoreCommand(click.core.Group):
     """
-    The `CoreCommand` is the main entry point for the CLI.
+    The `CoreCommand` is the main entry point for the CLI.    
     """
     def invoke(self, ctx):
         ja2mqtt_config.ANSI_COLORS = not ctx.params.get("no-ansi", False)
