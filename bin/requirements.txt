@@ -8,3 +8,5 @@ myst_parser
 furo
 sphinx_copybutton
 twine
+jsonschema
+```
