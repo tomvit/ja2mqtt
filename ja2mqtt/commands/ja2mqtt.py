@@ -22,7 +22,7 @@ class CoreCommand(click.core.Group):
         ja2mqtt_config.ANSI_COLORS = not ctx.params.get("no-ansi", False)
         ja2mqtt_config.DEBUG = ctx.params.get("debug", False)
         try:
-            for sig in ("TERM", "HUP", "INT"):
+            for sig in ("TERM", "INT"):
                 signal.signal(
                     getattr(signal, "SIG" + sig),
                     lambda x, y: ja2mqtt_config.exit_event.set(),
