@@ -64,14 +64,12 @@ def config_topics(config, log):
 def config_validate(config, log):
     def _display_validation(res, errors, file):
         if not res:
+            click.echo(f"* The file {file} is NOT VALID.")
             if errors is not None:
-                click.echo(f"Validation of {file} failed with the following errors:")
                 for e in errors:
-                    print(f"- {e.message}, in {e.json_path[2:]}")
-            else:
-                click.echo(f"Validation of {file} failed.")
+                    print(f"  - {e.message}, in {e.json_path[2:]}")
         else:
-            click.echo(f"The configuration file {file} is valid.")
+            click.echo(f"* The file {file} is VALID.")
 
     res, errors = config.validate(throw_ex=False)
     _display_validation(res, errors, config.config_file)
