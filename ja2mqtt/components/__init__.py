@@ -9,6 +9,7 @@ class Component:
     """
     Base class for all components.
     """
+
     def __init__(self, config, name):
         self.log = logging.getLogger(name)
         self.config = config

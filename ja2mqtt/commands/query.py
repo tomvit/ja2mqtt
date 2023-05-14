@@ -164,9 +164,7 @@ class StatesTable:
         """
         Adds a new topic to the data.
         """
-        self.data.append(
-            {"topic": topic.name, "count": 0, "updated": 0, "state": None}
-        )
+        self.data.append({"topic": topic.name, "count": 0, "updated": 0, "state": None})
 
     def topic_data(self, name):
         """
@@ -179,7 +177,7 @@ class StatesTable:
 
     def update(self, topic, data):
         """
-        Updates the data of a topic.        
+        Updates the data of a topic.
         """
         updated = False
         inx = self.topic_data(topic)
@@ -203,7 +201,9 @@ class StatesTable:
             if sys.stdout.isatty():
                 print("".join(["\033[A" for i in range(len(data) + 2)]))
             else:
-                print(f"---- {datetime.datetime.now().strftime('%d-%m-%y %H:%M:%S')} ----")
+                print(
+                    f"---- {datetime.datetime.now().strftime('%d-%m-%y %H:%M:%S')} ----"
+                )
         self.table.display(data)
         self.displayed = True
 
