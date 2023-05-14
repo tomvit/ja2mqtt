@@ -16,6 +16,7 @@ class bcolors:
     OKGREEN = "\033[32m"
     WARNING = "\033[33m"
     ERROR = "\033[91m"
+    RED = "\033[91m"
     ENDC = "\033[0m"
     BOLD = "\033[1m"
     UNDERLINE = "\033[4m"
