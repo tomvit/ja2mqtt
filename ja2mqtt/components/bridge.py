@@ -35,6 +35,9 @@ class Pattern:
         self.re = re.compile(self.pattern)
 
     def __str__(self):
+        """
+        String representation of the object.
+        """
         return f"r'{self.pattern}'" if self.match is None else self.match.group(0)
 
     def __eq__(self, other):
@@ -47,10 +50,7 @@ class PrfStateChange:
     PrfStateChange evaluates a state change in a peripheral at position `pos`. It uses
     the current state object that represents decoded peripheral states (a result of
     `decode_prfstate`) and compares a new decoded state with the curent state at
-    a position `pos`. If the state changes, the `__eq__` method returns True otherwise
-    it returns False. After the evaluation of equality, the property `state` contains
-    the current state of the peripheral and property `updated` contains the updated
-    time of the peripheral.
+    a position `pos`.
     """
 
     def __init__(self, pos, current_state):
@@ -76,6 +76,12 @@ class PrfStateChange:
             return False, None
 
     def __eq__(self, other):
+        """
+        The equality operator compares the current state of the peripheral with the data read from the serial inteface. 
+        If the state changes, the `__eq__` method returns True otherwise it returns False. After the evaluation of equality,
+        the property `state` contains the current state of the peripheral and property `updated` contains the updated
+        time of the peripheral.
+        """
         res, d = self.decode(other)
         if res:
             if self.state != d[self.pos]:
