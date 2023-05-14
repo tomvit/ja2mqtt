@@ -12,7 +12,7 @@ import click
 
 import ja2mqtt.config as ja2mqtt_config
 from ja2mqtt.components import MQTT, SerialMQTTBridge, JA2MQTTConfig
-from ja2mqtt.utils import Map, dict_from_string, randomString
+from ja2mqtt.utils import Map, dict_from_string, randomString, format_str_color, bcolors
 from ja2mqtt.json2table import Table
 
 from . import BaseCommandLogOnly
@@ -119,21 +119,34 @@ class StatesTable:
     """
     Displays a table with the states of all topics.
     """
+
     def __init__(self, time_diff=False, sort=False):
-        """        
+        """
         :param time_diff: if True, the time difference between the current time and the time of the last update is displayed
         :param sort: if True, the table is sorted by the time of the last update
         """
         table_def = [
             {"name": "TOPIC", "value": "{topic}"},
             {"name": "UPDATED", "value": "{updated}", "format": self._format_time},
-            {"name": "STATE", "value": "{state}"},
+            {"name": "STATE", "value": "{state}", "format": self._format_state},
         ]
         self.table = Table(table_def, None, False)
         self.data = []
         self.displayed = False
         self.time_diff = time_diff
         self.sort = sort
+
+    def _format_state(self, a, b, c):
+        """
+        Formats the state of a section of a peripheral with a color when ANSI colors are enabled. 
+        The method displays "OK" and "ARMED" states in green and "READY" state of the section in red.
+        """
+        if b in ["ON", "ARMED"]:
+            return format_str_color(b, bcolors.OKGREEN, not ja2mqtt_config.ANSI_COLORS)
+        elif b in ["READY"]:
+            return format_str_color(b, bcolors.RED, not ja2mqtt_config.ANSI_COLORS)
+        else:
+            return b
 
     def _format_time(self, a, b, c):
         """
