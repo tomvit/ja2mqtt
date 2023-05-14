@@ -114,19 +114,11 @@ properties:
       peripheral:
         type: "array"
         items:
-          type: "object"
-          required:
-            - "name"
-            - "type"
-            - "pos"
-          additionalProperties: false
-          properties:
-            name:
-              type: "string"
-            type:
-              type: "string"
-            pos:
-              type: "integer"
+          $ref: "#/definitions/prftype"
+      alarm:
+        type: "array"
+        items:
+          $ref: "#/definitions/prftype"
 
   # simulator
   simulator:
@@ -174,3 +166,20 @@ properties:
               type: "__python_expr_or_int"
             write:
               type: "__python_expr_or_str"
+
+definitions:
+  prftype:
+    id: "#/definitions/prftype"
+    type: "object"
+    required:
+      - "name"
+      - "type"
+      - "pos"
+    additionalProperties: false
+    properties:
+      name:
+        type: "string"
+      type:
+        type: "string"
+      pos:
+        type: "integer"
