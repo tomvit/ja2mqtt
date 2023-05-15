@@ -42,7 +42,7 @@ serial2mqtt:
     no_correlation: True
 
 # MQTT topics for sections that will be generated when events in serial output occur
-{% for s in topology.section %}
+{% for s in iter(topology.section) %}
 - name: section/{{ s.name }}
   rules:
   - read: !py section_state('STATE ({{ s.code }}) (READY|ARMED_PART|ARMED|SERVICE|BLOCKED|OFF)',1,2)
@@ -53,7 +53,7 @@ serial2mqtt:
       updated: !py data.updated
 {% endfor %}
 
-{% for v in topology.peripheral if v.type in ['motion','magnet'] %}
+{% for v in iter(topology.peripheral) if v.type in ['motion','magnet'] %}
 - name: {{ v.type }}/{{ v.name }}
   rules:
   - read: !py prf_state({{ v['pos'] }})
@@ -68,7 +68,7 @@ serial2mqtt:
     process_next_rule: True
 {% endfor %}
 
-{% for v in topology.alarm %}
+{% for v in iter(topology.alarm) %}
 - name: alarm/{{ v.name }}
   rules:
   - read: !py pattern("INTRUDER_ALARM ({{ v.pos }}) (ON|OFF)")
@@ -126,7 +126,7 @@ mqtt2serial:
       write: !py format("{pin} STATE",pin=data.pin)
       request_ttl: 99
 
-{% for s in topology.section %}
+{% for s in iter(topology.section) %}
 # set state to ARMED for a single section
 - name: section/{{ s.name }}/set
   rules:

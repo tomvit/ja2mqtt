@@ -238,6 +238,7 @@ class JA2MQTTConfig:
         if self._scope is None:
             self._scope = Map(
                 topology=self.config.root("topology"),
+                iter=lambda x: x if x is not None else [],
                 pattern=lambda x: Pattern(x),
                 format=lambda x, **kwa: x.format(**kwa),
                 prf_state=lambda pos: _prf_state(pos),
