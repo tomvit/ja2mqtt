@@ -53,7 +53,7 @@ serial2mqtt:
       updated: !py data.updated
 {% endfor %}
 
-{% for v in topology.peripheral if v.type in ['motion','siren','magnet','smoke'] %}
+{% for v in topology.peripheral if v.type in ['motion','magnet'] %}
 - name: {{ v.type }}/{{ v.name }}
   rules:
   - read: !py prf_state({{ v['pos'] }})
@@ -66,6 +66,17 @@ serial2mqtt:
 
     # allow to process next rule when this rule matches
     process_next_rule: True
+{% endfor %}
+
+{% for v in topology.alarm %}
+- name: alarm/{{ v.name }}
+  rules:
+  - read: !py pattern("INTRUDER_ALARM ({{ v.pos }}) (ON|OFF)")
+    write:
+      name: {{ v.name }}
+      type: {{ v.type }}
+      pos: {{ v.pos }}
+      state: !py data.match.group(2)
 {% endfor %}
 
 # generic error
