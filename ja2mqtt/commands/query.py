@@ -138,7 +138,7 @@ class StatesTable:
 
     def _format_state(self, a, b, c):
         """
-        Formats the state of a section of a peripheral with a color when ANSI colors are enabled. 
+        Formats the state of a section of a peripheral with a color when ANSI colors are enabled.
         The method displays "OK" and "ARMED" states in green and "READY" state of the section in red.
         """
         if b in ["ON", "ARMED"]:

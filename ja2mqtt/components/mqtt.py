@@ -84,7 +84,7 @@ class MQTT(Component):
             self.log.info(f"Disconnected from the MQTT broker.")
             self.connected = False
             if rc != 0:
-                raise Exception("The client was disconnected unexpectedly.")
+                raise Exception(f"The client was disconnected unexpectedly, rc={rc}")
         except Exception as e:
             self.on_error(e)
 
@@ -121,6 +121,9 @@ class MQTT(Component):
             self.init_client()
             while not exit_event.is_set():
                 try:
+                    self.log.debug(
+                        f"Connecting to {self.address}, port={self.port}, keepalive={self.keepalive}, client_id={self.client_name}"
+                    )
                     self.client.connect(
                         self.address, port=self.port, keepalive=self.keepalive
                     )

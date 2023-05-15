@@ -67,7 +67,7 @@ class PrfStateChange:
 
     def decode(self, line):
         """
-        Decode line to dict where keys are codes and values are states.
+        Decode PRFSTATE event from serial interface to dict where keys are codes and values are states.
         """
         if line.startswith("PRFSTATE"):
             d = decode_prfstate(line.split(" ")[1])
@@ -77,7 +77,7 @@ class PrfStateChange:
 
     def __eq__(self, other):
         """
-        The equality operator compares the current state of the peripheral with the data read from the serial inteface. 
+        The equality operator compares the current state of the peripheral with the data read from the serial inteface.
         If the state changes, the `__eq__` method returns True otherwise it returns False. After the evaluation of equality,
         the property `state` contains the current state of the peripheral and property `updated` contains the updated
         time of the peripheral.
@@ -96,8 +96,9 @@ class PrfStateChange:
 
 class SectionState:
     """
-    SectionState evaluates a state change in a section.
+    SectionState evaluates a state change of a section.
     """
+
     def __init__(self, pattern, section_group=1, state_group=2):
         self.re = re.compile(pattern)
         self.section_group = section_group
