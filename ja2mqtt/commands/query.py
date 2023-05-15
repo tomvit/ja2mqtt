@@ -145,6 +145,8 @@ class StatesTable:
             return format_str_color(b, bcolors.OKGREEN, not ja2mqtt_config.ANSI_COLORS)
         elif b in ["READY"]:
             return format_str_color(b, bcolors.RED, not ja2mqtt_config.ANSI_COLORS)
+        elif b is None:
+            return "N/A"
         else:
             return b
 
@@ -152,7 +154,7 @@ class StatesTable:
         """
         Formats the time difference between the current time and the time of the last update.
         """
-        if b is not None:
+        if b is not None and b != 0:
             try:
                 return display_time(b, self.time_diff)
             except Exception as e:
