@@ -60,7 +60,7 @@ exit_event = Event()
 # valid schema versions
 SCHEMA_VERSIONS = ["1.0"]
 
-JA2MQTT_HOME="~/.jam2qtt"
+JA2MQTT_HOME=f"{os.path.expanduser('~')}/.ja2mqtt"
 PID_FILE = os.path.join(JA2MQTT_HOME, "ja2mqtt.pid")
 
 os.makedirs(JA2MQTT_HOME, exist_ok=True)
