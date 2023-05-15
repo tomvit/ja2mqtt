@@ -11,10 +11,13 @@ from ja2mqtt.components import MQTT, Serial, SerialMQTTBridge, Simulator
 from ja2mqtt.config import Config, init_logging
 from ja2mqtt.utils import Map, randomString
 
-from . import BaseCommand
+from . import RunCommand
+import sys
+
+import os
 
 
-@click.command("run", help="Run command.", cls=BaseCommand)
+@click.command("run", help="Run command.", cls=RunCommand)
 def command_run(config, log):
     bridge = SerialMQTTBridge(config)
 

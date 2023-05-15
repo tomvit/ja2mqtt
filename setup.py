@@ -35,7 +35,8 @@ install_requires = [
     'pyserial>=3.5',
     'PyYAML>=6.0',
     'jsonschema>=4.0.0',
-    'pytz>=2023.3'
+    'pytz>=2023.3',
+    'python-pidfile>=3.1.1'
 ]
 
 setup(
