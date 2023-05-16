@@ -10,7 +10,7 @@ import click
 import ja2mqtt.config as ja2mqtt_config
 from ja2mqtt import __version__
 from ja2mqtt.commands.config import command_config
-from ja2mqtt.commands.run import command_run
+from ja2mqtt.commands.run import command_run, command_stop
 from ja2mqtt.commands.query import command_publish, command_states
 from ja2mqtt.utils import bcolors, format_str_color
 
@@ -63,6 +63,7 @@ def ja2mqtt(no_ansi, debug):
 
 
 ja2mqtt.add_command(command_run)
+ja2mqtt.add_command(command_stop)
 ja2mqtt.add_command(command_config)
 ja2mqtt.add_command(command_publish)
 ja2mqtt.add_command(command_states)
