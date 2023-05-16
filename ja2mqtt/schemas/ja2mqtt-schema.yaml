@@ -33,6 +33,7 @@ properties:
       additionalProperties: False
       required:
         - "name"
+        - "rules"
       properties:
         name:
           type: "string"
@@ -62,3 +63,31 @@ properties:
                 type: "boolean"
   mqtt2serial:
     type: "array"
+    items:
+      type: "object"
+      additionalProperties: False 
+      required:
+        - "name"
+        - "rules"
+      properties:
+        name: 
+          type: "string"
+        disabled:
+          type: "boolean"
+        rules:
+          type: "array"
+          items:
+            type: "object"
+            additionalProperties: False
+            required:
+              - "write"
+            properties:
+              read:
+                type: "object"
+                patternProperties:
+                  "[a-zA-Z0-9]+":
+                    type: "__python_expr_or_str_or_number"
+              write:
+                type: "__python_expr_or_str"
+              request_ttl:
+                type: "number"
