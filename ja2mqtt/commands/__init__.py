@@ -6,9 +6,8 @@ import logging
 import os
 import sys
 import click
-from click import Option
-
 import pidfile
+from click import Option
 
 import ja2mqtt.config as ja2mqtt_config
 from ja2mqtt.config import Config, init_logging, PID_FILE
@@ -92,9 +91,9 @@ class RunCommand(BaseCommand):
         )
 
     def command_run(self, ctx):
-        if os.path.exists(PID_FILE):
+        if pidfile.PIDFile(ja2mqtt_config.PID_FILE).is_running:
             raise Exception(f"The {PID_FILE} already exists. Is ja2mqtt already running?")
-
+        
         self.is_daemon = ctx.params.pop("daemon")
         super().command_run(ctx)
         if self.is_daemon:
@@ -109,9 +108,6 @@ class RunCommand(BaseCommand):
                 self.log.debug(f"Exiting the current process and starting the daemon process (pid={pid}).")
                 ja2mqtt_config.exit_event.set()
                 sys.exit(0)
-
-        # from here on, the command run is running as daemon or normally
-        pidfile.PIDFile(PID_FILE).__enter__()
 
 
 class BaseCommandLogOnly(BaseCommand):
