@@ -8,6 +8,7 @@ import click
 
 from ja2mqtt.config import Config, env_variables
 from ja2mqtt.utils import Map
+from ja2mqtt.components import JA2MQTTConfig
 
 from . import BaseCommandLogOnly, BaseCommandLogOnlyNoValidate
 
@@ -26,13 +27,8 @@ def config_main(config, log):
     "ja2mqtt", help="Show the ja2mqtt definition configuration.", cls=BaseCommandLogOnly
 )
 def config_ja2mqtt(config, log):
-    ja2mqtt_file = config.get_dir_path(config.root("ja2mqtt"))
-    scope = Map(topology=config.root("topology"))
-    ja2mqtt = Config(
-        ja2mqtt_file, scope=scope, use_template=True, schema="ja2mqtt-schema.yaml"
-    )
-    ja2mqtt.validate(throw_ex=True)
-    print(json.dumps(ja2mqtt.root._config, indent=4, default=str))
+    ja2mqtt = JA2MQTTConfig(config)
+    print(json.dumps(ja2mqtt.ja2mqtt.root._config, indent=4, default=str))
 
 
 @click.command("env", help="Show environment varialbes.")
@@ -46,16 +42,14 @@ def config_env():
 
 @click.command("topics", help="Show MQTT topics.", cls=BaseCommandLogOnly)
 def config_topics(config, log):
-    ja2mqtt_file = config.get_dir_path(config.root("ja2mqtt"))
-    scope = Map(topology=config.root("topology"))
-    ja2mqtt = Config(ja2mqtt_file, scope=scope, use_template=True)
+    ja2mqtt = JA2MQTTConfig(config)
 
     print("Publishing:")
-    for t in ja2mqtt("serial2mqtt"):
-        print(f"- {t['name']}")
+    for t in ja2mqtt.topics_serial2mqtt:
+        print(f"- {t.name}")
     print("Subscribing:")
-    for t in ja2mqtt("mqtt2serial"):
-        print(f"- {t['name']}")
+    for t in ja2mqtt.topics_mqtt2serial:
+        print(f"- {t.name}")
 
 
 @click.command(
@@ -74,14 +68,10 @@ def config_validate(config, log):
     res, errors = config.validate(throw_ex=False)
     _display_validation(res, errors, config.config_file)
     try:
-        ja2mqtt_file = config.get_dir_path(config.root("ja2mqtt"))
-        scope = Map(topology=config.root("topology"))
-        ja2mqtt = Config(
-            ja2mqtt_file, scope=scope, use_template=True, schema="ja2mqtt-schema.yaml"
-        )
-        res, errors = ja2mqtt.validate(throw_ex=False)
-        _display_validation(res, errors, ja2mqtt_file)
-    except:
+        ja2mqtt = JA2MQTTConfig(config, throw_ex=False)
+        _display_validation(ja2mqtt.is_valid, ja2mqtt.validation_errors, ja2mqtt.ja2mqtt_file)
+    except Exception as e:
+        print(str(e))
         _display_validation(False, None, None)
 
 

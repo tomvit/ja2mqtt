@@ -11,6 +11,8 @@ from ja2mqtt.components import MQTT, Serial, SerialMQTTBridge, Simulator
 from ja2mqtt.config import Config, init_logging
 from ja2mqtt.utils import Map, randomString
 
+from ja2mqtt import __version__
+
 from . import RunCommand
 import sys
 
@@ -20,6 +22,8 @@ import os
 @click.command("run", help="Run command.", cls=RunCommand)
 def command_run(config, log):
     bridge = SerialMQTTBridge(config)
+
+    log.info(f"ja2mqtt, Jablotron JA-121 Serial MQTT bridge, version {__version__}")
 
     simulator = None
     if config("simulator") is not None:

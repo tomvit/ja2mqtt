@@ -189,7 +189,7 @@ class Topic:
 
 
 class JA2MQTTConfig:
-    def __init__(self, config):
+    def __init__(self, config, throw_ex=True):
         self._scope = None
         self.config = config
         self.topics_serial2mqtt = []
@@ -201,19 +201,21 @@ class JA2MQTTConfig:
             use_template=True,
             schema="ja2mqtt-schema.yaml",
         )
+        self.is_valid, self.validation_errors = self.ja2mqtt.validate(throw_ex=throw_ex)
 
-        # system properties
-        self.topic_prefix = self.ja2mqtt("system.topic_prefix", "ja2mqtt")
-        self.correlation_id = self.ja2mqtt("system.correlation_id", None)
-        self.correlation_timeout = self.ja2mqtt("system.correlation_timeout", 0)
-        self.topic_sys_error = self.ja2mqtt("system.topic_sys_error", None)
-        self.prfstate_bits = self.ja2mqtt("system.prfstate_bits", 128)
+        if self.is_valid:
+            # system properties
+            self.topic_prefix = self.ja2mqtt("system.topic_prefix", "ja2mqtt")
+            self.correlation_id = self.ja2mqtt("system.correlation_id", None)
+            self.correlation_timeout = self.ja2mqtt("system.correlation_timeout", 0)
+            self.topic_sys_error = self.ja2mqtt("system.topic_sys_error", None)
+            self.prfstate_bits = self.ja2mqtt("system.prfstate_bits", 128)
 
-        # topics
-        for topic_def in self.ja2mqtt("serial2mqtt"):
-            self.topics_serial2mqtt.append(Topic(self.topic_prefix, topic_def))
-        for topic_def in self.ja2mqtt("mqtt2serial"):
-            self.topics_mqtt2serial.append(Topic(self.topic_prefix, topic_def))
+            # topics
+            for topic_def in self.ja2mqtt("serial2mqtt"):
+                self.topics_serial2mqtt.append(Topic(self.topic_prefix, topic_def))
+            for topic_def in self.ja2mqtt("mqtt2serial"):
+                self.topics_mqtt2serial.append(Topic(self.topic_prefix, topic_def))
 
     def scope(self):
         section_states = {}
