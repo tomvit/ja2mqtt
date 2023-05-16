@@ -11,7 +11,6 @@ from click import Option
 import pidfile
 
 import ja2mqtt.config as ja2mqtt_config
-from ja2mqtt import __version__
 from ja2mqtt.config import Config, init_logging, PID_FILE
 
 class BaseCommand(click.core.Command):
@@ -39,10 +38,10 @@ class BaseCommand(click.core.Command):
         )
         self.log = None
 
-    def init_logging(self, config):
+    def init_logging(self, config, command_name):
         init_logging(
             config.get_dir_path(config.root("logs")),
-            "run",
+            command_name,
             log_level="DEBUG" if ja2mqtt_config.DEBUG else "INFO",
         )
 
@@ -55,9 +54,8 @@ class BaseCommand(click.core.Command):
         config = Config(config_file, env_file, schema="config-schema.yaml")
         self.validate_config(config)
 
-        self.init_logging(config)
+        self.init_logging(config, ctx.command.name)
         self.log = logging.getLogger(ctx.command.name + "-loop")
-        self.log.info(f"ja2mqtt, Jablotron JA-121 Serial MQTT bridge, version {__version__}")
 
         ctx.params["config"] = config
         ctx.params["log"] = self.log
@@ -82,13 +80,13 @@ class RunCommand(BaseCommand):
         )
         self.is_daemon = False
 
-    def init_logging(self, config):
+    def init_logging(self, config, command_name):
         handlers = ["file"]
         if not self.is_daemon:
             handlers.append("console")
         init_logging(
             config.get_dir_path(config.root("logs")),
-            "run" if not self.is_daemon else "run_daemon",
+            command_name + ("" if not self.is_daemon else "_daemon"),
             log_level="DEBUG" if ja2mqtt_config.DEBUG else "INFO",
             handlers=handlers,
         )
@@ -115,14 +113,12 @@ class RunCommand(BaseCommand):
         # from here on, the command run is running as daemon or normally
         pidfile.PIDFile(PID_FILE).__enter__()
 
-    def invoke(self, ctx):
-        return super().invoke(ctx)
 
 class BaseCommandLogOnly(BaseCommand):
-    def init_logging(self, config):
+    def init_logging(self, config, command_name):
         init_logging(
             config.get_dir_path(config.root("logs")),
-            "run",
+            command_name,
             log_level="DEBUG" if ja2mqtt_config.DEBUG else "INFO",
             handlers=["file"],
         )
