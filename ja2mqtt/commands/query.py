@@ -120,7 +120,7 @@ class StatesTable:
     Displays a table with the states of all topics.
     """
 
-    def __init__(self, time_diff=False, sort=False):
+    def __init__(self, log, time_diff=False, sort=False):
         """
         :param time_diff: if True, the time difference between the current time and the time of the last update is displayed
         :param sort: if True, the table is sorted by the time of the last update
@@ -129,12 +129,14 @@ class StatesTable:
             {"name": "TOPIC", "value": "{topic}"},
             {"name": "UPDATED", "value": "{updated}", "format": self._format_time},
             {"name": "STATE", "value": "{state}", "format": self._format_state},
+            {"name": "RCVD", "value": "{num_received}", "justify": "left"},
         ]
         self.table = Table(table_def, None, False)
         self.data = []
         self.displayed = False
         self.time_diff = time_diff
         self.sort = sort
+        self.log = log
 
     def _format_state(self, a, b, c):
         """
@@ -166,7 +168,7 @@ class StatesTable:
         """
         Adds a new topic to the data.
         """
-        self.data.append({"topic": topic.name, "count": 0, "updated": 0, "state": None})
+        self.data.append({"topic": topic.name, "num_received": 0, "updated": 0, "state": None})
 
     def topic_data(self, name):
         """
@@ -184,10 +186,11 @@ class StatesTable:
         updated = False
         inx = self.topic_data(topic)
         if inx is not None and isinstance(data, dict):
+            self.data[inx]["num_received"] += 1
             for k, v in data.items():
                 if k in self.data[inx].keys():
-                    self.data[inx][k] = v
-                    updated = True
+                    self.data[inx][k] = v                
+                    updated = True            
         return updated
 
     def refresh(self):
@@ -268,6 +271,7 @@ def command_states(config, log, data, init_topic, timeout, watch, time_diff, sor
     states = None
 
     def _on_message(topic, payload):
+        log.info(topic)
         if states.update(topic, Map(json.loads(payload))) and watch:
             states.refresh()
 
@@ -281,7 +285,7 @@ def command_states(config, log, data, init_topic, timeout, watch, time_diff, sor
         raise Exception(f"The topic {init_topic} does not exist!")
 
     # states table
-    states = StatesTable(time_diff, sort)
+    states = StatesTable(log, time_diff, sort)
     for topic in ja2mqtt.topics_serial2mqtt:
         if not topic.disabled:
             # only topics with `state` property in data payload
