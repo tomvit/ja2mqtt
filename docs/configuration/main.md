@@ -67,13 +67,13 @@ serial:
 
 ## Topology
 
-Jablotron topology consists of two lists: one for sections and another for peripherals. Each section has a unique name and code, while each peripheral has a name, type, and position. For instance, a section may represent an entire house or a specific area within a house, like a garage or a cellar. Jablotron offers a range of sensor types that can be set up as peripherals, including motion sensors, sirens, smoke detectors, magnets, and keyboards, among others. This allows users to create a tailored security system that fits their specific needs.
+Jablotron topology consists of three lists: one for sections, one for peripherals and one for alarms. Each section has a unique name and code, while each peripheral and alarm has a name, type, and position. For instance, a section may represent an entire house or a specific area within a house, like a garage or a cellar. Jablotron offers a range of sensor types that can be set up as peripherals, including motion sensors, magnets, and keyboards, among others. This allows users to create a tailored security system that fits their specific needs.
 
 ```{caution}
-You can use arbitrary names for sections and peripherals as well as peripherals types, however, you need to use section codes and peripherals positions according to your Jablotron configuration.
+You can use arbitrary names for sections, peripherals, and alarms as well as peripherals and alarm types, however, you need to use section codes and peripherals and alarms positions according to your Jablotron configuration.
 ```
 
-The below example shows a topology with two sections and two peripherals.
+The below example shows a topology with two sections, two peripherals and two alarms.
 
 ```yaml
 topology:
@@ -89,9 +89,16 @@ topology:
     - name: house/smoke
       type: smoke
       pos: 2
+  alarm:
+    - name: house/siren  
+      type: siren 
+      pos: 1
+    - name: house/smoke 
+      type: smoke 
+      pos: 2
 ```
 
-Ja2mqtt utilizes the Jablotron topology to define MQTT events that can be published when there are state changes or events that ja2mqtt subscribes to for clients to control Jablotron sections or retrieve the states of the sections and peripherals. See [protocol definition](ja2mqtt.md) for more details.
+Ja2mqtt utilizes the Jablotron topology to define MQTT events that can be published when there are state changes or events that ja2mqtt subscribes to for clients to control Jablotron sections or retrieve the states of the sections, peripherals and alarms. See [protocol definition](ja2mqtt.md) for more details.
 
 ## Simulator
 
