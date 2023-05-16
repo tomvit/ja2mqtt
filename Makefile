@@ -13,7 +13,7 @@ build:
 	python3 setup.py egg_info sdist
 
 check:
-	pylint --python-version=3.6 ja2mqtt
+	pylint ja2mqtt
 
 image:
 	rm dist/*
