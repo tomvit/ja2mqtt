@@ -221,7 +221,7 @@ class StatesTable:
     metavar="<name>",
     is_flag=False,
     required=False,
-    help="The initi topic name to be published.",
+    help="The initialization topic name to be published.",
 )
 @click.option(
     "-d",
