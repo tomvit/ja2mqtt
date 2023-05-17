@@ -127,6 +127,7 @@ class StatesTable:
             {"name": "TOPIC", "value": "{topic}"},
             {"name": "UPDATED", "value": "{updated}", "format": self._format_time},
             {"name": "STATE", "value": "{state}", "format": self._format_state},
+            {"name": "COUNT", "value": "{count}", "justify": "left"},
             {"name": "RCVD", "value": "{num_received}", "justify": "left"},
         ]
         self.table = Table(table_def, None, False)
@@ -166,7 +167,7 @@ class StatesTable:
         """
         Adds a new topic to the data.
         """
-        self.data.append({"topic": topic.name, "num_received": 0, "updated": 0, "state": None})
+        self.data.append({"topic": topic.name, "num_received": 0, "updated": 0, "state": None, "count": None})
 
     def topic_data(self, name):
         """

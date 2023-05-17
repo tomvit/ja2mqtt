@@ -51,6 +51,7 @@ serial2mqtt:
       section_name: {{ s.name }}
       state: !py data.state
       updated: !py data.updated
+      count: !py data.count
 {% endfor %}
 
 {% for v in iter(topology.peripheral) if v.type in ['motion','magnet'] %}
@@ -63,6 +64,7 @@ serial2mqtt:
       pos: {{ v.pos }}
       state: !py data.state
       updated: !py data.updated
+      count: !py data.count
 
     # allow to process next rule when this rule matches
     process_next_rule: True
