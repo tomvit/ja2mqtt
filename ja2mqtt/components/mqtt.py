@@ -96,9 +96,7 @@ class MQTT(Component):
             transport=self.transport,
         )
         if self.username is not None:
-            self.log.debug(
-                f"Using '{self.username}/*******' to authenticate with the MQTT broker."
-            )
+            self.log.debug(f"Using '{self.username}/*******' to authenticate with the MQTT broker.")
             if self.password is None:
                 self.log.warning("The password was not specified!")
             self.client.username_pw_set(username=self.username, password=self.password)
@@ -124,9 +122,7 @@ class MQTT(Component):
                     self.log.debug(
                         f"Connecting to {self.address}, port={self.port}, keepalive={self.keepalive}, client_id={self.client_name}"
                     )
-                    self.client.connect(
-                        self.address, port=self.port, keepalive=self.keepalive
-                    )
+                    self.client.connect(self.address, port=self.port, keepalive=self.keepalive)
                     break
                 except Exception as e:
                     self.on_error(
@@ -139,11 +135,7 @@ class MQTT(Component):
 
     def wait_is_connected(self, exit_event, timeout=0):
         start_time = time.time()
-        while (
-            not exit_event.is_set()
-            and not self.connected
-            and (timeout == 0 or time.time() - start_time <= timeout)
-        ):
+        while not exit_event.is_set() and not self.connected and (timeout == 0 or time.time() - start_time <= timeout):
             exit_event.wait(0.2)
         return self.connected
 

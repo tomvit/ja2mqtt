@@ -4,6 +4,7 @@
 import json
 import re
 import time
+import logging
 from queue import Empty, Queue
 
 from ja2mqtt.config import Config
@@ -20,6 +21,8 @@ from .serial import SerialJA121TException, decode_prfstate
 
 PRFSTATE_RE = re.compile("PRFSTATE ([0-9A-F]+)")
 
+BRIGDGE_COMPONENT_NAME = "bridge"
+
 
 class Pattern:
     """
@@ -29,7 +32,7 @@ class Pattern:
     for the `wrtie` condition of the rule.
     """
 
-    def __init__(self, pattern):
+    def __init__(self, pattern: str):
         self.match = None
         self.pattern = pattern
         self.re = re.compile(self.pattern)
@@ -45,67 +48,20 @@ class Pattern:
         return self.match is not None
 
 
-class PrfStateChange:
-    """
-    PrfStateChange evaluates a state change in a peripheral at position `pos`. It uses
-    the current state object that represents decoded peripheral states (a result of
-    `decode_prfstate`) and compares a new decoded state with the curent state at
-    a position `pos`.
-    """
-
-    def __init__(self, pos, current_state):
-        self.pos = pos
-        self.current_state = current_state
-        self.state = None
-        self.updated = None
-
-    def __str__(self):
-        """
-        String representation of the oject.
-        """
-        return f"pos={self.pos}, state={self.state}"
-
-    def decode(self, line):
-        """
-        Decode PRFSTATE event from serial interface to dict where keys are codes and values are states.
-        """
-        if line.startswith("PRFSTATE"):
-            d = decode_prfstate(line.split(" ")[1])
-            return True, d
-        else:
-            return False, None
-
-    def __eq__(self, other):
-        """
-        The equality operator compares the current state of the peripheral with the data read from the serial inteface.
-        If the state changes, the `__eq__` method returns True otherwise it returns False. After the evaluation of equality,
-        the property `state` contains the current state of the peripheral and property `updated` contains the updated
-        time of the peripheral.
-        """
-        res, d = self.decode(other)
-        if res:
-            if self.state != d[self.pos]:
-                self.updated = time.time()
-            self.state = d[self.pos]
-            res = (
-                self.current_state is None
-                or d[self.pos] != self.current_state[self.pos]
-            )
-        return res
-
-
 class SectionState:
     """
     SectionState evaluates a state change of a section.
     """
 
-    def __init__(self, pattern, section_group=1, state_group=2):
+    def __init__(self, pattern, section_group: int = 1, state_group: int = 2):
+        self.log = logging.getLogger(BRIGDGE_COMPONENT_NAME)
         self.re = re.compile(pattern)
         self.section_group = section_group
         self.state_group = state_group
         self.state = None
         self.match = None
         self.updated = None
+        self.count = 0
 
     def __eq__(self, other):
         self.match = self.re.match(other)
@@ -115,24 +71,39 @@ class SectionState:
             if self.state != state:
                 self.updated = time.time()
                 self.state = state
+                self.count += 1
+                self.log.debug(
+                    f"Updating section state, section={section}, state={state}, count={self.count}, updated={self.updated}"
+                )
             return True
         else:
             return False
 
 
 class PrfState:
-    def __init__(self, pos):
+    """
+    PrfState evaluates a state change of a peripheral.
+    """
+
+    def __init__(self, pos: int):
+        self.log = logging.getLogger(BRIGDGE_COMPONENT_NAME)
         self.state = None
         self.pos = str(pos)
         self.report_on_next = False
+        self.updated = None
+        self.count = 0
 
-    def __eq__(self, other):
+    def __eq__(self, other: str):
         res = False
         if other.startswith("PRFSTATE"):
             d = decode_prfstate(other.split(" ")[1])
             if self.state != d[self.pos]:
                 self.state = d[self.pos]
                 self.updated = time.time()
+                self.count += 1
+                self.log.debug(
+                    f"Updating prfstate, pos={self.pos}, state={self.state}, count={self.count}, updated={self.updated}"
+                )
                 res = True
             if self.report_on_next:
                 self.report_on_next = False
@@ -175,17 +146,14 @@ class Topic:
                             v = v.eval(scope)
                         if v != data[k]:
                             raise Exception(
-                                f"Invalid value of property {'.'.join(path)}, "
-                                + f"found: {data[k]}, exepcted: {v}"
+                                f"Invalid value of property {'.'.join(path)}, " + f"found: {data[k]}, exepcted: {v}"
                             )
         except Exception as e:
             raise Exception(f"Topic data validation failed. {str(e)}")
 
     @classmethod
     def list(cls, topics):
-        return ", ".join(
-            [x.name + ("" if not x.disabled else " (disabled)") for x in topics]
-        )
+        return ", ".join([x.name + ("" if not x.disabled else " (disabled)") for x in topics])
 
 
 class JA2MQTTConfig:
@@ -260,7 +228,7 @@ class JA2MQTTConfig:
 
 class SerialMQTTBridge(Component, JA2MQTTConfig):
     def __init__(self, config):
-        Component.__init__(self, config, "bridge")
+        Component.__init__(self, config, BRIGDGE_COMPONENT_NAME)
         JA2MQTTConfig.__init__(self, config)
         self.mqtt = None
         self.serial = None
@@ -273,12 +241,8 @@ class SerialMQTTBridge(Component, JA2MQTTConfig):
             f"There are {len(self.topics_serial2mqtt)} serial2mqtt and "
             + f"{len(self.topics_mqtt2serial)} mqtt2serial topics."
         )
-        self.log.debug(
-            f"The serial2mqtt topics are: {Topic.list(self.topics_serial2mqtt)}"
-        )
-        self.log.debug(
-            f"The mqtt2serial topics are: {Topic.list(self.topics_mqtt2serial)}"
-        )
+        self.log.debug(f"The serial2mqtt topics are: {Topic.list(self.topics_serial2mqtt)}")
+        self.log.debug(f"The mqtt2serial topics are: {Topic.list(self.topics_mqtt2serial)}")
 
         # states of perihperals
         self.prfstate = [decode_prfstate("".zfill(self.prfstate_bits))]
@@ -287,18 +251,12 @@ class SerialMQTTBridge(Component, JA2MQTTConfig):
         if self.request_queue.qsize() > 0:
             self.request = self.request_queue.get()
         if self.request is not None:
-            if (
-                time.time() - self.request.created_time < self.correlation_timeout
-                and self.request.ttl > 0
-            ):
+            if time.time() - self.request.created_time < self.correlation_timeout and self.request.ttl > 0:
                 if self.request.cor_id is not None:
                     data[self.correlation_id] = self.request.cor_id
                 self.request.ttl -= 1
             else:
-                self.log.debug(
-                    "Discarding the request for correlation. The correlation timeout "
-                    + "or TTL expired."
-                )
+                self.log.debug("Discarding the request for correlation. The correlation timeout " + "or TTL expired.")
                 self.request = None
         return data
 
@@ -328,9 +286,7 @@ class SerialMQTTBridge(Component, JA2MQTTConfig):
 
     def on_mqtt_message(self, topic_name, payload):
         if not self.serial.is_ready():
-            self.log.warn(
-                "No messages will be processed. The serial interface is not available."
-            )
+            self.log.warn("No messages will be processed. The serial interface is not available.")
             return
         try:
             data = Map(json.loads(payload))
@@ -345,9 +301,7 @@ class SerialMQTTBridge(Component, JA2MQTTConfig):
                 for rule in topic.rules:
                     if rule.read is not None:
                         topic.check_rule_data(rule.read, data, self.scope())
-                        self.log.debug(
-                            "The event data is valid according to the defined rules."
-                        )
+                        self.log.debug("The event data is valid according to the defined rules.")
                     _data = Map(data)
                     self.update_scope("data", _data)
                     try:
@@ -365,9 +319,7 @@ class SerialMQTTBridge(Component, JA2MQTTConfig):
 
     def on_serial_data(self, data):
         if not self.mqtt.connected:
-            self.log.warn(
-                "No events will be published. The client is not connected to the MQTT broker."
-            )
+            self.log.warn("No events will be published. The client is not connected to the MQTT broker.")
             return
 
         self.update_prfstate(data)

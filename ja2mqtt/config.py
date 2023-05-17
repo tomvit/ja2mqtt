@@ -60,10 +60,11 @@ exit_event = Event()
 # valid schema versions
 SCHEMA_VERSIONS = ["1.0"]
 
-JA2MQTT_HOME=f"{os.path.expanduser('~')}/.ja2mqtt"
+JA2MQTT_HOME = f"{os.path.expanduser('~')}/.ja2mqtt"
 PID_FILE = os.path.join(JA2MQTT_HOME, "ja2mqtt.pid")
 
 os.makedirs(JA2MQTT_HOME, exist_ok=True)
+
 
 class Jinja2TemplateLoader(jinja2.BaseLoader):
     def get_source(self, environment, template):
@@ -86,9 +87,7 @@ class Jinja2Template(io.BytesIO):
     def __init__(self, file, scope=None, strip_blank_lines=False):
         super(Jinja2Template, self).__init__(None)
         self.name = file
-        env = jinja2.Environment(
-            loader=Jinja2TemplateLoader(), trim_blocks=True, lstrip_blocks=True
-        )
+        env = jinja2.Environment(loader=Jinja2TemplateLoader(), trim_blocks=True, lstrip_blocks=True)
         if scope is not None:
             env.globals.update(scope)
         try:
@@ -98,9 +97,7 @@ class Jinja2Template(io.BytesIO):
             self.write(content.encode())
             self.seek(0)
         except Exception as e:
-            raise Exception(
-                f"Error when processing template {os.path.basename(file)}: {str(e)}"
-            )
+            raise Exception(f"Error when processing template {os.path.basename(file)}: {str(e)}")
 
 
 def get_schema_file(name):
@@ -114,14 +111,7 @@ def get_dir_path(config_dir, path, base_dir=None, check=False):
     """
     Return the directory for the path specified.
     """
-    d = os.path.normpath(
-        (
-            ((config_dir if base_dir is None else base_dir) + "/")
-            if path[0] != "/"
-            else ""
-        )
-        + path
-    )
+    d = os.path.normpath((((config_dir if base_dir is None else base_dir) + "/") if path[0] != "/" else "") + path)
     if check and not os.path.exists(d):
         raise Exception(f"The directory {d} does not exist!")
     return d
@@ -170,9 +160,7 @@ def read_config(config_file, env_file, use_template, scope=None):
     try:
         config = yaml.load(stream, Loader=yaml.FullLoader)
     except Exception as e:
-        raise Exception(
-            f"Error when reading the configuration file {config_file}: {str(e)}"
-        )
+        raise Exception(f"Error when reading the configuration file {config_file}: {str(e)}")
     finally:
         stream.close()
     config_dir = os.path.dirname(config_file)
@@ -212,10 +200,7 @@ def py_constructor(loader, node):
     try:
         return PythonExpression(replace_env_variable(node.value))
     except Exception as e:
-        raise Exception(
-            'Cannot create python expression from string "%s". %s'
-            % (node.value, str(e))
-        )
+        raise Exception('Cannot create python expression from string "%s". %s' % (node.value, str(e)))
 
 
 class Config:
@@ -244,9 +229,7 @@ class Config:
         )
         self.root = self.get_part(None)
         if schema:
-            self.schema = read_config(
-                get_schema_file(schema), None, use_template=False
-            )[0]
+            self.schema = read_config(get_schema_file(schema), None, use_template=False)[0]
 
     def check_dupplicates(self, path):
         _path = path.split(".")
@@ -267,12 +250,7 @@ class Config:
             return isinstance(i, PythonExpression) or isinstance(i, str)
 
         def __python_expr_or_str_or_number(c, i):
-            return (
-                isinstance(i, PythonExpression)
-                or isinstance(i, str)
-                or isinstance(i, int)
-                or isinstance(i, float)
-            )
+            return isinstance(i, PythonExpression) or isinstance(i, str) or isinstance(i, int) or isinstance(i, float)
 
         type_checker = Draft7Validator.TYPE_CHECKER.redefine_many(
             Map(
@@ -288,9 +266,7 @@ class Config:
 
         if errors:
             if throw_ex:
-                raise Exception(
-                    f"The configuration file '{self.config_file}' is not valid!"
-                )
+                raise Exception(f"The configuration file '{self.config_file}' is not valid!")
             return False, errors
         else:
             self.check_dupplicates("topology.section.code")
@@ -316,9 +292,7 @@ class Config:
         )
 
     def __call__(self, path, default=None, type=None, required=True, no_eval=False):
-        return self.root(
-            path, default=default, type=type, required=required, no_eval=no_eval
-        )
+        return self.root(path, default=default, type=type, required=required, no_eval=no_eval)
 
 
 class ConfigPart:
@@ -345,9 +319,7 @@ class ConfigPart:
         r = default
         if self._config is not None:
             val = reduce(
-                lambda di, key: di.get(key, default)
-                if isinstance(di, dict)
-                else default,
+                lambda di, key: di.get(key, default) if isinstance(di, dict) else default,
                 path.split("."),
                 self._config,
             )
@@ -365,8 +337,7 @@ class ConfigPart:
                             )
                         except Exception as e:
                             raise Exception(
-                                "Cannot evaluate Python expression for property '%s'. %s"
-                                % (self.path(path), str(e))
+                                "Cannot evaluate Python expression for property '%s'. %s" % (self.path(path), str(e))
                             )
                 r = type(val) if type != None else val
         if not r and required:
@@ -376,24 +347,15 @@ class ConfigPart:
     def value_str(self, path, default=None, regex=None, required=False):
         v = self.value(path, default=default, type=str, required=required)
         if regex is not None and not re.match(regex, v):
-            raise Exception(
-                "The property %s value %s does not match %s!"
-                % (self.path(path), v, regex)
-            )
+            raise Exception("The property %s value %s does not match %s!" % (self.path(path), v, regex))
         return v
 
     def value_int(self, path, default=None, min=None, max=None, required=False):
         v = self.value(path, default=default, type=int, required=required)
         if min is not None and v < min:
-            raise Exception(
-                "The property %s value %s must be greater or equal to %d!"
-                % (self.path(path), v, min)
-            )
+            raise Exception("The property %s value %s must be greater or equal to %d!" % (self.path(path), v, min))
         if max is not None and v > max:
-            raise Exception(
-                "The property %s value %s must be less or equal to %d!"
-                % (self.path(path), v, max)
-            )
+            raise Exception("The property %s value %s must be less or equal to %d!" % (self.path(path), v, max))
         return v
 
     def value_bool(self, path, default=None, required=False):
@@ -423,9 +385,7 @@ class CustomFormatter(logging.Formatter):
         return formatter.format(record)
 
 
-def init_logging(
-    logs_dir, command_name, log_level="INFO", handlers=["file", "console"]
-):
+def init_logging(logs_dir, command_name, log_level="INFO", handlers=["file", "console"]):
     """
     Initialize the logging, set the log level and logging directory.
     """
@@ -440,9 +400,7 @@ def init_logging(
             "version": 1,
             "disable_existing_loggers": True,
             "formatters": {
-                "standard": {
-                    "format": CustomFormatter.format_header + CustomFormatter.format_msg
-                },
+                "standard": {"format": CustomFormatter.format_header + CustomFormatter.format_msg},
                 "colored": {"()": CustomFormatter},
             },
             "handlers": {

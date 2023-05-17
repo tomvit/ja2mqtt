@@ -33,9 +33,7 @@ class Component:
         """
         Start the component thread.
         """
-        self.thread = threading.Thread(
-            target=self.worker, args=(exit_event,), daemon=True
-        )
+        self.thread = threading.Thread(target=self.worker, args=(exit_event,), daemon=True)
         self.thread.start()
 
 

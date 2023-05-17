@@ -12,6 +12,7 @@ from click import Option
 import ja2mqtt.config as ja2mqtt_config
 from ja2mqtt.config import Config, init_logging, PID_FILE
 
+
 class BaseCommand(click.core.Command):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -93,7 +94,7 @@ class RunCommand(BaseCommand):
     def command_run(self, ctx):
         if pidfile.PIDFile(ja2mqtt_config.PID_FILE).is_running:
             raise Exception(f"The {PID_FILE} already exists. Is ja2mqtt already running?")
-        
+
         self.is_daemon = ctx.params.pop("daemon")
         super().command_run(ctx)
         if self.is_daemon:

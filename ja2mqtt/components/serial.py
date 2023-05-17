@@ -30,10 +30,7 @@ def decode_prfstate(prfstate):
     of the respective peripherals. For details see JA-121T documentation.
     """
     try:
-        parts = [
-            bin(int(prfstate[i : i + 2], 16))[2:].zfill(8)
-            for i in range(0, len(prfstate), 2)
-        ]
+        parts = [bin(int(prfstate[i : i + 2], 16))[2:].zfill(8) for i in range(0, len(prfstate), 2)]
 
         peripherals = {}
         for x in range(0, int(len(prfstate) / 2)):
@@ -42,14 +39,9 @@ def decode_prfstate(prfstate):
                 peripherals[y] = parts[x][j]
                 j += 1
 
-        return {
-            str(k): ("ON" if peripherals[k] == "1" else "OFF")
-            for k in sorted(peripherals.keys())
-        }
+        return {str(k): ("ON" if peripherals[k] == "1" else "OFF") for k in sorted(peripherals.keys())}
     except Exception as e:
-        raise SerialJA121TException(
-            f"Cannot decode prfstate string {prfstate}. {str(e)}"
-        )
+        raise SerialJA121TException(f"Cannot decode prfstate string {prfstate}. {str(e)}")
 
 
 def encode_prfstate(prf, prf_state_bits=24):
@@ -85,9 +77,7 @@ class Serial(Component):
         self.buffer = Queue()
         self.wait_on_ready = self.config.value_int("wait_on_ready", default=10)
         self.use_simulator = self.config.value_bool("use_simulator", default=False)
-        self.minimum_write_delay = self.config.value_int(
-            "minimum_write_delay", default=1
-        )
+        self.minimum_write_delay = self.config.value_int("minimum_write_delay", default=1)
         self.last_write_time = None
         if not self.use_simulator:
             self.ser = None
@@ -137,9 +127,7 @@ class Serial(Component):
                     break
                 except Exception as e:
                     self.log.error(str(e))
-                    self.log.info(
-                        f"Waiting {self.wait_on_ready} seconds for the port to be ready..."
-                    )
+                    self.log.info(f"Waiting {self.wait_on_ready} seconds for the port to be ready...")
                     exit_event.wait(self.wait_on_ready)
                     self.ser = None
 
@@ -164,13 +152,8 @@ class Serial(Component):
         try:
             current_time = time.time()
             # wait the minimum_write_delay
-            if (
-                self.last_write_time is not None
-                and current_time - self.last_write_time < self.minimum_write_delay
-            ):
-                waiting_time = self.minimum_write_delay - (
-                    current_time - self.last_write_time
-                )
+            if self.last_write_time is not None and current_time - self.last_write_time < self.minimum_write_delay:
+                waiting_time = self.minimum_write_delay - (current_time - self.last_write_time)
                 self.log.debug(f"Too frequent writes, waiting {waiting_time}.")
                 time.sleep(waiting_time)
             self.ser.write(bytes(line + "\n", ENCODING))
@@ -191,9 +174,7 @@ class Serial(Component):
                 try:
                     x = self.ser.readline()
                 except Exception as e:
-                    self.log.error(
-                        f"Error occured while reading data from the serial port. {str(e)}"
-                    )
+                    self.log.error(f"Error occured while reading data from the serial port. {str(e)}")
                     self.close()
                     self.open(exit_event)
                     continue

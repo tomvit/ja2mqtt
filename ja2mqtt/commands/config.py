@@ -23,9 +23,7 @@ def config_main(config, log):
     print(json.dumps(config.root._config, indent=4, default=str))
 
 
-@click.command(
-    "ja2mqtt", help="Show the ja2mqtt definition configuration.", cls=BaseCommandLogOnly
-)
+@click.command("ja2mqtt", help="Show the ja2mqtt definition configuration.", cls=BaseCommandLogOnly)
 def config_ja2mqtt(config, log):
     ja2mqtt = JA2MQTTConfig(config)
     print(json.dumps(ja2mqtt.ja2mqtt.root._config, indent=4, default=str))
@@ -52,9 +50,7 @@ def config_topics(config, log):
         print(f"- {t.name}")
 
 
-@click.command(
-    "validate", help="Validate configuration.", cls=BaseCommandLogOnlyNoValidate
-)
+@click.command("validate", help="Validate configuration.", cls=BaseCommandLogOnlyNoValidate)
 def config_validate(config, log):
     def _display_validation(res, errors, file):
         if not res:

@@ -49,9 +49,7 @@ def command_publish(config, topic, data, log, timeout):
     bridge = SerialMQTTBridge(config)
     _topic = next(filter(lambda x: x.name == topic, bridge.topics_mqtt2serial), None)
     if _topic is None:
-        raise Exception(
-            f"The topic with name '{topic}' does not exist in the ja2mqtt definition file!"
-        )
+        raise Exception(f"The topic with name '{topic}' does not exist in the ja2mqtt definition file!")
 
     _data = {}
     for d in data:
@@ -189,8 +187,8 @@ class StatesTable:
             self.data[inx]["num_received"] += 1
             for k, v in data.items():
                 if k in self.data[inx].keys():
-                    self.data[inx][k] = v                
-                    updated = True            
+                    self.data[inx][k] = v
+                    updated = True
         return updated
 
     def refresh(self):
@@ -206,9 +204,7 @@ class StatesTable:
             if sys.stdout.isatty():
                 print("".join(["\033[A" for i in range(len(data) + 2)]))
             else:
-                print(
-                    f"---- {datetime.datetime.now().strftime('%d-%m-%y %H:%M:%S')} ----"
-                )
+                print(f"---- {datetime.datetime.now().strftime('%d-%m-%y %H:%M:%S')} ----")
         self.table.display(data)
         self.displayed = True
 

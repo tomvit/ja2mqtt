@@ -19,9 +19,7 @@ class Table:
     def _sort_def(self, sort_cols, table_def):
         if sort_cols is None:
             return None
-        sort_def = collections.OrderedDict.fromkeys(
-            [s.strip().upper() for s in sort_cols.split(",")]
-        )
+        sort_def = collections.OrderedDict.fromkeys([s.strip().upper() for s in sort_cols.split(",")])
         for e in self.table_def:
             if e.get("value"):
                 params = PathDef(e.get("value")).params(e["name"])
@@ -32,9 +30,7 @@ class Table:
                             break
         return sort_def
 
-    def format_item(
-        self, cdef, value, skipformat=False, entry=None, adjust=True, global_format=None
-    ):
+    def format_item(self, cdef, value, skipformat=False, entry=None, adjust=True, global_format=None):
         if cdef.get("format") and not skipformat:  # and value is not None:
             try:
                 v = str(cdef["format"](cdef, value, entry))
@@ -53,14 +49,9 @@ class Table:
             v = v[: cdef["mlen"] - 1] + "…"
 
         if not cdef.get("justify") or cdef.get("justify") == "left":
-            return f"{v}" + "".join(
-                [" " for x in range(asize - len(remove_ansi_escape(v)))]
-            )
+            return f"{v}" + "".join([" " for x in range(asize - len(remove_ansi_escape(v)))])
         if cdef.get("justify") == "right":
-            return (
-                "".join([" " for x in range(asize - len(remove_ansi_escape(v)))])
-                + f"{v}"
-            )
+            return "".join([" " for x in range(asize - len(remove_ansi_escape(v)))]) + f"{v}"
 
     def get_field(self, field_name, data):
         d = data
@@ -88,11 +79,7 @@ class Table:
 
     def calc_col_sizes(self):
         for cdef in self.table_def:
-            l = len(
-                self.format_item(
-                    cdef, cdef["name"], skipformat=True, entry=None, adjust=False
-                )
-            )
+            l = len(self.format_item(cdef, cdef["name"], skipformat=True, entry=None, adjust=False))
             if cdef.get("_len") is None or l > cdef["_len"]:
                 if cdef.get("mlen") is not None and l > cdef["mlen"]:
                     l = cdef["mlen"]
@@ -125,23 +112,15 @@ class Table:
             pass
         return cols
 
-    def display(
-        self, data, noterm=False, global_format=None, format=None, csv_delim=";"
-    ):
+    def display(self, data, noterm=False, global_format=None, format=None, csv_delim=";"):
         if format is not None and format not in ["json", "csv"]:
-            raise Exception(
-                "Invalid format value {format}. The allowed values are 'csv' or 'json'."
-            )
+            raise Exception("Invalid format value {format}. The allowed values are 'csv' or 'json'.")
 
         # sort data
         if self.sort_def is not None:
             data = sorted(
                 data,
-                key=lambda item: tuple(
-                    self.eval_value(v, item)
-                    for k, v in self.sort_def.items()
-                    if v is not None
-                ),
+                key=lambda item: tuple(self.eval_value(v, item) for k, v in self.sort_def.items() if v is not None),
                 reverse=self.sort_reverse,
             )
 
@@ -230,7 +209,5 @@ class Table:
 
         for cdef in self.table_def:
             if cdef.get("name") is not None:
-                line = "{name}  {descr}\n".format(
-                    name=cdef["name"].ljust(mlen), descr=cdef.get("help", "n/a")
-                )
+                line = "{name}  {descr}\n".format(name=cdef["name"].ljust(mlen), descr=cdef.get("help", "n/a"))
                 sys.stdout.write(line[0:cols])

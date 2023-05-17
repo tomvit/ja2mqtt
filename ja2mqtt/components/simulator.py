@@ -54,9 +54,7 @@ class Section:
         if self.state == "ARMED":
             self.state = "READY"
             return self.__str__()
-        raise SimulatorException(
-            f"Cannot run command UNSET. Invalid state {self.state}."
-        )
+        raise SimulatorException(f"Cannot run command UNSET. Invalid state {self.state}.")
 
 
 class Simulator:
@@ -70,13 +68,8 @@ class Simulator:
         self.response_delay = config.value_int("response_delay", default=0.5)
         self.prfstate_bits = prfstate_bits
         self.rules = [Map(x) for x in config.value("rules")]
-        self.sections = {
-            str(x["code"]): Section(Map(x)) for x in config.value("sections")
-        }
-        self.peripherals = [
-            int(x.strip())
-            for x in config.value("peripherals", default="1", required=False).split(",")
-        ]
+        self.sections = {str(x["code"]): Section(Map(x)) for x in config.value("sections")}
+        self.peripherals = [int(x.strip()) for x in config.value("peripherals", default="1", required=False).split(",")]
         self.pin = config.value("pin")
         self.timeout = 1
         self.buffer = Queue()
@@ -130,9 +123,7 @@ class Simulator:
                 data = {
                     "SET": lambda _: section.set(),
                     "UNSET": lambda _: section.unset(),
-                    "N/A": lambda x: (_ for _ in ()).throw(
-                        SimulatorException(f"The command {x} is not implemented.")
-                    ),
+                    "N/A": lambda x: (_ for _ in ()).throw(SimulatorException(f"The command {x} is not implemented.")),
                 }.get(command.command, "N/A")(command.command)
                 self._add_to_buffer(data)
             else:
@@ -140,15 +131,9 @@ class Simulator:
             return
 
         # STATE command
-        command = _match(
-            "^(?P<pin>[0-9]+) (?P<command>STATE)( (?P<code>[0-9]+))?$", data_str
-        )
+        command = _match("^(?P<pin>[0-9]+) (?P<command>STATE)( (?P<code>[0-9]+))?$", data_str)
         if command is not None and _check_pin(command):
-            sections = [
-                x
-                for x in self.sections.values()
-                if command.code is None or str(x.code) == str(command.code)
-            ]
+            sections = [x for x in self.sections.values() if command.code is None or str(x.code) == str(command.code)]
             time.sleep(self.response_delay)
             for section in sections:
                 self.buffer.put(str(section))
@@ -159,9 +144,7 @@ class Simulator:
         if command is not None:
             from .serial import encode_prfstate
 
-            self._add_to_buffer(
-                "PRFSTATE " + encode_prfstate(self.generate_prfstate(on_prob=0.5))
-            )
+            self._add_to_buffer("PRFSTATE " + encode_prfstate(self.generate_prfstate(on_prob=0.5)))
             return
 
     def readline(self):
@@ -206,9 +189,7 @@ class Simulator:
             self.log.info("Simulator worker ended.")
 
     def start(self, exit_event):
-        self.thread = threading.Thread(
-            target=self.worker, args=(exit_event,), daemon=True
-        )
+        self.thread = threading.Thread(target=self.worker, args=(exit_event,), daemon=True)
         self.thread.start()
 
     def join(self):

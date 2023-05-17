@@ -26,11 +26,7 @@ class bcolors:
 
 def format_str_color(str, color, disable=False):
     color = None if disable else color
-    return (
-        (color if color is not None else "")
-        + str
-        + (bcolors.ENDC if color is not None else "")
-    )
+    return (color if color is not None else "") + str + (bcolors.ENDC if color is not None else "")
 
 
 class PythonExpression:
@@ -135,9 +131,7 @@ def deep_eval(data, scope, raise_ex=False):
             data = data.eval(scope)
         except Exception as e:
             if raise_ex:
-                raise Exception(
-                    f"The Python expression '{data.expr_str}' failed. %s." % (str(e))
-                )
+                raise Exception(f"The Python expression '{data.expr_str}' failed. %s." % (str(e)))
             else:
                 data = None
     return data
@@ -188,11 +182,7 @@ def deep_merge(source, destination):
             node = destination.setdefault(key, {})
             deep_merge(value, node)
         else:
-            if (
-                key in destination
-                and isinstance(destination[key], list)
-                and isinstance(value, list)
-            ):
+            if key in destination and isinstance(destination[key], list) and isinstance(value, list):
                 for x in value:
                     destination[key].append(x)
             else:
@@ -252,10 +242,7 @@ class PathDef:
             if params.params.get(k):
                 new_path = new_path.replace("%s" % params.params.get(k), v, 1)
             else:
-                raise Exception(
-                    "The param '%s' has not been found in path definition '%s'."
-                    % (k, self.path_def)
-                )
+                raise Exception("The param '%s' has not been found in path definition '%s'." % (k, self.path_def))
 
         return new_path
 
