@@ -161,7 +161,7 @@ To retrieve the state of peripherals, the following rule uses the `write_prf_sta
 
 The ja2mqtt protocol definition includes a `all/get` topic that allows retrieval of states for both sections and peripherals. The following YAML code displays the rules for this topic, which are constructed from rules of the `section/get` and `prfstate/get` topics.
 
-```YAML
+```yaml
 - name: all/get
   rules:
     - write: !py write_prf_state()
