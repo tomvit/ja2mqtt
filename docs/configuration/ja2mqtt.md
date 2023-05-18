@@ -34,7 +34,7 @@ system:
 
 ## Jinja templates
 
-The Jablotron topology may have multiple sections and peripherals that could have different rules but share the same parameters. To address this, ja2mqtt definition file utilizes Jinja2 templates and Jablotron topology data to define parametrized publishing and subscribing topic rules.
+The Jablotron topology may have multiple sections, peripherals and alarms that could have different rules but share the same parameters. To address this, ja2mqtt definition file utilizes Jinja2 templates and Jablotron topology data to define parametrized publishing and subscribing topic rules.
 
 For instance, the following code shows how MQTT topics for all sections can be defined:
 
@@ -42,11 +42,12 @@ For instance, the following code shows how MQTT topics for all sections can be d
 {% for s in topology.section %}
 - name: ja2mqtt/section/{{ s.name }}
   rules:
-  - read: !py pattern('STATE {{ s.code }} (READY|ARMED_PART|ARMED|SERVICE|BLOCKED|OFF)')
+  - read: !py section_state('STATE ({{ s.code }}) (READY|ARMED_PART|ARMED|SERVICE|BLOCKED|OFF)',1,2)
     write:
       section_code: {{ s.code }}
       section_name: {{ s.name }}
-      state: !py data.match.group(1)
+      state: !py data.state
+      count: !py data.count
 {% endfor %}
 ```
 
@@ -77,9 +78,10 @@ The section topics follow the format `{prefix}/section/{name}`, where `{prefix}`
       section_name: house
       state: !py data.state
       updated: !py data.updated
+      count: !py data.count
 ```
 
-In this configuration, the `read` property of the rule matches the data in the serial interface using the provided regular expression, which defines the possible state changes for section 1 as `READY`, `ARMED_PART`, `ARMED`, `SERVICE`, `BLOCKED`, or `OFF`. The function `section_state` is a built-in function that tracks the state change for a section and updates the time at which the section state was last changed. Once the `read` condition is met, the data is written to MQTT under the topic named `ja2mqtt/section/house`. The written data fields include the section code (set to 1), the section name (set to "house"), the section state (set to the matched group from the regular expression), and the time of the last section state update.
+In this configuration, the `read` property of the rule utilizes the built-in function `section_state` to match the data from the serial interface using the provided regular expression. The parameters `1` and `2` represent the capture groups for the state code and state name respectively. The regular expression defines the possible state changes for section 1 as `READY`, `ARMED_PART`, `ARMED`, `SERVICE`, `BLOCKED`, or `OFF`. The function `section_state` is an internal function that monitors the state changes for a section and updates the timestamp for the last change. Once the `read` condition is satisfied, the data is written to MQTT under the topic named `ja2mqtt/section/house`. The written data includes the section code (set to 1), the section name (set to "house"), the section state (derived from the `state` property of the `data` variable, which is defined by the `section_state` function and corresponds to the matched group from the regular expression), the timestamp of the most recent section state update, and the number of section state changes indicated by the `count` property.
 
 In the `write` property, you can define arbitrary sub-properties as data to be sent to MQTT. When specifying values for the data, you can use any arbitrary values or a {ref}`Python expression <configuration/index:python expressions>`. The scope to evaluate the expression includes the `data` variable that contains the data read from the serial interface. If you use a built-in function in the `read` property of the rule, you can access various properties of the result of the function such as the [`match` object](https://docs.python.org/3/library/re.html#match-objects) that can be used for `pattern` and `section_state` functions.
 
@@ -96,19 +98,20 @@ the topic with name `ja2mqtt/section/house` will be published with the following
    "section_code": 1,
    "section_name": "house",
    "state": "ARMED",
-   "updated": 1683727085.619606
+   "updated": 1683727085.619606,
+   "count": 123
  }
  ```
 
-#### Peripherals
+#### Peripherals and Alarms
 
-The ja2mqtt definition file specifies the topics for publishing changes in peripheral states. The peripheral topics follow the format `ja2mqtt/{type}/{location}`, where `{type}` refers to the type of peripheral (e.g. motion, siren, magnet, smoke) and `{location}` refers to the location of the peripheral device (e.g. `garage`, `house/groundfloor/office`, etc.). The types and locations are taken from the Jablotron topology in the main configuration file and can be defined by the user.
+The ja2mqtt definition file specifies the topics for publishing changes in peripheral and alarm states. The topics for peripherals follow the format `ja2mqtt/{type}/{location}`, while the alarm topics follow the format `ja2mqtt/alarm/{type}/{location}`. In these formats, `{type}` refers to the type of peripheral or alarm (e.g., motion, siren, magnet, smoke), and `{location}` refers to the location of the device (e.g., `garage`, `house/groundfloor/office`). The types and locations are extracted from the Jablotron topology in the main configuration file and can be customized by the user.
 
-Although the rules for these topics are similar to the ones for MQTT topics, ja2mqtt uses different functions to decode the peripheral states that JA-121T transmits through the serial interface as `PRFSTATE {number}`. Here, `{number}` is an octal number that encodes the peripheral states. ja2mqtt includes decoding and encoding functions for this `PRFSTATE` octal number based on the [JA-121T serial protocol](https://github.com/tomvit/ja2mqtt/tree/master/etc/JA-121T.pdf).
+While the rules for these topics are similar to MQTT topics, ja2mqtt employs different functions to decode the peripheral states transmitted by the JA-121T device via the serial interface as `PRFSTATE {number}`. Here, `{number}` represents a hexadecimal number that encodes the peripheral states. ja2mqtt includes decoding and encoding functions for this `PRFSTATE` number, based on the [JA-121T serial protocol](https://github.com/tomvit/ja2mqtt/tree/master/etc/JA-121T.pdf). Conversely, the alarm states are read as numeric values from the serial interface.
 
-The following example provides a topic rule to read the `PRFSTATE` message in the serial interface and generate event data with five properties: `name`, `type`, `pos`, `state`, and `updated`. The `read` property of the rule uses a Python expression with the `prf_state` function that utilizes the internal peripheral state object and checks if the state of the peripheral on position `3` has changed (i.e., from ON to OFF or from OFF to ON). If the state has changed, the `write` property specifies the data to be generated for the event, including the name of the peripheral, its type, position, state and updated time. Since this rule is only applicable to a single peripheral state change topic, and the `PRFSTATE` number may indicate state changes for multiple peripherals, the `process_next_rule` property is included to allow for the processing of the next topic rule and the generation of events for other peripheral state changes.
+The following example showcases a topic rule that reads the `PRFSTATE` message from the serial interface and generates event data with five properties: `name`, `type`, `pos`, `state`, and `updated`. The `read` property of the rule utilizes a Python expression with the `prf_state` function, which employs an internal peripheral state object to check for changes in the state of the peripheral at position `3` (e.g., transitioning from ON to OFF or vice versa). If a change is detected, the `write` property specifies the data to be generated for the event, including the name, type, position, state, and updated time of the peripheral. As this rule is specific to a single peripheral state change topic, and the `PRFSTATE` number may indicate state changes for multiple peripherals, the `process_next_rule` property is included to allow for the processing of the next topic rule and the generation of events for other peripheral state changes.
 
-Here is the example YAML configuration:
+Below is an example YAML configuration for a peripheral of type `motion`:
 
 ```yaml
 - name: motion/garage
@@ -120,6 +123,7 @@ Here is the example YAML configuration:
       pos: 1
       state: !py data.state
       updated: !py data.updated
+      count: !py data.count
     process_next_rule: True
 ```
 

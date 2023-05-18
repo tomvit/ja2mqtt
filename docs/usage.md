@@ -133,15 +133,15 @@ You can use the following command options to customize the output:
 * `-w`, `--watch`: Continuously display the data, refreshing the output when an event is received.
 * `-d`, `--data`: Provide input data for the initialization event, such as setting the PIN to retrieve section states.
 
-Here is an example command. The column `RCVD` shows a number of received messages of the corresponding topic. 
+Here is an example command. The column labeled "COUNT" displays the number of events generated since the start-up of the ja2mqtt "run" process. The column labeled "RCVD" indicates the number of messages received for the respective topic since the start-up of the ja2mqtt "states" process.
 
 ```
 ja2mqtt states -c config/config.yaml -i ja2mqtt/all/get -d pin=1234 -w -t -s
-TOPIC                                       UPDATED            STATE     RCVD
-ja2mqtt/motion/house/livingroom             20 minutes ago     OFF       1
-ja2mqtt/section/house                       1 hour ago         READY     1
-ja2mqtt/section/cellar                      2 hours ago        ARMED     1
-ja2mqtt/section/garage                      2 hours ago        ARMED     1
-ja2mqtt/motion/garage                       2 hours ago        OFF       1
-ja2mqtt/siren/house/siren                   2 hours ago        OFF       1
-```
+TOPIC                                  UPDATED            STATE  COUNT  RCVD  
+ja2mqtt/motion/house/livingroom        just now           ON     154    2     
+ja2mqtt/motion/house/office            3 minutes ago      OFF    183    1     
+ja2mqtt/motion/house/hall              16 minutes ago     OFF    113    1     
+ja2mqtt/section/house                  2 hours ago        READY  7      1     
+ja2mqtt/section/cellar                 17-05-23 15:59:53  ARMED  1      1     
+ja2mqtt/magnet/cellar/door             17-05-23 15:59:52  OFF    1      1     
+ja2mqtt/alarm/house/smoke              N/A                N/A    -      0     
