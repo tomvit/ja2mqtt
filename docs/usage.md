@@ -62,7 +62,7 @@ Use configuration commands to explore configuration that ja2mqtt uses including 
     * `__python_expr_or_str` - A Python expression or string.
     * `__python_expr_or_str_or_number`  - A Python expression or string or integer or float.
 
-## Run command
+## Command run
 
 ja2mqtt run command is the main command the performs the function of the bridge between Jablotron control unit and MQTT broker. You can use it as follows:
 
@@ -71,9 +71,13 @@ ja2mqtt run command is the main command the performs the function of the bridge 
 ja2mqtt run -c config/config.yaml
 ```
 
-The logs will be automtically displayed on the console as well as will be stored in the log files.
+```{note}
+You can also utilize the `--daemon` option to run the process in the background. 
+```
 
-The command first reads the configurations, establishes connections with serial interface and MQTT broker by subscribing to defined topics. It then starts workers that read data from serial interface and MQTT events and performs operations to send events to MQTT or write data to serial interface. The below snippet shows the initial logs after the command is started with debug on.
+The process initially reads the configurations, establishes connections with the serial interface and MQTT broker by subscribing to the specified topics. It proceeds to start workers responsible for reading data from the serial interface and handling MQTT events. These workers perform operations such as sending events to MQTT or writing data to the serial interface based on the received data. Additionally, the process generates a PID file located in the user's home directory at `~/.ja2mqtt/ja2mqtt.pid`. This file serves the purpose of checking whether the same process is already running. It is also used by the `stop` command to send a termination signal to the running process.
+
+The below snippet shows the initial logs after the command is started with debug on. The logs will be automtically stored in the log files and in case the command is not running in daemon mode, they will also be displayed on the console. 
 
 ```
 2023-05-05 22:30:32,245 [run-loop] [I] ja2mqtt, Jablotron JA-121 Serial MQTT bridge, version 1.0.4
@@ -104,8 +108,16 @@ The command first reads the configurations, establishes connections with serial 
 2023-05-05 22:30:32,380 [mqtt    ] [I] Subscribing to ja2mqtt/section/cellar/get
 ```
 
+## Command stop
 
-## Publish command
+When ja2mqtt `run` process is running (either in daemon mode or normally), the process's PID will be stored in `~/.ja2mqtt/ja2mqtt.pid` file in user's home directory. You can then stop the process by using the command stop as follows in which case the PID file will be deleted.
+
+```{code-block} bash
+:class: copy-button
+ja2mqtt stop
+```
+
+## Command publish
 
 ja2mqtt provides `pub` command that allows you to send events to the MQTT broker to control or query Jablotron via ja2mqtt.
 
@@ -121,7 +133,7 @@ ja2mqtt pub -c config/config.yaml -t ja2mqtt/section/get -d pin=1234
 
 To view a list of topics that can be used, run the `ja2mqtt config topics` command. These topics can be found under the "subscribing topics" section.
 
-## States command
+## Command states
 
 You can use the `states` command to view the current states of all sections and peripherals. The command provides information on the corresponding topic, the time when the section or peripheral was last updated, and its current state.
 
