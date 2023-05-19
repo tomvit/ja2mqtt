@@ -20,6 +20,7 @@ def read(*parts):
         return fobj.read()
 
 
+__version__ = "0.0.0"
 # Read the version number from __init__.py
 here = os.path.abspath(os.path.dirname(__file__))
 version_file = os.path.join(here, "ja2mqtt", "__init__.py")
