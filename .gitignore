@@ -13,3 +13,4 @@ bin/shift*
 docs/_build
 .vscode
 ja2mqtt.code-workspace
+.envrc
