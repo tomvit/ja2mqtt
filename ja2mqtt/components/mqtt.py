@@ -25,7 +25,7 @@ class MQTT(Component):
 
     def __init__(self, name, config):
         super().__init__(config, "mqtt")
-        self.client_name = name
+        self.client_id = name
         self.address = self.config.value_str("address")
         self.port = self.config.value_int("port", default=1883)
         self.keepalive = self.config.value_int("keepalive", default=60)
@@ -84,13 +84,16 @@ class MQTT(Component):
             self.log.info(f"Disconnected from the MQTT broker.")
             self.connected = False
             if rc != 0:
-                raise Exception(f"The client was disconnected unexpectedly, rc={rc}")
+                raise Exception(
+                    f"The client was disconnected unexpectedly, rc={rc}."
+                    + (f" Is there another client with the client ID '{self.client_id}' connected?" if rc == 7 else "")
+                )
         except Exception as e:
             self.on_error(e)
 
     def init_client(self):
         self.client = mqtt.Client(
-            self.client_name,
+            self.client_id,
             clean_session=self.clean_session,
             protocol=self.protocol,
             transport=self.transport,
@@ -120,7 +123,7 @@ class MQTT(Component):
             while not exit_event.is_set():
                 try:
                     self.log.debug(
-                        f"Connecting to {self.address}, port={self.port}, keepalive={self.keepalive}, client_id={self.client_name}"
+                        f"Connecting to {self.address}, port={self.port}, keepalive={self.keepalive}, client_id={self.client_id}"
                     )
                     self.client.connect(self.address, port=self.port, keepalive=self.keepalive)
                     break
