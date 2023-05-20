@@ -55,7 +55,7 @@ class CoreCommand(click.core.Group):
 @click.version_option(version=__version__)
 def ja2mqtt(no_ansi, debug):
     """
-    The `ja2mqtt` is a command line interface for the `ja2mqtt`.
+    Query and control Jablotron alarms with MQTT and JA-121T.
     """
     ja2mqtt_config.ANSI_COLORS = not no_ansi
     ja2mqtt_config.DEBUG = debug

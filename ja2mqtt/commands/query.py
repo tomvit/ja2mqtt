@@ -18,7 +18,7 @@ from ja2mqtt.json2table import Table
 from . import BaseCommandLogOnly
 
 
-@click.command("pub", help="Publish a topic.", cls=BaseCommandLogOnly)
+@click.command("pub", help="Publish a topic to the MQTT broker.", cls=BaseCommandLogOnly)
 @click.option(
     "-t",
     "--topic",
@@ -46,6 +46,13 @@ from . import BaseCommandLogOnly
     help="Timeout to wait for responses. The default is correlation timeout from the ja2mqtt configuration.",
 )
 def command_publish(config, topic, data, log, timeout):
+    """
+    Publishes a topic to the MQTT broker.
+    :param: config: the ja2mqtt configuration
+    :param: topic: the topic name to be published
+    :param: data: the data as a key=value pair for the topic to be published
+    :param: log: the logger
+    """
     bridge = SerialMQTTBridge(config)
     _topic = next(filter(lambda x: x.name == topic, bridge.topics_mqtt2serial), None)
     if _topic is None:
