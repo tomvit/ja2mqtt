@@ -1,0 +1,2 @@
+#!/bin/bash
+ja2mqtt states -i ja2mqtt/all/get -d pin=${JABLOTRON_PIN} -w -t -s 
