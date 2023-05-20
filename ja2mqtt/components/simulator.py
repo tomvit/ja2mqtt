@@ -35,9 +35,15 @@ class Section:
         self.state = data.state
 
     def __str__(self):
+        """
+        Returns a string representation of the section.
+        """
         return f"STATE {self.code} {self.state}"
 
     def __repr__(self):
+        """
+        Returns a string representation of the section.
+        """
         return self.__str__()
 
     def set(self):
