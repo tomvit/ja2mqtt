@@ -28,7 +28,7 @@ def command_run(config, log):
             log.error("The serial interface is set to be simulated but the simulator configuration does not exist!")
 
         serial = Serial(config.get_part("serial"), simulator)
-        mqtt = MQTT(f"ja2mqtt-client+{randomString(10)}", config.get_part("mqtt-broker"))
+        mqtt = MQTT(f"ja2mqtt-server+{bridge.topic_prefix}", config.get_part("mqtt-broker"))
 
         bridge.set_mqtt(mqtt)
         bridge.set_serial(serial)
