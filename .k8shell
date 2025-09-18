@@ -1,0 +1,11 @@
+blueprint:
+  template: k8shelldev
+  shell: /bin/zsh
+  image: workspaces/dev:1.10
+  sudo: true
+  resources:
+    cpu: 8
+    memory: 8Gi
+  network:
+    networkPolicy: system
+

@@ -16,7 +16,7 @@ check:
 	pylint --python-version=3.6 ja2mqtt
 
 image:
-	rm dist/*
+	rm -f dist/*
 	python3 setup.py egg_info sdist
 	rm -fr docker/files && mkdir -p docker/files
 	cp dist/ja2mqtt-*.tar.gz docker/files
